@@ -60,12 +60,12 @@
 
 % The \icmltitle you define below is probably too long as a header.
 % Therefore, a short form for the running title is supplied here:
-\icmltitlerunning{Project Report Template for Data Literacy 2025}
+\icmltitlerunning{Exposure-Normalized Bicycle Crash Risk Along Berlin Routes} % I think our title is not too long, hence we can use the same as for \icmltitle
 
 \begin{document}
 
 \twocolumn[
-\icmltitle{My Data Literacy Project\\ (Replace this with your Project Title)}
+\icmltitle{Exposure-Normalized Bicycle Crash Risk Along Berlin Routes}
 
 % It is OKAY to include author information, even for blind
 % submissions: the style file will automatically remove it for you
@@ -126,7 +126,12 @@
 \printAffiliationsAndNotice{\icmlEqualContribution} % otherwise use the standard text.
 
 \begin{abstract}
-Put your abstract here. Abstracts typically start with a sentence motivating why the subject is interesting. Then mention the data, methodology or methods you are working with, and describe results. 
+We plan to investigate route-level bicycle crash risk in Berlin by addressing a key limitation in current safety analyses: raw crash counts don't distinguish 
+between dangerous roads and simply busy roads. Our approach will combine police-recorded crash data from the German Unfallatlas with recent city-wide traffic 
+volume estimates to calculate a normalized risk metric at the street-segment level. The core idea is to identify which segments have high crash rates per cyclist 
+rather than just high absolute crash numbers. We will then explore how to aggregate these segment-level risks into route-level scores that could inform safer 
+cycling navigation. Key challenges we anticipate include dealing with potential under-reporting in the crash data and uncertainty in the traffic volume estimates, 
+though we haven't yet determined the best validation approach for this. 
 \end{abstract}
 
 \section{Introduction}\label{sec:intro}
