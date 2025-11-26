@@ -9,4 +9,8 @@
 *.synctex.gz
 
 # local virtual environment files
-.venv\*
+.venv/
+.env/
+
+# local data, never upload them since they are too large
+data/
