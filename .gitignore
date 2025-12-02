@@ -13,4 +13,4 @@
 .env/
 
 # local data, never upload them since they are too large
-data/
+data/.DS_Store

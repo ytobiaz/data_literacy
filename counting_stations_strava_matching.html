@@ -1,0 +1,1056 @@
+<!DOCTYPE html>
+<html>
+<head>
+    
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-glyphicons.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.2.0/css/all.min.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/python-visualization/folium/folium/templates/leaflet.awesome.rotate.min.css"/>
+    
+            <meta name="viewport" content="width=device-width,
+                initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+            <style>
+                #map_53d49280d449f896ca5a9595fbbcb88d {
+                    position: relative;
+                    width: 100.0%;
+                    height: 100.0%;
+                    left: 0.0%;
+                    top: 0.0%;
+                }
+                .leaflet-container { font-size: 1rem; }
+            </style>
+
+            <style>html, body {
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 0;
+            }
+            </style>
+
+            <style>#map {
+                position:absolute;
+                top:0;
+                bottom:0;
+                right:0;
+                left:0;
+                }
+            </style>
+
+            <script>
+                L_NO_TOUCH = false;
+                L_DISABLE_3D = false;
+            </script>
+
+        
+</head>
+<body>
+    
+    
+            <div class="folium-map" id="map_53d49280d449f896ca5a9595fbbcb88d" ></div>
+        
+</body>
+<script>
+    
+    
+            var map_53d49280d449f896ca5a9595fbbcb88d = L.map(
+                "map_53d49280d449f896ca5a9595fbbcb88d",
+                {
+                    center: [52.52, 13.405],
+                    crs: L.CRS.EPSG3857,
+                    ...{
+  "zoom": 11,
+  "zoomControl": true,
+  "preferCanvas": false,
+}
+
+                }
+            );
+
+            
+
+        
+    
+            var tile_layer_3788d52a09e8ab142d0932f1fe5d52eb = L.tileLayer(
+                "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
+                {
+  "minZoom": 0,
+  "maxZoom": 20,
+  "maxNativeZoom": 20,
+  "noWrap": false,
+  "attribution": "\u0026copy; \u003ca href=\"https://www.openstreetmap.org/copyright\"\u003eOpenStreetMap\u003c/a\u003e contributors \u0026copy; \u003ca href=\"https://carto.com/attributions\"\u003eCARTO\u003c/a\u003e",
+  "subdomains": "abcd",
+  "detectRetina": false,
+  "tms": false,
+  "opacity": 1,
+}
+
+            );
+        
+    
+            tile_layer_3788d52a09e8ab142d0932f1fe5d52eb.addTo(map_53d49280d449f896ca5a9595fbbcb88d);
+        
+    
+            var poly_line_e3feed3761863e1754a4ba3990a28373 = L.polyline(
+                [[52.53291708479503, 13.198417116047414], [52.533060254279285, 13.198545543837993], [52.5334012212827, 13.198791983785625], [52.533674922584446, 13.198956331114443], [52.53379746385919, 13.199036165302891], [52.53390016849809, 13.199102182465428], [52.53399395760561, 13.19916856477838], [52.534496007019094, 13.199480629129546], [52.53467985880877, 13.199570602866325]],
+                {"bubblingMouseEvents": true, "color": "#3388ff", "dashArray": null, "dashOffset": null, "fill": false, "fillColor": "#3388ff", "fillOpacity": 0.2, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "noClip": false, "opacity": 0.8, "smoothFactor": 1.0, "stroke": true, "weight": 4}
+            ).addTo(map_53d49280d449f896ca5a9595fbbcb88d);
+        
+    
+            var poly_line_542d66ff838dae576e82deb42d280f90 = L.polyline(
+                [[52.53817616824922, 13.247708419102503], [52.53829399819926, 13.24753252514502], [52.53833548528959, 13.24712121512163], [52.53837211217266, 13.24661973654324], [52.538400318410254, 13.24603791472664], [52.53842812804181, 13.245346238824043], [52.53847646378322, 13.244595220364419], [52.53856968338685, 13.243662938603109], [52.53881345287306, 13.24165561622981], [52.53923891074354, 13.23827154505237], [52.5395534904027, 13.235754112070447], [52.53959018132602, 13.235342970821764], [52.53961306404436, 13.234803629315776], [52.53961531064513, 13.234475802968607], [52.53960960925183, 13.234093672871335], [52.53957240835247, 13.233513824880312], [52.539525587641684, 13.233086527148979], [52.53948631534566, 13.232846204422087], [52.53937425124946, 13.232351300495838], [52.53929434143713, 13.232097981119725]],
+                {"bubblingMouseEvents": true, "color": "#3388ff", "dashArray": null, "dashOffset": null, "fill": false, "fillColor": "#3388ff", "fillOpacity": 0.2, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "noClip": false, "opacity": 0.8, "smoothFactor": 1.0, "stroke": true, "weight": 4}
+            ).addTo(map_53d49280d449f896ca5a9595fbbcb88d);
+        
+    
+            var poly_line_1cebb48a3388b4c6176e1556215b034b = L.polyline(
+                [[52.53817616824922, 13.247708419102503], [52.53815248771576, 13.247933535265506], [52.53787348187739, 13.251265762091759], [52.5376969107614, 13.253323962693328], [52.53745996847207, 13.256130686231344], [52.53736992637299, 13.257164227183486], [52.53727086043705, 13.258555099132643], [52.53719778825875, 13.259409470343076], [52.53709933957575, 13.260601336356379], [52.53693732298412, 13.262568179046752], [52.536752735629065, 13.264869614331914]],
+                {"bubblingMouseEvents": true, "color": "#3388ff", "dashArray": null, "dashOffset": null, "fill": false, "fillColor": "#3388ff", "fillOpacity": 0.2, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "noClip": false, "opacity": 0.8, "smoothFactor": 1.0, "stroke": true, "weight": 4}
+            ).addTo(map_53d49280d449f896ca5a9595fbbcb88d);
+        
+    
+            var poly_line_d733864b36bbbd72a381b91d25446421 = L.polyline(
+                [[52.51266405521242, 13.32293134647123], [52.51281460297528, 13.32512037510684], [52.51295542978469, 13.3272556857423], [52.51312525046919, 13.329930926818202], [52.51314390400019, 13.330235430650731]],
+                {"bubblingMouseEvents": true, "color": "#3388ff", "dashArray": null, "dashOffset": null, "fill": false, "fillColor": "#3388ff", "fillOpacity": 0.2, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "noClip": false, "opacity": 0.8, "smoothFactor": 1.0, "stroke": true, "weight": 4}
+            ).addTo(map_53d49280d449f896ca5a9595fbbcb88d);
+        
+    
+            var poly_line_75dbbf17b28cbffb599ec208c080677a = L.polyline(
+                [[52.567393972489036, 13.412186397402117], [52.566901528950716, 13.412261671200953], [52.56633720863261, 13.412355252730457], [52.56617544822449, 13.412409680643439]],
+                {"bubblingMouseEvents": true, "color": "#3388ff", "dashArray": null, "dashOffset": null, "fill": false, "fillColor": "#3388ff", "fillOpacity": 0.2, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "noClip": false, "opacity": 0.8, "smoothFactor": 1.0, "stroke": true, "weight": 4}
+            ).addTo(map_53d49280d449f896ca5a9595fbbcb88d);
+        
+    
+            var poly_line_ca87e5ab7fd8434aef85bc7212c7344d = L.polyline(
+                [[52.51382850327922, 13.473436653161128], [52.513716594248635, 13.474480143285819], [52.51366539234935, 13.475075569968885], [52.51352404295798, 13.476544622552945], [52.51347407814622, 13.47706386209997]],
+                {"bubblingMouseEvents": true, "color": "#3388ff", "dashArray": null, "dashOffset": null, "fill": false, "fillColor": "#3388ff", "fillOpacity": 0.2, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "noClip": false, "opacity": 0.8, "smoothFactor": 1.0, "stroke": true, "weight": 4}
+            ).addTo(map_53d49280d449f896ca5a9595fbbcb88d);
+        
+    
+            var poly_line_6ed05c5b9983a6b7856b56ab2d8be578 = L.polyline(
+                [[52.466192931858565, 13.307300877351185], [52.46618205987113, 13.307497334019862], [52.46619954411971, 13.307735048247395], [52.46625186858479, 13.308025172736867], [52.46631786771199, 13.308262281264152], [52.46642816603055, 13.308500430235629], [52.46676819608935, 13.309071662479123], [52.46700104408739, 13.30947063312095]],
+                {"bubblingMouseEvents": true, "color": "#3388ff", "dashArray": null, "dashOffset": null, "fill": false, "fillColor": "#3388ff", "fillOpacity": 0.2, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "noClip": false, "opacity": 0.8, "smoothFactor": 1.0, "stroke": true, "weight": 4}
+            ).addTo(map_53d49280d449f896ca5a9595fbbcb88d);
+        
+    
+            var poly_line_cc6e0c2a680286c3a3f60be2df906aeb = L.polyline(
+                [[52.487626700781725, 13.333114871759857], [52.48991556147593, 13.333011622191906], [52.490709227139554, 13.33306965342635]],
+                {"bubblingMouseEvents": true, "color": "#3388ff", "dashArray": null, "dashOffset": null, "fill": false, "fillColor": "#3388ff", "fillOpacity": 0.2, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "noClip": false, "opacity": 0.8, "smoothFactor": 1.0, "stroke": true, "weight": 4}
+            ).addTo(map_53d49280d449f896ca5a9595fbbcb88d);
+        
+    
+            var poly_line_1d2775fb0e11cc8a9f6fdc87e278f415 = L.polyline(
+                [[52.52683612158251, 13.370601279886943], [52.52701787683121, 13.371189368191649], [52.52734027008991, 13.372230563400464], [52.52751958604565, 13.372814854697042], [52.527749024860356, 13.373584522352301], [52.527968439200365, 13.374317513250977], [52.528184746650574, 13.374967446985325], [52.528483728611555, 13.375953669409185]],
+                {"bubblingMouseEvents": true, "color": "#3388ff", "dashArray": null, "dashOffset": null, "fill": false, "fillColor": "#3388ff", "fillOpacity": 0.2, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "noClip": false, "opacity": 0.8, "smoothFactor": 1.0, "stroke": true, "weight": 4}
+            ).addTo(map_53d49280d449f896ca5a9595fbbcb88d);
+        
+    
+            var poly_line_91e800419f16d5f1ebe38371bfe9f0b6 = L.polyline(
+                [[52.513761466693325, 13.41768874445451], [52.513894738642385, 13.417709671866604], [52.51465007669162, 13.41788376571005], [52.51503656467546, 13.41794445611923], [52.515173740777165, 13.417973647611433], [52.51538147711248, 13.418031499576076], [52.51552188487061, 13.418081534019244]],
+                {"bubblingMouseEvents": true, "color": "#3388ff", "dashArray": null, "dashOffset": null, "fill": false, "fillColor": "#3388ff", "fillOpacity": 0.2, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "noClip": false, "opacity": 0.8, "smoothFactor": 1.0, "stroke": true, "weight": 4}
+            ).addTo(map_53d49280d449f896ca5a9595fbbcb88d);
+        
+    
+            var poly_line_41ac67f643df7192b1464d91190f109a = L.polyline(
+                [[52.52016667472911, 13.422406456132075], [52.51995729767024, 13.423151080025987], [52.51952247385959, 13.424610764687536], [52.51924281184536, 13.425583025695534], [52.51902163624894, 13.42639232176822], [52.51871862423398, 13.427592174534906]],
+                {"bubblingMouseEvents": true, "color": "#3388ff", "dashArray": null, "dashOffset": null, "fill": false, "fillColor": "#3388ff", "fillOpacity": 0.2, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "noClip": false, "opacity": 0.8, "smoothFactor": 1.0, "stroke": true, "weight": 4}
+            ).addTo(map_53d49280d449f896ca5a9595fbbcb88d);
+        
+    
+            var poly_line_8d52cee2bc816597e8a169ad83fb82f4 = L.polyline(
+                [[52.45520420814208, 13.514132241037077], [52.455075654051676, 13.514513655026684], [52.45475087043901, 13.515502946799968], [52.45471056034956, 13.515702895012183], [52.45462147297675, 13.516281223709132], [52.454467404577706, 13.517341998751645], [52.45442051764493, 13.517613866583195], [52.45426108083478, 13.518416503192066], [52.454064121412436, 13.519357653099359]],
+                {"bubblingMouseEvents": true, "color": "#3388ff", "dashArray": null, "dashOffset": null, "fill": false, "fillColor": "#3388ff", "fillOpacity": 0.2, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "noClip": false, "opacity": 0.8, "smoothFactor": 1.0, "stroke": true, "weight": 4}
+            ).addTo(map_53d49280d449f896ca5a9595fbbcb88d);
+        
+    
+            var poly_line_6386f32a84df6387bac1316d05106dd8 = L.polyline(
+                [[52.467384853644205, 13.309469338465735], [52.467405929667436, 13.308827294267209], [52.466822844341316, 13.30775748959385], [52.46669591505924, 13.30761392927738], [52.466470532433675, 13.30743360471594], [52.466192931858565, 13.307300877351185]],
+                {"bubblingMouseEvents": true, "color": "#3388ff", "dashArray": null, "dashOffset": null, "fill": false, "fillColor": "#3388ff", "fillOpacity": 0.2, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "noClip": false, "opacity": 0.8, "smoothFactor": 1.0, "stroke": true, "weight": 4}
+            ).addTo(map_53d49280d449f896ca5a9595fbbcb88d);
+        
+    
+            var poly_line_7fac2b5bdca2a4821ea659848c068aca = L.polyline(
+                [[52.52261765099896, 13.415232106982453], [52.52211702530996, 13.416362283111752], [52.52199628866913, 13.416600143375927], [52.521947798733926, 13.416686396039916], [52.52187354186588, 13.416870414305652], [52.52180855319736, 13.41708042337874], [52.521743603253334, 13.417293355389166], [52.521457836252395, 13.418290927367766], [52.52077697819017, 13.420479806413043], [52.52039072408616, 13.42175135492423], [52.52016667472911, 13.422406456132075]],
+                {"bubblingMouseEvents": true, "color": "#3388ff", "dashArray": null, "dashOffset": null, "fill": false, "fillColor": "#3388ff", "fillOpacity": 0.2, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "noClip": false, "opacity": 0.8, "smoothFactor": 1.0, "stroke": true, "weight": 4}
+            ).addTo(map_53d49280d449f896ca5a9595fbbcb88d);
+        
+    
+            var poly_line_cafad1c1ac915affd24df3dddaa386fb = L.polyline(
+                [[52.55763826167631, 13.361368127371172], [52.55768290786751, 13.3616513004404], [52.55773283445149, 13.361992918473174], [52.557764929013075, 13.362249331781053], [52.557818418721, 13.362676688151934], [52.55785450799857, 13.36305004889266], [52.55788864993276, 13.363454708114256], [52.55795071353002, 13.36418990938452], [52.558012116594796, 13.36494512461613], [52.55802931655994, 13.365156683278911], [52.55802612198379, 13.365381869360775]],
+                {"bubblingMouseEvents": true, "color": "#3388ff", "dashArray": null, "dashOffset": null, "fill": false, "fillColor": "#3388ff", "fillOpacity": 0.2, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "noClip": false, "opacity": 0.8, "smoothFactor": 1.0, "stroke": true, "weight": 4}
+            ).addTo(map_53d49280d449f896ca5a9595fbbcb88d);
+        
+    
+            var poly_line_fe4994ce2b332b46b705ca02fc76c09e = L.polyline(
+                [[52.55103513597755, 13.399572048249002], [52.54905540317751, 13.400355199966276], [52.54900892944033, 13.400361803667064], [52.54875089706713, 13.40039846858556], [52.5483651228234, 13.400545176437427], [52.54810663631916, 13.4006492062257], [52.54797916236221, 13.400722131059522], [52.547852376567334, 13.400757958914639], [52.54747547865933, 13.400901411075553], [52.547222393965455, 13.401011066920494], [52.54711200041501, 13.401069737201587], [52.5469852671709, 13.401109463571121], [52.54670025473472, 13.401231034893293], [52.546600917928814, 13.401280332659304]],
+                {"bubblingMouseEvents": true, "color": "#3388ff", "dashArray": null, "dashOffset": null, "fill": false, "fillColor": "#3388ff", "fillOpacity": 0.2, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "noClip": false, "opacity": 0.8, "smoothFactor": 1.0, "stroke": true, "weight": 4}
+            ).addTo(map_53d49280d449f896ca5a9595fbbcb88d);
+        
+    
+            var poly_line_3935f819e10135e819506a0407afd8be = L.polyline(
+                [[52.53124774067027, 13.412040703137631], [52.53162088798994, 13.412684481157056], [52.53223179964125, 13.41344847443113], [52.532391343173224, 13.413637767527371], [52.53254398838217, 13.413844864654763], [52.53295571364979, 13.41430203947974], [52.533688636506334, 13.41511824832308], [52.534639497107015, 13.416177284150027], [52.53536316484495, 13.416969505416324], [52.53546173943214, 13.417091771808705], [52.53584320939084, 13.417511082624976], [52.53660334214926, 13.418362505785769]],
+                {"bubblingMouseEvents": true, "color": "#3388ff", "dashArray": null, "dashOffset": null, "fill": false, "fillColor": "#3388ff", "fillOpacity": 0.2, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "noClip": false, "opacity": 0.8, "smoothFactor": 1.0, "stroke": true, "weight": 4}
+            ).addTo(map_53d49280d449f896ca5a9595fbbcb88d);
+        
+    
+            var poly_line_63add977f1bfc9c406a7501541e29436 = L.polyline(
+                [[52.54274826005968, 13.412273680546841], [52.54291431534133, 13.412284520223654], [52.5437204672486, 13.412364698286899], [52.54411544140712, 13.41244316643563], [52.54443135632412, 13.412537164427759], [52.545246908224456, 13.412764251098508], [52.546804260987656, 13.413169938257344], [52.5476982907422, 13.41341244922915]],
+                {"bubblingMouseEvents": true, "color": "#3388ff", "dashArray": null, "dashOffset": null, "fill": false, "fillColor": "#3388ff", "fillOpacity": 0.2, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "noClip": false, "opacity": 0.8, "smoothFactor": 1.0, "stroke": true, "weight": 4}
+            ).addTo(map_53d49280d449f896ca5a9595fbbcb88d);
+        
+    
+            var poly_line_ba09b508cdfa18be724a077adc1148cf = L.polyline(
+                [[52.492660088407376, 13.370935405328447], [52.492601616299744, 13.371224024406443], [52.4924748549354, 13.371865929563578], [52.49214743734364, 13.373485679083636], [52.491802146926275, 13.375234674367315], [52.49156817177569, 13.376386180198423], [52.49154627383881, 13.37674066587203], [52.491600875060634, 13.376949108873031], [52.491960774806024, 13.378084355878755], [52.492237421925374, 13.3789160031041], [52.492381593583616, 13.37936692850768], [52.49240921776049, 13.37949646932969], [52.49247153202743, 13.379701611567704], [52.49305455634862, 13.381476021159685], [52.49320900330202, 13.381940964529974], [52.49342326981194, 13.382605408770095], [52.49348042886899, 13.382740696527703], [52.49365878574004, 13.383388927194762], [52.49365899863344, 13.383535074623925]],
+                {"bubblingMouseEvents": true, "color": "#3388ff", "dashArray": null, "dashOffset": null, "fill": false, "fillColor": "#3388ff", "fillOpacity": 0.2, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "noClip": false, "opacity": 0.8, "smoothFactor": 1.0, "stroke": true, "weight": 4}
+            ).addTo(map_53d49280d449f896ca5a9595fbbcb88d);
+        
+    
+            var poly_line_8131117468f781f37f81b51fa862bb40 = L.polyline(
+                [[52.50094400137092, 13.444548315145841], [52.50104459714434, 13.444716389795245], [52.50111991536397, 13.444795450394812], [52.50115165763892, 13.444852942613732], [52.502267079523044, 13.446295996832907], [52.50232947983728, 13.446366360125976], [52.50239068881448, 13.446408056696875], [52.502547604016165, 13.446537012577094], [52.502711526596464, 13.446771567618198]],
+                {"bubblingMouseEvents": true, "color": "#3388ff", "dashArray": null, "dashOffset": null, "fill": false, "fillColor": "#3388ff", "fillOpacity": 0.2, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "noClip": false, "opacity": 0.8, "smoothFactor": 1.0, "stroke": true, "weight": 4}
+            ).addTo(map_53d49280d449f896ca5a9595fbbcb88d);
+        
+    
+            var poly_line_08af6558aacf148264520b659f95e64b = L.polyline(
+                [[52.49261853236813, 13.558506701806461], [52.49101584712863, 13.558377856885311], [52.490418233361815, 13.558335047887613], [52.48995544025253, 13.55830783075982], [52.489894524493, 13.558305411013865], [52.48950558883785, 13.55828746993554], [52.48889865318128, 13.55826055598858], [52.488460691217455, 13.558239807077415], [52.48767550672917, 13.558188203534648]],
+                {"bubblingMouseEvents": true, "color": "#3388ff", "dashArray": null, "dashOffset": null, "fill": false, "fillColor": "#3388ff", "fillOpacity": 0.2, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "noClip": false, "opacity": 0.8, "smoothFactor": 1.0, "stroke": true, "weight": 4}
+            ).addTo(map_53d49280d449f896ca5a9595fbbcb88d);
+        
+    
+            var poly_line_0f6117a6195d6f4e11fe67a033470d97 = L.polyline(
+                [[52.49595411059411, 13.467435541042743], [52.496010193337824, 13.467475216730874], [52.49604572732381, 13.467516040521517], [52.49737438749588, 13.468659008027291], [52.497418134748614, 13.468703372316032], [52.49748520826105, 13.46874692616108], [52.49854817334585, 13.469646821708825], [52.4987006986223, 13.469637698398428], [52.498913458763866, 13.469372217369719], [52.49900731067235, 13.46927381660054], [52.49905314578614, 13.469235788588712], [52.49908563357585, 13.469216442093018], [52.499116373843876, 13.46920525166137], [52.49914354059314, 13.469204307908534], [52.499180834846044, 13.469200585921943], [52.499185762767354, 13.469200095037907], [52.49923757706935, 13.469233375625564], [52.49927079958087, 13.4692637958387], [52.49929999865701, 13.469314234202526], [52.4993104203783, 13.46935539233664], [52.499329089611635, 13.469386617271173], [52.49938599412852, 13.469481787355443], [52.49940764909272, 13.469518004621236], [52.499468690919066, 13.46960495358015], [52.49952040760095, 13.469639593621249], [52.499730390770104, 13.469732503846174], [52.49987946946662, 13.469799267027389], [52.49993126459905, 13.46983997764027], [52.49995442873023, 13.469860251111085], [52.500056864837035, 13.469924110288783], [52.50028309022699, 13.470000836461594], [52.50031744716971, 13.47001220457574], [52.500362441250005, 13.470047618376654], [52.50038018375535, 13.470085551900047], [52.5003888337061, 13.470124325631176], [52.5003871264602, 13.470234894877926], [52.50035186985235, 13.470540664148183], [52.50023217143325, 13.470795508149136], [52.50019416844299, 13.47090251598449], [52.50017475315393, 13.470960319912066], [52.500154820280464, 13.471034080968762], [52.5001439830203, 13.471081152036064], [52.500131201283665, 13.471184395276856], [52.500133101970974, 13.471230386422084], [52.50014595336851, 13.47126897608779], [52.50024848941747, 13.471472014675669], [52.50031444537632, 13.471697760477673], [52.50043847940207, 13.471830864566739], [52.500468123782255, 13.471897836814993], [52.500480370337016, 13.471989230878318], [52.50049913505151, 13.472060693939888], [52.50055440034877, 13.472149407540563], [52.50059591729476, 13.472232750613271], [52.50063271618453, 13.472311466319836], [52.50066130607881, 13.472406952740908], [52.50068532950346, 13.472517213992269], [52.50072403472645, 13.472769733228816], [52.50073303886147, 13.472868334278813], [52.50072506494175, 13.47294170009351], [52.500704137263426, 13.473026671939047], [52.50064993052828, 13.473158000023584], [52.50059840632454, 13.473388459998535], [52.5005283871652, 13.473702341897095], [52.500483600290536, 13.473879519123603], [52.500426999748576, 13.473975338588279], [52.500365045555945, 13.474035371880976], [52.500303219045676, 13.47410851412472], [52.50024383830929, 13.474253345961383], [52.500243494208675, 13.474463791582982], [52.49871912690537, 13.477844374636568], [52.4982014866426, 13.47900396956707], [52.498100382772805, 13.479215193993845], [52.498042701830165, 13.479335923700583], [52.49805647166065, 13.479364517044434], [52.49837533098768, 13.47976203727512], [52.49844953411455, 13.479832123553038], [52.498903551454845, 13.480384876787422], [52.499098740826376, 13.480586641119144]],
+                {"bubblingMouseEvents": true, "color": "#3388ff", "dashArray": null, "dashOffset": null, "fill": false, "fillColor": "#3388ff", "fillOpacity": 0.2, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "noClip": false, "opacity": 0.8, "smoothFactor": 1.0, "stroke": true, "weight": 4}
+            ).addTo(map_53d49280d449f896ca5a9595fbbcb88d);
+        
+    
+            var poly_line_0035f917f344f61e3ed01c701034c955 = L.polyline(
+                [[52.49343221397987, 13.428219382352962], [52.49335094709456, 13.428396725231762], [52.49301573520932, 13.429441697060954], [52.49302979603055, 13.429543098297874], [52.49295153264234, 13.429794150571958], [52.49288245882255, 13.42985935924271], [52.49263352809464, 13.430633114463737], [52.4923582278537, 13.431514915093134], [52.492364811876634, 13.43163471871212], [52.49227557308674, 13.431893978977541], [52.49222925801979, 13.431917451760608], [52.4919190761663, 13.432888780534958], [52.49188251348049, 13.432973088458192], [52.49169834240274, 13.43355677903136], [52.49171621201385, 13.433665315683855], [52.49161872453349, 13.433974325860875], [52.49155927400186, 13.434011903194381], [52.4911844821198, 13.435185274000816]],
+                {"bubblingMouseEvents": true, "color": "#3388ff", "dashArray": null, "dashOffset": null, "fill": false, "fillColor": "#3388ff", "fillOpacity": 0.2, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "noClip": false, "opacity": 0.8, "smoothFactor": 1.0, "stroke": true, "weight": 4}
+            ).addTo(map_53d49280d449f896ca5a9595fbbcb88d);
+        
+    
+            var poly_line_bc649f5d8fbfa3d33b579c6a670843ef = L.polyline(
+                [[52.488268362984506, 13.364085840941758], [52.48827760751948, 13.364825988881188], [52.48827271529284, 13.365693070960244], [52.4882737043953, 13.367315162679185], [52.48827233360945, 13.368092249398176], [52.488271883183884, 13.368346962026203], [52.48826139619109, 13.368556814114722], [52.488199613263006, 13.369079349850377], [52.48802708198334, 13.370560192908368]],
+                {"bubblingMouseEvents": true, "color": "#3388ff", "dashArray": null, "dashOffset": null, "fill": false, "fillColor": "#3388ff", "fillOpacity": 0.2, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "noClip": false, "opacity": 0.8, "smoothFactor": 1.0, "stroke": true, "weight": 4}
+            ).addTo(map_53d49280d449f896ca5a9595fbbcb88d);
+        
+    
+            var poly_line_dd5381fe85479ef95fb91e3288ee5194 = L.polyline(
+                [[52.43901104684002, 13.387681690429059], [52.43879323531079, 13.387728348353756], [52.43829824049895, 13.387863019934214], [52.43813807099002, 13.387906244601565], [52.4379425441577, 13.38796009275059], [52.437759619760385, 13.388022238597612], [52.43744742906452, 13.388156247800081], [52.437266685601145, 13.38824750617328], [52.43703838943717, 13.388384289419864], [52.43648331804282, 13.388706176314937], [52.43613980350125, 13.388905376605027], [52.4349337038999, 13.389611259094844], [52.43435671713417, 13.389953405789148]],
+                {"bubblingMouseEvents": true, "color": "#3388ff", "dashArray": null, "dashOffset": null, "fill": false, "fillColor": "#3388ff", "fillOpacity": 0.2, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "noClip": false, "opacity": 0.8, "smoothFactor": 1.0, "stroke": true, "weight": 4}
+            ).addTo(map_53d49280d449f896ca5a9595fbbcb88d);
+        
+    
+            var circle_marker_eb0be1fd71b9a3b1f7647e674a107700 = L.circleMarker(
+                [52.549071, 13.4003668365479],
+                {"bubblingMouseEvents": true, "color": "red", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "red", "fillOpacity": 1, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 6, "stroke": true, "weight": 3}
+            ).addTo(map_53d49280d449f896ca5a9595fbbcb88d);
+        
+    
+        var popup_1559527b4b5d6600ac58505d8acdf2fe = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_c638fd5fc3f2cf3ca1ca03ad262d6fb9 = $(`<div id="html_c638fd5fc3f2cf3ca1ca03ad262d6fb9" style="width: 100.0%; height: 100.0%;"><b>Station ID:</b> 12-PA-SCH<br><b>Matched Strava Segment:</b> streetsegment_3169<br><b>Distance:</b> 1.93 m</div>`)[0];
+                popup_1559527b4b5d6600ac58505d8acdf2fe.setContent(html_c638fd5fc3f2cf3ca1ca03ad262d6fb9);
+            
+        
+
+        circle_marker_eb0be1fd71b9a3b1f7647e674a107700.bindPopup(popup_1559527b4b5d6600ac58505d8acdf2fe)
+        ;
+
+        
+    
+    
+            var circle_marker_5cdcd3f4b2655771bd333e17d0e78c4e = L.circleMarker(
+                [52.513932159398976, 13.41783460946187],
+                {"bubblingMouseEvents": true, "color": "red", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "red", "fillOpacity": 1, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 6, "stroke": true, "weight": 3}
+            ).addTo(map_53d49280d449f896ca5a9595fbbcb88d);
+        
+    
+        var popup_4a618cfc85f28d26ea021e664a3ac3ff = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_df50c36dedd225c9c2e54d26a801cd7f = $(`<div id="html_df50c36dedd225c9c2e54d26a801cd7f" style="width: 100.0%; height: 100.0%;"><b>Station ID:</b> 02-MI-JAN-N<br><b>Matched Strava Segment:</b> streetsegment_2258<br><b>Distance:</b> 12.82 m</div>`)[0];
+                popup_4a618cfc85f28d26ea021e664a3ac3ff.setContent(html_df50c36dedd225c9c2e54d26a801cd7f);
+            
+        
+
+        circle_marker_5cdcd3f4b2655771bd333e17d0e78c4e.bindPopup(popup_4a618cfc85f28d26ea021e664a3ac3ff)
+        ;
+
+        
+    
+    
+            var circle_marker_57d4cd8a39725c43afe97276758772e1 = L.circleMarker(
+                [52.5139429938464, 13.417611074205],
+                {"bubblingMouseEvents": true, "color": "red", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "red", "fillOpacity": 1, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 6, "stroke": true, "weight": 3}
+            ).addTo(map_53d49280d449f896ca5a9595fbbcb88d);
+        
+    
+        var popup_42fc994b02916846167e1d38c1c34a35 = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_ae5e17307d5978088828aa957c31eeae = $(`<div id="html_ae5e17307d5978088828aa957c31eeae" style="width: 100.0%; height: 100.0%;"><b>Station ID:</b> 02-MI-JAN-S<br><b>Matched Strava Segment:</b> streetsegment_2258<br><b>Distance:</b> 12.10 m</div>`)[0];
+                popup_42fc994b02916846167e1d38c1c34a35.setContent(html_ae5e17307d5978088828aa957c31eeae);
+            
+        
+
+        circle_marker_57d4cd8a39725c43afe97276758772e1.bindPopup(popup_42fc994b02916846167e1d38c1c34a35)
+        ;
+
+        
+    
+    
+            var circle_marker_fb281a5fd63a8cb9e129e98e4c38ad9d = L.circleMarker(
+                [52.488135580706334, 13.33311990737359],
+                {"bubblingMouseEvents": true, "color": "red", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "red", "fillOpacity": 1, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 6, "stroke": true, "weight": 3}
+            ).addTo(map_53d49280d449f896ca5a9595fbbcb88d);
+        
+    
+        var popup_e8715e63b2c35757f5b0d14fb11ecd4e = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_10a609ee005859af407680552de1ee6e = $(`<div id="html_10a609ee005859af407680552de1ee6e" style="width: 100.0%; height: 100.0%;"><b>Station ID:</b> 13-CW-PRI<br><b>Matched Strava Segment:</b> streetsegment_1913<br><b>Distance:</b> 3.11 m</div>`)[0];
+                popup_e8715e63b2c35757f5b0d14fb11ecd4e.setContent(html_10a609ee005859af407680552de1ee6e);
+            
+        
+
+        circle_marker_fb281a5fd63a8cb9e129e98e4c38ad9d.bindPopup(popup_e8715e63b2c35757f5b0d14fb11ecd4e)
+        ;
+
+        
+    
+    
+            var circle_marker_8b176f060af846c5b165cbf08f6df366 = L.circleMarker(
+                [52.4919379605113, 13.373472267973566],
+                {"bubblingMouseEvents": true, "color": "red", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "red", "fillOpacity": 1, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 6, "stroke": true, "weight": 3}
+            ).addTo(map_53d49280d449f896ca5a9595fbbcb88d);
+        
+    
+        var popup_ef2fa74cd20bbbcd2873a4dfe5774558 = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_c5de53e2c89e7fe7065f6b802cb602f8 = $(`<div id="html_c5de53e2c89e7fe7065f6b802cb602f8" style="width: 100.0%; height: 100.0%;"><b>Station ID:</b> 18-TS-YOR-O<br><b>Matched Strava Segment:</b> streetsegment_3287<br><b>Distance:</b> 36.89 m</div>`)[0];
+                popup_ef2fa74cd20bbbcd2873a4dfe5774558.setContent(html_c5de53e2c89e7fe7065f6b802cb602f8);
+            
+        
+
+        circle_marker_8b176f060af846c5b165cbf08f6df366.bindPopup(popup_ef2fa74cd20bbbcd2873a4dfe5774558)
+        ;
+
+        
+    
+    
+            var circle_marker_20a0d86ac4aa2cb71195e800fd47288a = L.circleMarker(
+                [52.492279999999994, 13.37321],
+                {"bubblingMouseEvents": true, "color": "red", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "red", "fillOpacity": 1, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 6, "stroke": true, "weight": 3}
+            ).addTo(map_53d49280d449f896ca5a9595fbbcb88d);
+        
+    
+        var popup_9436f9fb4db9362afe68bce473c5edff = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_a05103c42cc7c18423185b1eeba5a0fe = $(`<div id="html_a05103c42cc7c18423185b1eeba5a0fe" style="width: 100.0%; height: 100.0%;"><b>Station ID:</b> 18-TS-YOR-W<br><b>Matched Strava Segment:</b> streetsegment_3287<br><b>Distance:</b> 13.33 m</div>`)[0];
+                popup_9436f9fb4db9362afe68bce473c5edff.setContent(html_a05103c42cc7c18423185b1eeba5a0fe);
+            
+        
+
+        circle_marker_20a0d86ac4aa2cb71195e800fd47288a.bindPopup(popup_9436f9fb4db9362afe68bce473c5edff)
+        ;
+
+        
+    
+    
+            var circle_marker_b9219e8dad845a233b4f742bc7bd977e = L.circleMarker(
+                [52.488117, 13.369785],
+                {"bubblingMouseEvents": true, "color": "red", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "red", "fillOpacity": 1, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 6, "stroke": true, "weight": 3}
+            ).addTo(map_53d49280d449f896ca5a9595fbbcb88d);
+        
+    
+        var popup_7065c8fe0b7fba699f91975f5400c59f = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_59c7323423d3887a4b12d82f65a7e866 = $(`<div id="html_59c7323423d3887a4b12d82f65a7e866" style="width: 100.0%; height: 100.0%;"><b>Station ID:</b> 19-TS-MON<br><b>Matched Strava Segment:</b> streetsegment_4631<br><b>Distance:</b> 0.07 m</div>`)[0];
+                popup_7065c8fe0b7fba699f91975f5400c59f.setContent(html_59c7323423d3887a4b12d82f65a7e866);
+            
+        
+
+        circle_marker_b9219e8dad845a233b4f742bc7bd977e.bindPopup(popup_7065c8fe0b7fba699f91975f5400c59f)
+        ;
+
+        
+    
+    
+            var circle_marker_9eedbf50168e6dbef516c760762a9301 = L.circleMarker(
+                [52.558189999999996, 13.364943499999999],
+                {"bubblingMouseEvents": true, "color": "red", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "red", "fillOpacity": 1, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 6, "stroke": true, "weight": 3}
+            ).addTo(map_53d49280d449f896ca5a9595fbbcb88d);
+        
+    
+        var popup_bad2f357e72377ed8f709bc275c10391 = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_7455a9b680ecc02ffbf86ea36d75e9ae = $(`<div id="html_7455a9b680ecc02ffbf86ea36d75e9ae" style="width: 100.0%; height: 100.0%;"><b>Station ID:</b> 27-RE-MAR<br><b>Matched Strava Segment:</b> streetsegment_2630<br><b>Distance:</b> 32.31 m</div>`)[0];
+                popup_bad2f357e72377ed8f709bc275c10391.setContent(html_7455a9b680ecc02ffbf86ea36d75e9ae);
+            
+        
+
+        circle_marker_9eedbf50168e6dbef516c760762a9301.bindPopup(popup_bad2f357e72377ed8f709bc275c10391)
+        ;
+
+        
+    
+    
+            var circle_marker_a429b1a50f2366ed7b3c3fa6f04f80ee = L.circleMarker(
+                [52.527176896192806, 13.372015887260499],
+                {"bubblingMouseEvents": true, "color": "red", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "red", "fillOpacity": 1, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 6, "stroke": true, "weight": 3}
+            ).addTo(map_53d49280d449f896ca5a9595fbbcb88d);
+        
+    
+        var popup_a46c58274bcbf0c86bead864703f0845 = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_d7e2a9cd4842c3c1cbee2f724e4db3f4 = $(`<div id="html_d7e2a9cd4842c3c1cbee2f724e4db3f4" style="width: 100.0%; height: 100.0%;"><b>Station ID:</b> 03-MI-SAN-O<br><b>Matched Strava Segment:</b> streetsegment_2228<br><b>Distance:</b> 15.80 m</div>`)[0];
+                popup_a46c58274bcbf0c86bead864703f0845.setContent(html_d7e2a9cd4842c3c1cbee2f724e4db3f4);
+            
+        
+
+        circle_marker_a429b1a50f2366ed7b3c3fa6f04f80ee.bindPopup(popup_a46c58274bcbf0c86bead864703f0845)
+        ;
+
+        
+    
+    
+            var circle_marker_d21ee3755101a8d98b731cbb87bd038f = L.circleMarker(
+                [52.52768601979379, 13.3731048641205],
+                {"bubblingMouseEvents": true, "color": "red", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "red", "fillOpacity": 1, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 6, "stroke": true, "weight": 3}
+            ).addTo(map_53d49280d449f896ca5a9595fbbcb88d);
+        
+    
+        var popup_046703452960d4f0fe7190a788979ba9 = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_e7169b21681f0fc4c3e6396ad8c97486 = $(`<div id="html_e7169b21681f0fc4c3e6396ad8c97486" style="width: 100.0%; height: 100.0%;"><b>Station ID:</b> 03-MI-SAN-W<br><b>Matched Strava Segment:</b> streetsegment_2228<br><b>Distance:</b> 13.14 m</div>`)[0];
+                popup_046703452960d4f0fe7190a788979ba9.setContent(html_e7169b21681f0fc4c3e6396ad8c97486);
+            
+        
+
+        circle_marker_d21ee3755101a8d98b731cbb87bd038f.bindPopup(popup_046703452960d4f0fe7190a788979ba9)
+        ;
+
+        
+    
+    
+            var circle_marker_b45f055961338b0cc711b91c9eb4a4fb = L.circleMarker(
+                [52.50119886795759, 13.445060485362998],
+                {"bubblingMouseEvents": true, "color": "red", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "red", "fillOpacity": 1, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 6, "stroke": true, "weight": 3}
+            ).addTo(map_53d49280d449f896ca5a9595fbbcb88d);
+        
+    
+        var popup_7f54420bba3d4c35609d701b67c5af62 = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_995e330ec2eb1fa9fa5b65bfa3ed23fb = $(`<div id="html_995e330ec2eb1fa9fa5b65bfa3ed23fb" style="width: 100.0%; height: 100.0%;"><b>Station ID:</b> 05-FK-OBB-O<br><b>Matched Strava Segment:</b> streetsegment_3343<br><b>Distance:</b> 12.81 m</div>`)[0];
+                popup_7f54420bba3d4c35609d701b67c5af62.setContent(html_995e330ec2eb1fa9fa5b65bfa3ed23fb);
+            
+        
+
+        circle_marker_b45f055961338b0cc711b91c9eb4a4fb.bindPopup(popup_7f54420bba3d4c35609d701b67c5af62)
+        ;
+
+        
+    
+    
+            var circle_marker_5bdbea0b0577d5f225dd25677554de31 = L.circleMarker(
+                [52.501275608591385, 13.444867366313998],
+                {"bubblingMouseEvents": true, "color": "red", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "red", "fillOpacity": 1, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 6, "stroke": true, "weight": 3}
+            ).addTo(map_53d49280d449f896ca5a9595fbbcb88d);
+        
+    
+        var popup_2190da0b9c52fbd11d6b68c1e49be408 = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_7189a4625dfbd0cb39f0675b9c147777 = $(`<div id="html_7189a4625dfbd0cb39f0675b9c147777" style="width: 100.0%; height: 100.0%;"><b>Station ID:</b> 05-FK-OBB-W<br><b>Matched Strava Segment:</b> streetsegment_3343<br><b>Distance:</b> 12.76 m</div>`)[0];
+                popup_2190da0b9c52fbd11d6b68c1e49be408.setContent(html_7189a4625dfbd0cb39f0675b9c147777);
+            
+        
+
+        circle_marker_5bdbea0b0577d5f225dd25677554de31.bindPopup(popup_2190da0b9c52fbd11d6b68c1e49be408)
+        ;
+
+        
+    
+    
+            var circle_marker_f8a818ef0cc4990af0fed2bf74e26fb3 = L.circleMarker(
+                [52.500323402386094, 13.4743022918701],
+                {"bubblingMouseEvents": true, "color": "red", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "red", "fillOpacity": 1, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 6, "stroke": true, "weight": 3}
+            ).addTo(map_53d49280d449f896ca5a9595fbbcb88d);
+        
+    
+        var popup_0cda85788a5255b7f1d829e6e9ec9541 = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_7fe2f89ec11d16ddd8060e68269513f8 = $(`<div id="html_7fe2f89ec11d16ddd8060e68269513f8" style="width: 100.0%; height: 100.0%;"><b>Station ID:</b> 26-LI-PUP<br><b>Matched Strava Segment:</b> streetsegment_3588<br><b>Distance:</b> 14.56 m</div>`)[0];
+                popup_0cda85788a5255b7f1d829e6e9ec9541.setContent(html_7fe2f89ec11d16ddd8060e68269513f8);
+            
+        
+
+        circle_marker_f8a818ef0cc4990af0fed2bf74e26fb3.bindPopup(popup_0cda85788a5255b7f1d829e6e9ec9541)
+        ;
+
+        
+    
+    
+            var circle_marker_7e875a71739a743ea85bd031bfcd4f63 = L.circleMarker(
+                [52.49253399999999, 13.558493],
+                {"bubblingMouseEvents": true, "color": "red", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "red", "fillOpacity": 1, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 6, "stroke": true, "weight": 3}
+            ).addTo(map_53d49280d449f896ca5a9595fbbcb88d);
+        
+    
+        var popup_edc03066aaf83105b123e3951aea8758 = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_567f97678a6054a40dcc575d90f9beca = $(`<div id="html_567f97678a6054a40dcc575d90f9beca" style="width: 100.0%; height: 100.0%;"><b>Station ID:</b> 24-MH-ALB<br><b>Matched Strava Segment:</b> streetsegment_3572<br><b>Distance:</b> 0.77 m</div>`)[0];
+                popup_edc03066aaf83105b123e3951aea8758.setContent(html_567f97678a6054a40dcc575d90f9beca);
+            
+        
+
+        circle_marker_7e875a71739a743ea85bd031bfcd4f63.bindPopup(popup_edc03066aaf83105b123e3951aea8758)
+        ;
+
+        
+    
+    
+            var circle_marker_0bac1f141b0cc598f57e3ec34180e3e5 = L.circleMarker(
+                [52.56692362, 13.41248937],
+                {"bubblingMouseEvents": true, "color": "red", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "red", "fillOpacity": 1, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 6, "stroke": true, "weight": 3}
+            ).addTo(map_53d49280d449f896ca5a9595fbbcb88d);
+        
+    
+        var popup_6887b2f1fad6675ea2e3aa5afd9147e7 = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_04ca2240f0df8ae0b45c997af42d540a = $(`<div id="html_04ca2240f0df8ae0b45c997af42d540a" style="width: 100.0%; height: 100.0%;"><b>Station ID:</b> 10-PA-BER-N<br><b>Matched Strava Segment:</b> streetsegment_478<br><b>Distance:</b> 25.61 m</div>`)[0];
+                popup_6887b2f1fad6675ea2e3aa5afd9147e7.setContent(html_04ca2240f0df8ae0b45c997af42d540a);
+            
+        
+
+        circle_marker_0bac1f141b0cc598f57e3ec34180e3e5.bindPopup(popup_6887b2f1fad6675ea2e3aa5afd9147e7)
+        ;
+
+        
+    
+    
+            var circle_marker_693645c3c25ac3cdcd84369121fd5eed = L.circleMarker(
+                [52.566812860000006, 13.412166489999999],
+                {"bubblingMouseEvents": true, "color": "red", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "red", "fillOpacity": 1, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 6, "stroke": true, "weight": 3}
+            ).addTo(map_53d49280d449f896ca5a9595fbbcb88d);
+        
+    
+        var popup_0a7cc6e2d60bc4a9ab94b293ddbdf12d = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_da4e68fb7b97084e8a3703b41626b85e = $(`<div id="html_da4e68fb7b97084e8a3703b41626b85e" style="width: 100.0%; height: 100.0%;"><b>Station ID:</b> 10-PA-BER-S<br><b>Matched Strava Segment:</b> streetsegment_478<br><b>Distance:</b> 12.17 m</div>`)[0];
+                popup_0a7cc6e2d60bc4a9ab94b293ddbdf12d.setContent(html_da4e68fb7b97084e8a3703b41626b85e);
+            
+        
+
+        circle_marker_693645c3c25ac3cdcd84369121fd5eed.bindPopup(popup_0a7cc6e2d60bc4a9ab94b293ddbdf12d)
+        ;
+
+        
+    
+    
+            var circle_marker_1cbe9c4878ed9f76877b0f64539a27e3 = L.circleMarker(
+                [52.533307694787844, 13.198487973304141],
+                {"bubblingMouseEvents": true, "color": "red", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "red", "fillOpacity": 1, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 6, "stroke": true, "weight": 3}
+            ).addTo(map_53d49280d449f896ca5a9595fbbcb88d);
+        
+    
+        var popup_f59b966a4f99a8bdde314cb501723205 = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_8a5f059d5114697f70dc2ecb194b31ac = $(`<div id="html_8a5f059d5114697f70dc2ecb194b31ac" style="width: 100.0%; height: 100.0%;"><b>Station ID:</b> 15-SP-KLO-S<br><b>Matched Strava Segment:</b> streetsegment_163<br><b>Distance:</b> 24.09 m</div>`)[0];
+                popup_f59b966a4f99a8bdde314cb501723205.setContent(html_8a5f059d5114697f70dc2ecb194b31ac);
+            
+        
+
+        circle_marker_1cbe9c4878ed9f76877b0f64539a27e3.bindPopup(popup_f59b966a4f99a8bdde314cb501723205)
+        ;
+
+        
+    
+    
+            var circle_marker_4a18117f7d4327917163788d2a2614db = L.circleMarker(
+                [52.53351245116568, 13.199052742313857],
+                {"bubblingMouseEvents": true, "color": "red", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "red", "fillOpacity": 1, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 6, "stroke": true, "weight": 3}
+            ).addTo(map_53d49280d449f896ca5a9595fbbcb88d);
+        
+    
+        var popup_ac1a9b50b3c4baf02e94cab056014e35 = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_7ebd0d042e7a0ca12020d93c0c92ec3b = $(`<div id="html_7ebd0d042e7a0ca12020d93c0c92ec3b" style="width: 100.0%; height: 100.0%;"><b>Station ID:</b> 15-SP-KLO-N<br><b>Matched Strava Segment:</b> streetsegment_163<br><b>Distance:</b> 20.28 m</div>`)[0];
+                popup_ac1a9b50b3c4baf02e94cab056014e35.setContent(html_7ebd0d042e7a0ca12020d93c0c92ec3b);
+            
+        
+
+        circle_marker_4a18117f7d4327917163788d2a2614db.bindPopup(popup_ac1a9b50b3c4baf02e94cab056014e35)
+        ;
+
+        
+    
+    
+            var circle_marker_f85293de53afa3d60ce2136931c67a75 = L.circleMarker(
+                [52.46676019265231, 13.3091647731717],
+                {"bubblingMouseEvents": true, "color": "red", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "red", "fillOpacity": 1, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 6, "stroke": true, "weight": 3}
+            ).addTo(map_53d49280d449f896ca5a9595fbbcb88d);
+        
+    
+        var popup_017890bfbea8405967bc7cb98a28aafe = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_d97fc05afea1274346acbcb9555f1d31 = $(`<div id="html_d97fc05afea1274346acbcb9555f1d31" style="width: 100.0%; height: 100.0%;"><b>Station ID:</b> 17-SK-BRE-O<br><b>Matched Strava Segment:</b> streetsegment_1201<br><b>Distance:</b> 8.23 m</div>`)[0];
+                popup_017890bfbea8405967bc7cb98a28aafe.setContent(html_d97fc05afea1274346acbcb9555f1d31);
+            
+        
+
+        circle_marker_f85293de53afa3d60ce2136931c67a75.bindPopup(popup_017890bfbea8405967bc7cb98a28aafe)
+        ;
+
+        
+    
+    
+            var circle_marker_3a1b7dd0a3920505114a26f93a17e959 = L.circleMarker(
+                [52.467215435872, 13.308360075375198],
+                {"bubblingMouseEvents": true, "color": "red", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "red", "fillOpacity": 1, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 6, "stroke": true, "weight": 3}
+            ).addTo(map_53d49280d449f896ca5a9595fbbcb88d);
+        
+    
+        var popup_437142b14e98610a329c9f56cc1544dd = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_5b259d02557f230e008fd16ab3e07136 = $(`<div id="html_5b259d02557f230e008fd16ab3e07136" style="width: 100.0%; height: 100.0%;"><b>Station ID:</b> 17-SK-BRE-W<br><b>Matched Strava Segment:</b> streetsegment_2586<br><b>Distance:</b> 8.74 m</div>`)[0];
+                popup_437142b14e98610a329c9f56cc1544dd.setContent(html_5b259d02557f230e008fd16ab3e07136);
+            
+        
+
+        circle_marker_3a1b7dd0a3920505114a26f93a17e959.bindPopup(popup_437142b14e98610a329c9f56cc1544dd)
+        ;
+
+        
+    
+    
+            var circle_marker_cb6f9c4b79326755a5648039b485d472 = L.circleMarker(
+                [52.438534999999995, 13.387952999999998],
+                {"bubblingMouseEvents": true, "color": "red", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "red", "fillOpacity": 1, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 6, "stroke": true, "weight": 3}
+            ).addTo(map_53d49280d449f896ca5a9595fbbcb88d);
+        
+    
+        var popup_5acc4122461abdda7260ff0fa1a05553 = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_8a4b1127b3a732f9ce619b91d6188219 = $(`<div id="html_8a4b1127b3a732f9ce619b91d6188219" style="width: 100.0%; height: 100.0%;"><b>Station ID:</b> 20-TS-MAR-N<br><b>Matched Strava Segment:</b> streetsegment_4706<br><b>Distance:</b> 16.96 m</div>`)[0];
+                popup_5acc4122461abdda7260ff0fa1a05553.setContent(html_8a4b1127b3a732f9ce619b91d6188219);
+            
+        
+
+        circle_marker_cb6f9c4b79326755a5648039b485d472.bindPopup(popup_5acc4122461abdda7260ff0fa1a05553)
+        ;
+
+        
+    
+    
+            var circle_marker_8e4a30d27f8d8c789dc639b005c76197 = L.circleMarker(
+                [52.43807245984249, 13.3878117799758],
+                {"bubblingMouseEvents": true, "color": "red", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "red", "fillOpacity": 1, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 6, "stroke": true, "weight": 3}
+            ).addTo(map_53d49280d449f896ca5a9595fbbcb88d);
+        
+    
+        var popup_b41811c767f38f9bff4853f7a2d196d5 = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_ca12f595e3fd2315654ed1eb455d9713 = $(`<div id="html_ca12f595e3fd2315654ed1eb455d9713" style="width: 100.0%; height: 100.0%;"><b>Station ID:</b> 20-TS-MAR-S<br><b>Matched Strava Segment:</b> streetsegment_4706<br><b>Distance:</b> 12.35 m</div>`)[0];
+                popup_b41811c767f38f9bff4853f7a2d196d5.setContent(html_ca12f595e3fd2315654ed1eb455d9713);
+            
+        
+
+        circle_marker_8e4a30d27f8d8c789dc639b005c76197.bindPopup(popup_b41811c767f38f9bff4853f7a2d196d5)
+        ;
+
+        
+    
+    
+            var circle_marker_2bf7c19032477c5c8e99f531c4dad85b = L.circleMarker(
+                [52.49299799999999, 13.429682],
+                {"bubblingMouseEvents": true, "color": "red", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "red", "fillOpacity": 1, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 6, "stroke": true, "weight": 3}
+            ).addTo(map_53d49280d449f896ca5a9595fbbcb88d);
+        
+    
+        var popup_06167fb62a8853eec530dd36c0de35aa = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_90bc04cb6b56e8ffb921e588414448b8 = $(`<div id="html_90bc04cb6b56e8ffb921e588414448b8" style="width: 100.0%; height: 100.0%;"><b>Station ID:</b> 21-NK-MAY<br><b>Matched Strava Segment:</b> streetsegment_3629<br><b>Distance:</b> 1.87 m</div>`)[0];
+                popup_06167fb62a8853eec530dd36c0de35aa.setContent(html_90bc04cb6b56e8ffb921e588414448b8);
+            
+        
+
+        circle_marker_2bf7c19032477c5c8e99f531c4dad85b.bindPopup(popup_06167fb62a8853eec530dd36c0de35aa)
+        ;
+
+        
+    
+    
+            var circle_marker_3fa8ae23dd454ed18fab1ba115d81483 = L.circleMarker(
+                [52.457269999999994, 13.518699999999999],
+                {"bubblingMouseEvents": true, "color": "red", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "red", "fillOpacity": 1, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 6, "stroke": true, "weight": 3}
+            ).addTo(map_53d49280d449f896ca5a9595fbbcb88d);
+        
+    
+        var popup_11ed6473eec0b9520b8b9e5133fe739e = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_66df0ee006b628b197228058d6c0d01a = $(`<div id="html_66df0ee006b628b197228058d6c0d01a" style="width: 100.0%; height: 100.0%;"><b>Station ID:</b> 23-TK-KAI<br><b>Matched Strava Segment:</b> streetsegment_2457<br><b>Distance:</b> 533.79 m</div>`)[0];
+                popup_11ed6473eec0b9520b8b9e5133fe739e.setContent(html_66df0ee006b628b197228058d6c0d01a);
+            
+        
+
+        circle_marker_3fa8ae23dd454ed18fab1ba115d81483.bindPopup(popup_11ed6473eec0b9520b8b9e5133fe739e)
+        ;
+
+        
+    
+    
+            var circle_marker_1ff506d81dfbc332d91a27c15e061359 = L.circleMarker(
+                [52.51358399999999, 13.474241999999998],
+                {"bubblingMouseEvents": true, "color": "red", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "red", "fillOpacity": 1, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 6, "stroke": true, "weight": 3}
+            ).addTo(map_53d49280d449f896ca5a9595fbbcb88d);
+        
+    
+        var popup_ca0c4d15e1147f5a0763e8bedf715b87 = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_7c3ad397011ff42453a75adb24dd1161 = $(`<div id="html_7c3ad397011ff42453a75adb24dd1161" style="width: 100.0%; height: 100.0%;"><b>Station ID:</b> 06-FK-FRA-O<br><b>Matched Strava Segment:</b> streetsegment_492<br><b>Distance:</b> 28.49 m</div>`)[0];
+                popup_ca0c4d15e1147f5a0763e8bedf715b87.setContent(html_7c3ad397011ff42453a75adb24dd1161);
+            
+        
+
+        circle_marker_1ff506d81dfbc332d91a27c15e061359.bindPopup(popup_ca0c4d15e1147f5a0763e8bedf715b87)
+        ;
+
+        
+    
+    
+            var circle_marker_2edae22d5b5612c49568c11995001388 = L.circleMarker(
+                [52.51378999999999, 13.474414],
+                {"bubblingMouseEvents": true, "color": "red", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "red", "fillOpacity": 1, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 6, "stroke": true, "weight": 3}
+            ).addTo(map_53d49280d449f896ca5a9595fbbcb88d);
+        
+    
+        var popup_b096d6bc34071458453421a62a64bda4 = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_6078171f9a90cd4a4731fa5977158702 = $(`<div id="html_6078171f9a90cd4a4731fa5977158702" style="width: 100.0%; height: 100.0%;"><b>Station ID:</b> 06-FK-FRA-W<br><b>Matched Strava Segment:</b> streetsegment_492<br><b>Distance:</b> 11.95 m</div>`)[0];
+                popup_b096d6bc34071458453421a62a64bda4.setContent(html_6078171f9a90cd4a4731fa5977158702);
+            
+        
+
+        circle_marker_2edae22d5b5612c49568c11995001388.bindPopup(popup_b096d6bc34071458453421a62a64bda4)
+        ;
+
+        
+    
+    
+            var circle_marker_15c96d612de5f470613d3e91fbb5ed4b = L.circleMarker(
+                [52.513132589695196, 13.326845169067298],
+                {"bubblingMouseEvents": true, "color": "red", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "red", "fillOpacity": 1, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 6, "stroke": true, "weight": 3}
+            ).addTo(map_53d49280d449f896ca5a9595fbbcb88d);
+        
+    
+        var popup_686c1139dac8a82d10097e51a4069f46 = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_9ef21a7b2de7d0afbe3c6a012ed4914b = $(`<div id="html_9ef21a7b2de7d0afbe3c6a012ed4914b" style="width: 100.0%; height: 100.0%;"><b>Station ID:</b> 14-CW-JU-W<br><b>Matched Strava Segment:</b> streetsegment_374<br><b>Distance:</b> 37.14 m</div>`)[0];
+                popup_686c1139dac8a82d10097e51a4069f46.setContent(html_9ef21a7b2de7d0afbe3c6a012ed4914b);
+            
+        
+
+        circle_marker_15c96d612de5f470613d3e91fbb5ed4b.bindPopup(popup_686c1139dac8a82d10097e51a4069f46)
+        ;
+
+        
+    
+    
+            var circle_marker_65b009ed27695123102a8a34a258c599 = L.circleMarker(
+                [52.512589999999996, 13.32663],
+                {"bubblingMouseEvents": true, "color": "red", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "red", "fillOpacity": 1, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 6, "stroke": true, "weight": 3}
+            ).addTo(map_53d49280d449f896ca5a9595fbbcb88d);
+        
+    
+        var popup_597ef0eca0e3fabd91457f54c9279fa9 = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_0994b6482e850b5898ec7a3ecd7d6618 = $(`<div id="html_0994b6482e850b5898ec7a3ecd7d6618" style="width: 100.0%; height: 100.0%;"><b>Station ID:</b> 14-CW-JU-O<br><b>Matched Strava Segment:</b> streetsegment_374<br><b>Distance:</b> 58.95 m</div>`)[0];
+                popup_597ef0eca0e3fabd91457f54c9279fa9.setContent(html_0994b6482e850b5898ec7a3ecd7d6618);
+            
+        
+
+        circle_marker_65b009ed27695123102a8a34a258c599.bindPopup(popup_597ef0eca0e3fabd91457f54c9279fa9)
+        ;
+
+        
+    
+    
+            var circle_marker_266d94767799b39ee9dc58d7b1fe7bec = L.circleMarker(
+                [52.5219071605016, 13.4175360202789],
+                {"bubblingMouseEvents": true, "color": "red", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "red", "fillOpacity": 1, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 6, "stroke": true, "weight": 3}
+            ).addTo(map_53d49280d449f896ca5a9595fbbcb88d);
+        
+    
+        var popup_bb7296763c45cfe27984c50ca6762214 = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_2b8769abebee32c94d3bd13f28e09e21 = $(`<div id="html_2b8769abebee32c94d3bd13f28e09e21" style="width: 100.0%; height: 100.0%;"><b>Station ID:</b> 01-MI-AL-W<br><b>Matched Strava Segment:</b> streetsegment_2611<br><b>Distance:</b> 38.58 m</div>`)[0];
+                popup_bb7296763c45cfe27984c50ca6762214.setContent(html_2b8769abebee32c94d3bd13f28e09e21);
+            
+        
+
+        circle_marker_266d94767799b39ee9dc58d7b1fe7bec.bindPopup(popup_bb7296763c45cfe27984c50ca6762214)
+        ;
+
+        
+    
+    
+            var circle_marker_11864df6db161b3e4672951fa7230c86 = L.circleMarker(
+                [52.53137962454281, 13.412354732375299],
+                {"bubblingMouseEvents": true, "color": "red", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "red", "fillOpacity": 1, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 6, "stroke": true, "weight": 3}
+            ).addTo(map_53d49280d449f896ca5a9595fbbcb88d);
+        
+    
+        var popup_a24e943c92bbc4b3c5a238b997ab9227 = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_97d5fc04db938cfd13bf55461670fb70 = $(`<div id="html_97d5fc04db938cfd13bf55461670fb70" style="width: 100.0%; height: 100.0%;"><b>Station ID:</b> 11-PA-SE-N<br><b>Matched Strava Segment:</b> streetsegment_3217<br><b>Distance:</b> 6.64 m</div>`)[0];
+                popup_a24e943c92bbc4b3c5a238b997ab9227.setContent(html_97d5fc04db938cfd13bf55461670fb70);
+            
+        
+
+        circle_marker_11864df6db161b3e4672951fa7230c86.bindPopup(popup_a24e943c92bbc4b3c5a238b997ab9227)
+        ;
+
+        
+    
+    
+            var circle_marker_2c182c011cda046a20d9a6b80c755edb = L.circleMarker(
+                [52.51393300000001, 13.417863999999998],
+                {"bubblingMouseEvents": true, "color": "red", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "red", "fillOpacity": 1, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 6, "stroke": true, "weight": 3}
+            ).addTo(map_53d49280d449f896ca5a9595fbbcb88d);
+        
+    
+        var popup_93eff91adc10851ece2644ffdac24bee = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_b18362a10e84f8aa87166449fc21c964 = $(`<div id="html_b18362a10e84f8aa87166449fc21c964" style="width: 100.0%; height: 100.0%;"><b>Station ID:</b> 04-MI-NO<br><b>Matched Strava Segment:</b> streetsegment_2258<br><b>Distance:</b> 16.04 m</div>`)[0];
+                popup_93eff91adc10851ece2644ffdac24bee.setContent(html_b18362a10e84f8aa87166449fc21c964);
+            
+        
+
+        circle_marker_2c182c011cda046a20d9a6b80c755edb.bindPopup(popup_93eff91adc10851ece2644ffdac24bee)
+        ;
+
+        
+    
+    
+            var circle_marker_4ab8a8fb143423b343f17274ac28dec9 = L.circleMarker(
+                [52.537901000000005, 13.247914],
+                {"bubblingMouseEvents": true, "color": "red", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "red", "fillOpacity": 1, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 6, "stroke": true, "weight": 3}
+            ).addTo(map_53d49280d449f896ca5a9595fbbcb88d);
+        
+    
+        var popup_c5d18a6f14e4303bc68302ef4fd0c528 = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_9d550890bb61ec9127a3cd20fd02c072 = $(`<div id="html_9d550890bb61ec9127a3cd20fd02c072" style="width: 100.0%; height: 100.0%;"><b>Station ID:</b> 16-SP-NO-O<br><b>Matched Strava Segment:</b> streetsegment_229<br><b>Distance:</b> 45.89 m</div>`)[0];
+                popup_c5d18a6f14e4303bc68302ef4fd0c528.setContent(html_9d550890bb61ec9127a3cd20fd02c072);
+            
+        
+
+        circle_marker_4ab8a8fb143423b343f17274ac28dec9.bindPopup(popup_c5d18a6f14e4303bc68302ef4fd0c528)
+        ;
+
+        
+    
+    
+            var circle_marker_de9d34d5fa7852d923c50e989bfd42d0 = L.circleMarker(
+                [52.53841399999999, 13.246996],
+                {"bubblingMouseEvents": true, "color": "red", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "red", "fillOpacity": 1, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 6, "stroke": true, "weight": 3}
+            ).addTo(map_53d49280d449f896ca5a9595fbbcb88d);
+        
+    
+        var popup_d9fdc47012bfed00262a5c3689d14f9b = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_88af116e29d8a09dc3770d4260f883df = $(`<div id="html_88af116e29d8a09dc3770d4260f883df" style="width: 100.0%; height: 100.0%;"><b>Station ID:</b> 16-SP-NO-W<br><b>Matched Strava Segment:</b> streetsegment_228<br><b>Distance:</b> 12.61 m</div>`)[0];
+                popup_d9fdc47012bfed00262a5c3689d14f9b.setContent(html_88af116e29d8a09dc3770d4260f883df);
+            
+        
+
+        circle_marker_de9d34d5fa7852d923c50e989bfd42d0.bindPopup(popup_d9fdc47012bfed00262a5c3689d14f9b)
+        ;
+
+        
+    
+    
+            var circle_marker_17b5f1bfc4e4d4a3ecc47746916b6331 = L.circleMarker(
+                [52.518941000000005, 13.426138999999997],
+                {"bubblingMouseEvents": true, "color": "red", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "red", "fillOpacity": 1, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 6, "stroke": true, "weight": 3}
+            ).addTo(map_53d49280d449f896ca5a9595fbbcb88d);
+        
+    
+        var popup_7d926087ad367fa9e98830663daac7a9 = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_0393f2d40d633d0a70027bfc017834e1 = $(`<div id="html_0393f2d40d633d0a70027bfc017834e1" style="width: 100.0%; height: 100.0%;"><b>Station ID:</b> 07-FK-ST<br><b>Matched Strava Segment:</b> streetsegment_2381<br><b>Distance:</b> 25.01 m</div>`)[0];
+                popup_7d926087ad367fa9e98830663daac7a9.setContent(html_0393f2d40d633d0a70027bfc017834e1);
+            
+        
+
+        circle_marker_17b5f1bfc4e4d4a3ecc47746916b6331.bindPopup(popup_7d926087ad367fa9e98830663daac7a9)
+        ;
+
+        
+    
+    
+            var circle_marker_b7003b55cf928a788c345af121dcc781 = L.circleMarker(
+                [52.543044, 13.412067],
+                {"bubblingMouseEvents": true, "color": "red", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "red", "fillOpacity": 1, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 6, "stroke": true, "weight": 3}
+            ).addTo(map_53d49280d449f896ca5a9595fbbcb88d);
+        
+    
+        var popup_1e1212b521fd8649c7550f41749724fd = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_7374bb5c21a27d6bf697de07942ae3f7 = $(`<div id="html_7374bb5c21a27d6bf697de07942ae3f7" style="width: 100.0%; height: 100.0%;"><b>Station ID:</b> 09-PA-SA-S<br><b>Matched Strava Segment:</b> streetsegment_3235<br><b>Distance:</b> 25.60 m</div>`)[0];
+                popup_1e1212b521fd8649c7550f41749724fd.setContent(html_7374bb5c21a27d6bf697de07942ae3f7);
+            
+        
+
+        circle_marker_b7003b55cf928a788c345af121dcc781.bindPopup(popup_1e1212b521fd8649c7550f41749724fd)
+        ;
+
+        
+    
+</script>
+</html>
