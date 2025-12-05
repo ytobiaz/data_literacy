@@ -127,28 +127,51 @@
 
 \begin{abstract}
 We plan to investigate route-level bicycle crash risk in Berlin by addressing a key limitation in current safety analyses: raw crash counts don't distinguish between 
-dangerous roads and simply busy roads. Our approach will combine police-recorded crash data from the German Unfallatlas with recent city-wide traffic volume estimates 
+dangerous roads and simply busy roads. Our approach will combine police-recorded crash data from the German \emph{Unfallatlas} with a city-wide dataset of measured bicycle volumes 
 to calculate a normalized risk metric at the street-segment level. We aim to estimate this risk conditional on contextual factors (e.g., time of day and weather) to 
 capture temporal variability. The core idea is to identify which segments have high crash rates per cyclist rather than just high absolute crash numbers. We will then 
 explore how to aggregate these segment-level risks into route-level scores that could inform safer cycling navigation. Building on this, we aim to score a user-specified 
 route and, where possible, recommend alternative routes with lower estimated risk while maintaining comparable convenience (e.g., distance or travel time).
 \end{abstract}
 
-% \section{Introduction}\label{sec:intro}
+\section{Introduction}\label{sec:intro}
+Cycling safety analyses often rely on raw crash counts, which can conflate danger with demand: streets that attract many cyclists accumulate more incidents even if per-rider risk is low~\citep{luecken2018}. 
+This obscures where infrastructure is intrinsically risky and limits both targeted interventions and everyday route choice, especially in dense networks like Berlin’s~\citep{Uijtdewilligen01092024}. 
+We address this by estimating bicycle crash risk per unit exposure on the street network and by propagating segment-level risk to route-level scores suitable for navigation.
 
-% Motivate the problem, situation or topic you decided to work on. Describe why it matters (is it of societal, economic, scientific value?). Outline the rest of the paper (use references, e.g.~to \Cref{sec:methods}: What kind of data you are working with, how you analyse it, and what kind of conclusion you reached. The point of the introduction is to make the reader want to read the rest of the paper.
+Our study combines police-recorded crashes from the German \emph{Unfallatlas} (Berlin subset)~\citep{Unfallatlas2025} with a city-wide dataset of measured bicycle volumes at the street-segment 
+level~\citep{kaiser_2025_15332147}. We compute a normalized segment-level risk metric and aim to estimate this risk conditional on contextual factors (e.g., time of day and weather) to capture 
+temporal variability. We then aggregate segment scores to evaluate arbitrary routes and recommend alternatives that reduce estimated risk while maintaining comparable convenience (distance or 
+travel time), aligning with emerging work on safety-aware routing~\citep{isprs-archives-XLIII-B4-2022-427-2022}.
 
-% \section{Data and Methods}\label{sec:methods}
+Our work makes the following contributions: (i) a reproducible pipeline for exposure-normalized, context-conditional risk at the segment scale using measured volumes rather than 
+inferred exposure; and (ii) a route-scoring and recommendation procedure that balances risk reduction against convenience. 
 
+The paper is organized as follows: we review related work in Section~\ref{sec:relatedw}, describe the data and methods in Section~\ref{sec:methods}, present results in Section~\ref{sec:results}, 
+and discuss and conclude in Section~\ref{sec:conclusion}.
+
+\section{Related Work}\label{sec:relatedw}
+To avoid conflating danger with demand, the literature normalizes crash risk by cyclist exposure~\citep{luecken2018}. City-scale studies therefore normalize by exposure and show that finer temporal 
+resolution improves inference while noting under-reporting in police records~\citep{Uijtdewilligen01092024}. To obtain exposure, some work extrapolates city-wide volumes from sparse counters 
+using learning-based models and multi-source features, showing that short campaigns improve accuracy at new locations~\citep{Kaiser_Klein_Kaack_2025}. More recent efforts release street-segment 
+datasets of measured bicycle volumes, enabling downstream safety analyses without building an exposure model~\citep{kaiser2025spatiotemporalgraphneuralnetwork}. At the network level, studies 
+define risk as crashes per exposure (often annualized), discuss link snapping and intersection allocation, and integrate risk into routing with convenience constraints~\citep{isprs-archives-XLIII-B4-2022-427-2022}. 
+In Berlin, case analyses highlight intersection concentration and caution that infrastructure comparisons require controlling for exposure~\citep{futuretransp1030037}. Building on 
+exposure-normalized analysis~\citep{Uijtdewilligen01092024}, measured volumes (contrasting extrapolation)~\citep{Kaiser_Klein_Kaack_2025, kaiser2025spatiotemporalgraphneuralnetwork}, and 
+route-level integration~\citep{isprs-archives-XLIII-B4-2022-427-2022}, we estimate context-conditional segment risk for Berlin and aggregate it to routes, consistent with local evidence on 
+exposure control~\citep{futuretransp1030037}.
+
+\section{Data and Methods}\label{sec:methods}
 % In this section, describe \emph{what you did}. Roughly speaking, explain what data you worked with, how or from where it was collected, it's structure and size. Explain your analysis, and any specific choices you made in it. Depending on the nature of your project, you may focus more or less on certain aspects. If you collected data yourself, explain the collection process in detail. If you downloaded data from the net, show an exploratory analysis that builds intuition for the data, and shows that you know the data well. If you are doing a custom analysis, explain how it works and why it is the right choice. If you are using a standard tool, it may still help to briefly outline it. Cite relevant works. You can use the \verb|\citep| and \verb|\citet| commands for this purpose \citep{mackay2003information}.
 
 % This is the template for a figure from the original ICML submission pack. In lecture 10 we will discuss plotting in detail.
 % Refer to this lecture on how to include figures in this text.
-% 
+
+% How to make a figure
 % \begin{figure}[ht]
 % \vskip 0.2in
 % \begin{center}
-% \centerline{\includegraphics[width=\columnwidth]{icml_numpapers}}
+% \centerline{\includegraphics[width=\columnwidth]{figures/teacher-student.pdf}}
 % \caption{Historical locations and number of accepted papers for International
 % Machine Learning Conferences (ICML 1993 -- ICML 2008) and International
 % Workshops on Machine Learning (ML 1988 -- ML 1992). At the time this figure was
@@ -159,26 +182,23 @@ route and, where possible, recommend alternative routes with lower estimated ris
 % \vskip -0.2in
 % \end{figure}
 
-% \section{Results}\label{sec:results}
-
+\section{Results}\label{sec:results}
 % In this section outline your results. At this point, you are just stating the outcome of your analysis. You can highlight important aspects (``we observe a significantly higher value of $x$ over $y$''), but leave interpretation and opinion to the next section. This section absoultely \emph{must} include at least two figures.
 
-% \section{Discussion \& Conclusion}\label{sec:conclusion}
-
+\section{Discussion \& Conclusion}\label{sec:conclusion}
 % Use this section to briefly summarize the entire text. Highlight limitations and problems, but also make clear statements where they are possible and supported by the analysis. 
 
-% \newpage
+\newpage
 
 % \section*{Contribution Statement}
 % Explain here, in one sentence per person, what each group member contributed. For example, you could write: Max Mustermann collected and prepared data. Gabi Musterfrau and John Doe performed the data analysis. Jane Doe produced visualizations. All authors will jointly wrote the text of the report. Note that you, as a group, a collectively responsible for the report. Your contributions should be roughly equal in amount and difficulty.
 
 % \section*{Notes} 
-
 % Your entire report has a \textbf{hard page limit of 4 pages} excluding references and the contribution statement. (I.e. any pages beyond page 4 must only contain the contribution statement and references). Appendices are \emph{not} possible. But you can put additional material, like interactive visualizations or videos, on a githunb repo (use \href{https://github.com/pnkraemer/tueplots}{links} in your pdf to refer to them). Each report has to contain \textbf{at least three plots or visualizations}, and \textbf{cite at least two references}. More details about how to prepare the report, inclucing how to produce plots, cite correctly, and how to ideally structure your github repo, will be discussed in the lecture, where a rubric for the evaluation will also be provided.
 
 
-% \bibliography{bibliography}
-% \bibliographystyle{icml2025}
+\bibliography{bibliography}
+\bibliographystyle{icml2025}
 
 \end{document}
 
