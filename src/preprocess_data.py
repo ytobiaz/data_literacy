@@ -1,7 +1,7 @@
 from pathlib import Path
 import pandas as pd
 
-def preprocess_accident_data():
+def preprocess_accident_data(save_to_parquet: bool = False):
     csv_dir = Path(Path(__file__).parent.parent / "data" / "csv")
     csv_files = sorted(csv_dir.glob("*.csv"))
 
@@ -36,10 +36,33 @@ def preprocess_accident_data():
     df_bike = df_all[df_all['IstRad'] == 1].copy()
     print(f"Filtered to bicycle accidents -> shape: {df_bike.shape}")
 
-    # only keep accidents in Berlin (column 'ULAND' == 11)
+    # only keep accidents in Berlin (column 'ULAND' == 11) and drop more irrelevant columns
     df_bike_berlin = df_bike[df_bike['ULAND'] == 11].copy()
+    df_bike_berlin = df_bike_berlin.drop(columns=['ULAND', 'UREGBEZ', 'UKREIS', 'UGEMEINDE', 'IstRad'])
+    df_bike_berlin = df_bike_berlin.reset_index(drop=True)
+
+    # assign english column names
+    df_bike_berlin.rename(columns={
+        "UJAHR": "year",
+        "UMONAT": "month",
+        "USTUNDE": "hour",
+        "UWOCHENTAG": "weekday",
+        "UKATEGORIE": "injury_severity",
+        "UART": "accident_kind",
+        "UTYP1": "accident_type",
+        "IstPKW": "car_involved",
+        "IstFuss": "pedestrian_involved",
+        "IstKrad": "motorcycle_involved",
+        "IstSonstige": "other_vehicle_involved",
+        "IstGkfz": "goods_vehicle_involved",
+        "IstStrassenzustand": "road_condition",
+        "ULICHTVERH": "light_condition"
+    }, inplace=True)
+    
     print(f"Filtered to bicycle accidents in Berlin -> shape: {df_bike_berlin.shape}")
     df_bike_berlin.head()
+    if save_to_parquet:
+        # save preprocessed data to parquet
+        output_fp = Path(Path(__file__).parent.parent / "data" / "preprocessed" / "bicycle_accidents_berlin.parquet")
+        df_bike_berlin.to_parquet(output_fp, index=False)   
     return df_bike_berlin
-
-

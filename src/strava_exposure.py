@@ -7,12 +7,42 @@ import pandas as pd
 
 from .utils import data_path
 
+columns_to_keep = ['counter_name',
+ 'date',
+ 'count',
+ 'year',
+ 'latitude',
+ 'longitude',
+ 'geometry',
+ 'socioeconomic_gender_distribution',
+ 'infrastructure_bicyclelane_type',
+ 'infrastructure_type_of_street',
+ 'infrastructure_number_of_street_lanes',
+ 'infrastructure_street_smoothness',
+ 'infrastructure_street_surface',
+ 'infrastructure_max_speed',
+ 'infrastructure_cyclability',
+ 'weather_temp_avg',
+ 'weather_temp_min',
+ 'weather_temp_max',
+ 'weather_precipitation',
+ 'weather_snowfall',
+ 'weather_wind_speed_avg',
+ 'weather_wind_speed_gust',
+ 'weather_pressure',
+ 'weather_sunshine_duration',
+ 'strava_total_trip_count',
+ 'strava_ride_count',
+ 'day_of_week',
+ 'month']
+
+
 
 def load_strava_berlin_data(parquet_path: str | Path | None = None) -> pd.DataFrame:
     parquet_path = (
         Path(parquet_path) if parquet_path is not None else data_path("strava", "berlin_data.parquet")
     )
-    return pd.read_parquet(parquet_path)
+    return pd.read_parquet(parquet_path, columns=columns_to_keep)
 
 
 def column_stability_summary(df: pd.DataFrame, *, group_col: str = "counter_name") -> pd.DataFrame:
