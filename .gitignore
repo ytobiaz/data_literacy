@@ -15,6 +15,9 @@
 # local data, never upload them since they are too large
 outputs/maps
 data/**
+src/__pycache__/**
+
+
 # Allow to push the merged outputs
 !data/merged/
 !data/merged/**
