@@ -84,6 +84,10 @@ def cluster_nodes_snap_grid(
     nodes["node_id"] = nodes.groupby(["x_rounded", "y_rounded"], sort=False).ngroup().astype("int64")
 
     node_points = nodes.dissolve(by="node_id", as_index=False)[["node_id", "geometry"]]
+
+    # dissolve over points typically produces MultiPoint -> collapse to a single Point per node
+    node_points["geometry"] = node_points.geometry.centroid
+
     segment_node_map = nodes[[counter_col, "node_id", "role"]].drop_duplicates()
 
     return NodeClustering(
@@ -148,11 +152,16 @@ def assign_accidents_to_nearest_crossing(
         rsuffix="node",
     )
 
-    acc_node = acc_node.dropna(subset=["node_id"]).copy()
-    acc_node["node_id"] = acc_node["node_id"].astype("int64")
+    # Keep ALL accidents (within your study area / segment corridor),
+    # and mark whether a crossing was found within max_distance_m.
+    acc_node["has_crossing"] = acc_node["node_id"].notna()
+
+    # Aggregate ONLY those accidents that actually got assigned to a crossing
+    assigned = acc_node.dropna(subset=["node_id"]).copy()
+    assigned["node_id"] = assigned["node_id"].astype("int64")
 
     acc_node_ym = (
-        acc_node.groupby(["node_id", "year", "month"], observed=True)
+        assigned.groupby(["node_id", "year", "month"], observed=True)
         .size()
         .reset_index(name="total_accidents")
     )
