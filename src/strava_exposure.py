@@ -22,19 +22,36 @@ columns_to_keep = ['counter_name',
  'infrastructure_street_surface',
  'infrastructure_max_speed',
  'infrastructure_cyclability',
- 'weather_temp_avg',
- 'weather_temp_min',
- 'weather_temp_max',
- 'weather_precipitation',
- 'weather_snowfall',
- 'weather_wind_speed_avg',
- 'weather_wind_speed_gust',
- 'weather_pressure',
- 'weather_sunshine_duration',
- 'strava_total_trip_count',
- 'strava_ride_count',
- 'day_of_week',
- 'month']
+ #'weather_temp_avg',
+ #'weather_temp_min',
+ #'weather_temp_max',
+ #'weather_precipitation',
+ #'weather_snowfall',
+ #'weather_wind_speed_avg',
+ #'weather_wind_speed_gust',
+ #'weather_pressure',
+ #'weather_sunshine_duration',
+ #'strava_total_trip_count',
+ #'strava_ride_count',
+ #'day_of_week',
+ #'month'
+ ]
+
+def load_and_aggregate_monthly_strava_counts_per_segment():
+    """Load Strava Berlin data and aggregate counts to monthly level per segment."""
+    parquet_path=data_path("strava", "berlin_data.parquet")
+    # only load necessary columns to reduce memory usage
+    df = pd.read_parquet(path=parquet_path, columns=['counter_name', 'date', 'count'])
+    df['date'] = pd.to_datetime(df['date'], errors='coerce')
+    df['year'] = df['date'].dt.year
+    df['month'] = df['date'].dt.month
+
+    agg_df = (
+        df.groupby(['counter_name', 'year', 'month'], as_index=False)
+        .agg({'count': 'sum'})
+    )
+
+    return agg_df
 
 
 

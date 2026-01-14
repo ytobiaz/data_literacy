@@ -66,3 +66,62 @@ def preprocess_accident_data(save_to_parquet: bool = False):
         output_fp = Path(Path(__file__).parent.parent / "data" / "preprocessed" / "bicycle_accidents_berlin.parquet")
         df_bike_berlin.to_parquet(output_fp, index=False)   
     return df_bike_berlin
+
+
+def one_hot_encode_columns(df: pd.DataFrame, columns: list[str]) -> pd.DataFrame:
+    """One-hot encode specified categorical columns in the dataframe.
+
+    Missing columns in `columns` will be skipped with a UserWarning. The input
+    list is deduplicated to avoid repeated entries.
+    """
+    # deduplicate while preserving order
+    seen = set()
+    columns_unique = [c for c in columns if not (c in seen or seen.add(c))]
+
+    present = [c for c in columns_unique if c in df.columns]
+    missing = [c for c in columns_unique if c not in df.columns]
+
+    if missing:
+        import warnings
+        warnings.warn(
+            f"One-hot encoding: these columns were not found and will be skipped: {missing}",
+            UserWarning,)
+
+    if not present:
+        # nothing to encode
+        return df.copy()
+
+    df_encoded = pd.get_dummies(df, columns=present, prefix=present, drop_first=True)
+    return df_encoded
+
+
+def aggregate_accidents_monthwise(
+    df,
+    segment_col,
+    year_col="year",
+    month_col="month"
+):
+    df = df.copy()
+
+    # total accident counter
+    df["total_accidents"] = 1
+
+    # detect one-hot encoded columns (bool or 0/1)
+    onehot_cols = [
+        c for c in df.columns
+        if c not in [segment_col, year_col, month_col]
+        and (
+            df[c].dtype == bool
+            or set(df[c].dropna().unique()).issubset({0, 1})
+        )
+    ]
+
+    agg_cols = ["total_accidents"] + onehot_cols
+
+    aggregated = (
+        df
+        .groupby([segment_col, year_col, month_col], as_index=False)[agg_cols]
+        .sum()
+    )
+
+    return aggregated
