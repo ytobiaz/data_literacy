@@ -127,16 +127,40 @@ def merge_exposure_and_accidents(
     accidents_agg_ym_rich: pd.DataFrame,
     *,
     merge_keys: Sequence[str] = ("counter_name", "year", "month"),
+    trip_col: str = "sum_strava_total_trip_count",
 ) -> pd.DataFrame:
+    """
+    Merge exposure and accidents at segment×year×month.
+
+    Uses an OUTER merge so we can explicitly see:
+      - accident months with missing exposure rows
+      - exposure months with zero accidents
+
+    Downstream, you can filter to exposure>0 for modeling risk.
+    """
+
+    merge_keys = list(merge_keys)
+
     merged = final_exposure_ym.merge(
         accidents_agg_ym_rich,
-        on=list(merge_keys),
-        how="left",
+        on=merge_keys,
+        how="outer",
         validate="one_to_one",
     )
 
+    # Track whether exposure row was missing (important for audits)
+    if trip_col in merged.columns:
+        merged["exposure_row_missing"] = merged[trip_col].isna()
+        merged[trip_col] = merged[trip_col].fillna(0)
+    else:
+        merged["exposure_row_missing"] = True  # conservative
+
+    # Fill accident columns with 0 where missing
     acc_cols = [c for c in accidents_agg_ym_rich.columns if c not in merge_keys]
-    merged[acc_cols] = merged[acc_cols].fillna(0)
+    for c in acc_cols:
+        if c in merged.columns:
+            merged[c] = merged[c].fillna(0)
+
     return merged
 
 

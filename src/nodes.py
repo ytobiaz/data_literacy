@@ -189,6 +189,10 @@ def build_node_exposure_panel_from_segments(
     crossing_ids = set(int(x) for x in crossing_ids)
 
     segment_node_map_cross = segment_node_map[segment_node_map["node_id"].isin(crossing_ids)].copy()
+
+    # Prevent double-counting when a segment maps to the same node more than once (e.g., start/end collapse)
+    segment_node_map_cross = segment_node_map_cross.drop_duplicates(subset=[counter_col, "node_id"])
+
     segment_exposure_nodes = segment_exposure_ym.merge(
         segment_node_map_cross[[counter_col, "node_id"]],
         on=counter_col,
@@ -209,21 +213,39 @@ def build_node_risk_panel(
     acc_node_ym: pd.DataFrame,
     crossings_gdf: GeoDataFrame,
 ) -> GeoDataFrame:
-    """Combine node exposure and node accidents into a node-level risk panel."""
+    """Combine node exposure and node accidents into a node-level risk panel.
+
+    IMPORTANT:
+    We must keep the union of node×year×month from exposure and accidents.
+    Otherwise accidents that occur in months without exposure rows disappear.
+    """
 
     node_panel_ym = node_exposure_ym.merge(
         acc_node_ym,
         on=["node_id", "year", "month"],
-        how="left",
+        how="outer",
     )
+
+    node_panel_ym["monthly_strava_trips"] = node_panel_ym["monthly_strava_trips"].fillna(0)
     node_panel_ym["total_accidents"] = node_panel_ym["total_accidents"].fillna(0)
 
+    # Fill missing metrics
+    if "monthly_strava_trips" in node_panel_ym.columns:
+        node_panel_ym["monthly_strava_trips"] = node_panel_ym["monthly_strava_trips"].fillna(0)
+    else:
+        # If exposure panel uses a different column name, fail loudly rather than silently miscompute
+        raise KeyError("Expected 'monthly_strava_trips' in node_exposure_ym")
+
+    node_panel_ym["total_accidents"] = node_panel_ym["total_accidents"].fillna(0)
+
+    # Add geometry
     node_panel_ym = node_panel_ym.merge(
         crossings_gdf[["node_id", "geometry"]],
         on="node_id",
         how="left",
     )
 
+    # Risk is undefined when trips are 0 -> use NaN denominator
     denom = node_panel_ym["monthly_strava_trips"].replace(0, np.nan)
     node_panel_ym["risk_accidents_per_trip"] = node_panel_ym["total_accidents"] / denom
     node_panel_ym["risk_accidents_per_10k_trips"] = node_panel_ym["risk_accidents_per_trip"] * 10_000
