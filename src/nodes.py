@@ -174,10 +174,11 @@ def build_node_exposure_panel_from_segments(
     segment_node_map: pd.DataFrame,
     crossing_ids: Iterable[int],
     *,
-    trip_col: str = "sum_strava_total_trip_count",
+    trip_col: str = "avg_strava_total_trip_count",
     counter_col: str = "counter_name",
 ) -> pd.DataFrame:
-    """Aggregate segment exposure to node×year×month by summing a trip_col."""
+    """Aggregate segment exposure to node×year×month by averaging incident segments' trip_col.
+    """
 
     for col in [counter_col, "year", "month", trip_col]:
         if col not in segment_exposure_ym.columns:
@@ -201,9 +202,11 @@ def build_node_exposure_panel_from_segments(
 
     node_exposure_ym = (
         segment_exposure_nodes.groupby(["node_id", "year", "month"], observed=True)
-        .agg(monthly_strava_trips=(trip_col, "sum"))
+        .agg(monthly_strava_trips=(trip_col, "mean"))
         .reset_index()
     )
+    
+    node_exposure_ym["monthly_strava_trips"] = node_exposure_ym["monthly_strava_trips"].round().astype("int64")
 
     return node_exposure_ym
 
