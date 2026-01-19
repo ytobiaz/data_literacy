@@ -160,13 +160,88 @@ def assign_accidents_to_nearest_crossing(
     assigned = acc_node.dropna(subset=["node_id"]).copy()
     assigned["node_id"] = assigned["node_id"].astype("int64")
 
-    acc_node_ym = (
-        assigned.groupby(["node_id", "year", "month"], observed=True)
-        .size()
-        .reset_index(name="total_accidents")
-    )
+    # Aggregate with rich factor distributions (like segment-level)
+    acc_node_ym = _aggregate_accidents_node_year_month_rich(assigned)
 
     return acc_node, acc_node_ym
+
+
+def _aggregate_accidents_node_year_month_rich(
+    assigned: pd.DataFrame,
+) -> pd.DataFrame:
+    """Aggregate node accidents to node×year×month with rich distributions (counts+shares).
+    
+    Similar to aggregate_accidents_segment_year_month_rich but for node level.
+    """
+    
+    acc = assigned.copy()
+    
+    # Ensure accident_id exists for counting
+    if "_accident_row_id" not in acc.columns:
+        id_candidates = ["accident_id", "accident_id_extended", "acc_id"]
+        id_col = next(
+            (
+                c
+                for c in id_candidates
+                if c in acc.columns and not acc[c].isna().all()
+            ),
+            None,
+        )
+        if id_col is None:
+            acc["_accident_row_id"] = np.arange(len(acc), dtype="int64")
+        else:
+            acc["_accident_row_id"] = acc[id_col]
+            if acc["_accident_row_id"].isna().any():
+                acc.loc[acc["_accident_row_id"].isna(), "_accident_row_id"] = (
+                    np.arange(len(acc), dtype="int64")[acc["_accident_row_id"].isna().to_numpy()]
+                )
+    
+    keys = ["node_id", "year", "month"]
+    
+    # Categorical columns (incident types/factors)
+    cat_cols = [
+        "injury_severity",
+        "accident_kind",
+        "accident_type",
+        "light_condition",
+        "road_condition",
+        "weekday_type",
+        "time_of_day",
+    ]
+    cat_cols = [c for c in cat_cols if c in acc.columns]
+    
+    # Base: total accidents count
+    acc_base = (
+        acc.groupby(keys, observed=True)
+        .agg(total_accidents=("_accident_row_id", "size"))
+        .reset_index()
+    )
+    
+    # Categoricals: pivot counts + shares
+    cat_blocks: list[pd.DataFrame] = []
+    for col in cat_cols:
+        pivot_counts = acc.pivot_table(
+            index=keys,
+            columns=col,
+            values="_accident_row_id",
+            aggfunc="count",
+            fill_value=0,
+        )
+        pivot_counts.columns = [f"acc_{col}_count_{str(cat)}" for cat in pivot_counts.columns]
+        
+        row_sums = pivot_counts.sum(axis=1).replace(0, pd.NA)
+        pivot_shares = pivot_counts.div(row_sums, axis=0)
+        pivot_shares.columns = [name.replace("_count_", "_share_") for name in pivot_counts.columns]
+        
+        cat_blocks.append(pd.concat([pivot_counts, pivot_shares], axis=1).reset_index())
+    
+    if cat_blocks:
+        from functools import reduce
+        acc_cats = reduce(lambda left, right: left.merge(right, on=keys, how="outer"), cat_blocks)
+    else:
+        acc_cats = acc_base[keys].copy()
+    
+    return acc_base.merge(acc_cats, on=keys, how="left")
 
 
 def build_node_exposure_panel_from_segments(
@@ -206,7 +281,7 @@ def build_node_exposure_panel_from_segments(
         .reset_index()
     )
     
-    node_exposure_ym["monthly_strava_trips"] = node_exposure_ym["monthly_strava_trips"].round().astype("int64")
+    node_exposure_ym["monthly_strava_trips"] = node_exposure_ym["monthly_strava_trips"].round()
 
     return node_exposure_ym
 
@@ -231,6 +306,11 @@ def build_node_risk_panel(
 
     node_panel_ym["monthly_strava_trips"] = node_panel_ym["monthly_strava_trips"].fillna(0)
     node_panel_ym["total_accidents"] = node_panel_ym["total_accidents"].fillna(0)
+
+    # Fill missing factor columns (counts and shares) with 0
+    for col in node_panel_ym.columns:
+        if col.startswith("acc_") and ("_count_" in col or "_share_" in col):
+            node_panel_ym[col] = node_panel_ym[col].fillna(0)
 
     # Fill missing metrics
     if "monthly_strava_trips" in node_panel_ym.columns:

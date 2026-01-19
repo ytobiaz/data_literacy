@@ -69,6 +69,8 @@ def aggregate_accidents_segment_year_month_rich(
         "accident_type",
         "light_condition",
         "road_condition",
+        "weekday_type",
+        "time_of_day",
     ]
     cat_cols = [c for c in cat_cols if c in acc.columns]
 
@@ -207,6 +209,18 @@ def build_core_risk_panel(
         if c.startswith("acc_road_condition_count_") or c.startswith("acc_road_condition_share_")
     ]
 
+    weekday_type_cols = [
+        c
+        for c in full.columns
+        if c.startswith("acc_weekday_type_count_") or c.startswith("acc_weekday_type_share_")
+    ]
+
+    time_of_day_cols = [
+        c
+        for c in full.columns
+        if c.startswith("acc_time_of_day_count_") or c.startswith("acc_time_of_day_share_")
+    ]
+
     cols_keep = (
         key_cols
         + segment_cols
@@ -217,6 +231,8 @@ def build_core_risk_panel(
         + accident_kind_cols
         + light_cols
         + road_cols
+        + weekday_type_cols
+        + time_of_day_cols
     )
 
     seen: set[str] = set()
