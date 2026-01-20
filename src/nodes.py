@@ -249,11 +249,10 @@ def build_node_exposure_panel_from_segments(
     segment_node_map: pd.DataFrame,
     crossing_ids: Iterable[int],
     *,
-    trip_col: str = "avg_strava_total_trip_count",
+    trip_col: str = "sum_strava_total_trip_count",
     counter_col: str = "counter_name",
 ) -> pd.DataFrame:
-    """Aggregate segment exposure to node×year×month by averaging incident segments' trip_col.
-    """
+    """Aggregate segment exposure to node×year×month by summing a trip_col."""
 
     for col in [counter_col, "year", "month", trip_col]:
         if col not in segment_exposure_ym.columns:
@@ -277,11 +276,9 @@ def build_node_exposure_panel_from_segments(
 
     node_exposure_ym = (
         segment_exposure_nodes.groupby(["node_id", "year", "month"], observed=True)
-        .agg(monthly_strava_trips=(trip_col, "mean"))
+        .agg(monthly_strava_trips=(trip_col, "sum"))
         .reset_index()
     )
-    
-    node_exposure_ym["monthly_strava_trips"] = node_exposure_ym["monthly_strava_trips"].round()
 
     return node_exposure_ym
 
@@ -292,45 +289,40 @@ def build_node_risk_panel(
     crossings_gdf: GeoDataFrame,
 ) -> GeoDataFrame:
     """Combine node exposure and node accidents into a node-level risk panel.
-
     IMPORTANT:
     We must keep the union of node×year×month from exposure and accidents.
     Otherwise accidents that occur in months without exposure rows disappear.
     """
-
     node_panel_ym = node_exposure_ym.merge(
         acc_node_ym,
         on=["node_id", "year", "month"],
         how="outer",
     )
-
+    
+    # Fill missing metrics
+    if "monthly_strava_trips" not in node_exposure_ym.columns:
+        raise KeyError("Expected 'monthly_strava_trips' in node_exposure_ym")
+    
     node_panel_ym["monthly_strava_trips"] = node_panel_ym["monthly_strava_trips"].fillna(0)
     node_panel_ym["total_accidents"] = node_panel_ym["total_accidents"].fillna(0)
-
+    
     # Fill missing factor columns (counts and shares) with 0
     for col in node_panel_ym.columns:
         if col.startswith("acc_") and ("_count_" in col or "_share_" in col):
             node_panel_ym[col] = node_panel_ym[col].fillna(0)
-
-    # Fill missing metrics
-    if "monthly_strava_trips" in node_panel_ym.columns:
-        node_panel_ym["monthly_strava_trips"] = node_panel_ym["monthly_strava_trips"].fillna(0)
-    else:
-        # If exposure panel uses a different column name, fail loudly rather than silently miscompute
-        raise KeyError("Expected 'monthly_strava_trips' in node_exposure_ym")
-
-    node_panel_ym["total_accidents"] = node_panel_ym["total_accidents"].fillna(0)
-
+    
     # Add geometry
     node_panel_ym = node_panel_ym.merge(
         crossings_gdf[["node_id", "geometry"]],
         on="node_id",
         how="left",
     )
-
+    
     # Risk is undefined when trips are 0 -> use NaN denominator
     denom = node_panel_ym["monthly_strava_trips"].replace(0, np.nan)
-    node_panel_ym["risk_accidents_per_trip"] = node_panel_ym["total_accidents"] / denom
+    
+    # Multiply by 0.5 to account for double-counting
+    node_panel_ym["risk_accidents_per_trip"] = 0.5 * (node_panel_ym["total_accidents"] / denom)
     node_panel_ym["risk_accidents_per_10k_trips"] = node_panel_ym["risk_accidents_per_trip"] * 10_000
-
+    
     return gpd.GeoDataFrame(node_panel_ym, geometry="geometry", crs=crossings_gdf.crs)
