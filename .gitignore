@@ -14,7 +14,7 @@
 
 # local data, never upload them since they are too large
 outputs/maps
-data/**
+#data/**
 src/__pycache__/**
 
 
