@@ -1,11 +1,24 @@
-# data_literacy
+# data_literacy repository 
+
+## Setup
+1) clone repository
+2) download input datasets:
+    * from the [destatis unfallatlas](https://unfallatlas.statistikportal.de/?BL=BB%20=%20Brandenburg) select _Accident Atlas and Open Data_, then download accident data csv-files for years 2019-2023 and unzip them. Store them in `data/input/accidents`.
+    * download [strava data for berlin](https://zenodo.org/records/15332147/files/berlin_data.parquet?download=1) and [graph geometry data for berlin](https://zenodo.org/records/15332147/files/berlin_graph_geometry.parquet?download=1). Store them in `data/input/strava`.
+    * download the [Berlin Bike Counting Stations Data](https://www.berlin.de/sen/uvk/_assets/verkehr/verkehrsplanung/radverkehr/weitere-radinfrastruktur/zaehlstellen-und-fahrradbarometer/gesamtdatei-stundenwerte.xlsx?ts=1752674590) and store them in `data/input/counting_stations`
+3) create virtual environment
+4) install required packages:
+    * run ```pip install uv```
+    * run ```uv sync``` to install requirements
+5) now you should be able to execute the jupyter notebooks
+
+
 ## Project Structure & Conventions
-
 This project follows a clear separation between **notebooks** and **core code** to ensure stability, readability, and scalability.
-
 ### Directory Structure
-- `data/`  
-  Raw and processed datasets.  
+- `data/input`  
+  Raw input data from external sources
+- `data/input` 
   Processed data and intermediate results should be persisted (e.g. Parquet).
 
 - `notebooks/`  
@@ -33,4 +46,4 @@ This project follows a clear separation between **notebooks** and **core code** 
 - Persist intermediate results to reduce memory usage and kernel instability.
 - Use consistent naming 
 
-> Notebooks are used to **tell the story** — the actual implementation lives in Python modules.
+Notebooks are used to **tell the story** — the actual implementation lives in Python modules.
