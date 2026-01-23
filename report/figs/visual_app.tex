@@ -1,0 +1,33 @@
+\begin{tikzpicture}[
+font=\small,
+>=stealth,
+imgnode/.style={inner sep=0, outer sep=0},
+label/.style={font=\normalsize\bfseries, anchor=north},
+]
+
+% Define widths
+\pgfmathsetmacro{\w}{0.305*\textwidth}
+\pgfmathsetmacro{\gap}{0.0425*\textwidth}
+
+% === Panel 1: Data ===
+\node[imgnode] (img1) at (0,0) {
+    \includegraphics[width=\w pt, trim=0 0 0 0, clip]{figs/map_segments_accidents.pdf}
+};
+\node[label, below=3pt of img1] (label1) {\textbf{(a) Data}};
+
+% === Panel 2: Risk ===
+\pgfmathsetmacro{\xtwo}{\w + \gap}
+\node[imgnode] (img2) at (\xtwo pt, 0) {
+    \includegraphics[width=\w pt, trim=0 0 0 0, clip]{figs/map_high_risk_segments.pdf}
+};
+\node[label, below=3pt of img2] (label2) {\textbf{(b) Risk estimation}};
+
+% === Panel 3: Routing ===
+\pgfmathsetmacro{\xthree}{2*\w + 2*\gap}
+\node[imgnode] (img3) at (\xthree pt, 0) {
+    \includegraphics[width=\w pt, trim=0 0 0 0, clip]{figs/map_routing.pdf}
+};
+\node[label, below=3pt of img3] (label3) {\textbf{(c) Safety routing}};
+
+
+\end{tikzpicture}

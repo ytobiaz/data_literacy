@@ -48,6 +48,7 @@
 \usepackage{amssymb}
 \usepackage{mathtools}
 \usepackage{amsthm}
+\usetikzlibrary{arrows.meta, positioning, calc}
 
 % if you use cleveref..
 \usepackage[capitalize,noabbrev]{cleveref}
@@ -136,6 +137,18 @@ bicycle safety analysis and safety-informed routing on urban street networks.
 \end{abstract}
 
 \section{Introduction}\label{sec:intro}
+\begin{figure*}[t]
+  \centering
+  \includegraphics{figs/map_3_panels.pdf}
+  \caption{\textbf{Safety-aware routing pipeline for the Berlin cycling network.}
+  Panels (a–c) show an example month (June 2021) and are zoomed in for readability; see Section~\ref{sec:methods} for formal definitions and notation.
+  \textbf{(a):} police-recorded bicycle crashes ({\color{TUorange}points}) and street segments with measured cyclist exposure ({\color{TUgray}lines}, used as the base network in all panels).
+  \textbf{(b):} monthly segment risk (accidents per 10{,}000 trips); high-risk segments in {\color{TUred}red} are the top 90th percentile of \(r_{s,t}\) in the displayed month. {\color{TUdark}Circles} mark junctions (degree $\ge 3$), for which we also estimate junction risk from exposure aggregated over incident segments.
+  \textbf{(c):} shortest path ({\color{TUblue}blue}) versus a safer alternative ({\color{TUgreen}green}) chosen to reduce route risk under a distance-detour constraint. {\color{TUocre}Filled circle} and {\color{TUocre}cross} denote origin and destination, respectively; {\color{TUdark}circles} show junctions for reference.
+  }
+  \label{fig:visual_app}
+\end{figure*}
+
 Cycling safety analyses often rely on raw crash counts, which conflate danger with demand: streets that attract many cyclists tend to accumulate more incidents even 
 when per-rider risk is low~\citep{luecken2018}. This obscures intrinsically risky locations and limits both targeted interventions and everyday route choice, 
 especially in dense urban networks such as Berlin~\citep{Uijtdewilligen01092024}. We address this by estimating bicycle crash risk per unit of cyclist exposure on 
@@ -173,7 +186,7 @@ We combine police-recorded bicycle crashes with measured cyclist exposure for th
 aggregated at the street-segment level~\citep{kaiser2025spatiotemporalgraphneuralnetwork}. Together these sources enable exposure-normalized safety analysis at 
 network scale. The street network is represented as polyline segments with associated monthly cyclist counts; crash locations are matched to segments via 
 nearest-segment assignment in a projected coordinate system. To reflect the concentration of crashes at intersections, we identify junctions as nodes where at least 
-three segments meet and assign crashes within a fixed radius to the nearest junction; junction exposure is the sum of the exposures of incident segments. All layers 
+three segments meet and assign crashes within a fixed radius to the nearest junction; junction exposure is derived from the exposures of incident segments. All layers 
 are harmonized to a common network topology and coordinate reference system to produce consistent monthly panels at the segment and junction levels. The resulting 
 dataset spans 2019–2023 and covers 4{,}958 street segments and 2{,}924 junctions in Berlin. After spatial matching to the street network and exposure data, the 
 analysis includes 33{,}181 bicycle crashes. At monthly resolution, crash events are sparse: in a typical month, fewer than 5\% of segments and about 3\% of junctions record at least one crash, while most have none. This sparsity motivates exposure-normalized risk estimation and constrained routing to assess safety–convenience trade-offs.
@@ -182,57 +195,55 @@ analysis includes 33{,}181 bicycle crashes. At monthly resolution, crash events 
 We aggregate crashes and exposure to monthly resolution; segments (or months) with zero measured exposure are excluded for that period. Junctions are derived from network topology, and 
 crashes within the junction radius are assigned accordingly. The outputs are monthly segment- and junction-level panels used in all subsequent analyses.
 
-\subsection{Methods}\label{sec:methods}\todo{discuss which logic for junctions to be used tbd by tuesday}
-% \paragraph{Exposure-normalized risk.}
-% For each street segment $s$ and month $t$, let $A_{s,t}$ be the number of police-recorded bicycle crashes and $E_{s,t}$ the measured cyclist exposure. Segment risk is
-% \begin{equation}
-% r_{s,t}=\frac{A_{s,t}}{E_{s,t}},
-% \end{equation}
-% reported as accidents per 10{,}000 trips for interpretability; segments with $E_{s,t}=0$ in month $t$ are excluded for that month~\citep{HADDAK20162025,Uijtdewilligen01092024}. To capture the empirical concentration of crashes near intersections, we also estimate junction risk. A junction is any node with degree $\ge 3$. Crashes within a fixed radius of a junction centroid are assigned to that junction, whose exposure aggregates incident segments:
-% \begin{equation}
-% E_{v,t}=\sum_{s\in\mathcal{I}(v)} E_{s,t}.
-% \end{equation}
-% Junction risk is defined analogously to segment risk and reported per 10{,}000 trips. We estimate risk at monthly resolution to separate temporal regimes and enable conditioning on context (e.g., time of day, weather).
-
+\subsection{Methods}\label{sec:methods}
 \paragraph{Exposure-normalized risk.}
 For each street segment $s$ and month $t$, let $A_{s,t}$ denote the number of police-recorded bicycle crashes and $E_{s,t}$ the measured cyclist exposure. Segment risk is
-\begin{equation}
+\[
 r_{s,t}=\frac{A_{s,t}}{E_{s,t}},
-\end{equation}
-reported as accidents per 10{,}000 trips for interpretability; segments with $E_{s,t}=0$ in month $t$ are excluded for that month~\citep{HADDAK20162025,Uijtdewilligen01092024}. To capture the concentration of crashes near intersections, we also estimate junction risk. A junction is any node with degree $\geq 3$, and crashes within a fixed radius of its centroid are assigned to that junction. Because a cyclist passing through a junction typically contributes exposure to two incident segments (entering and exiting), we approximate junction exposure as
+\]
+reported as accidents per 10{,}000 trips; segments with $E_{s,t}=0$ in month $t$ are excluded for that month~\citep{HADDAK20162025,Uijtdewilligen01092024}. To capture the concentration of crashes near intersections, we also estimate junction risk. A junction is any node with degree $\ge 3$; crashes within a fixed radius of its centroid are assigned to that junction. Because a traversal typically contributes exposure to two incident segments (entering and exiting), we approximate junction exposure by a half-sum of incident segment exposures,
 \begin{equation}
-E_{v,t}=\frac{1}{2}\sum_{s\in\mathcal{I}(v)}E_{s,t},
+\label{eq:half-sum}
+E_{v,t}=\tfrac{1}{2}\sum_{s\in\mathcal{I}(v)}E_{s,t},
 \end{equation}
-which avoids double-counting. While this specific halving correction is, to our knowledge, not standard in the literature, aggregating exposure over incident links is common when turning movements are unavailable~\citep{hakkert2002uses,WANG2020105838}. Junction risk $r_{v,t}$ is defined analogously to segment risk and likewise reported per 10{,}000 trips. We estimate risk at monthly resolution to separate temporal regimes and enable conditioning on context (e.g., time of day, weather).
+which avoids double-counting. While this specific halving correction is, to our knowledge, not standard, aggregating exposure over incident links is common when turning movements are unavailable~\citep{hakkert2002uses,WANG2020105838}. Junction risk $r_{v,t}$ is defined analogously and reported per 10{,}000 trips. We estimate all risks at monthly resolution to separate temporal regimes and enable conditioning on context (e.g., time of day, weather).
 
 \paragraph{Routing graph.}
-For each month $t$, we build a graph $G_t=(V_t,E_t)$ from the street network: nodes are segment endpoints, edges are segments with length $\ell_e$ and risk $r_{e,t}$. Junction identifiers and risks are mapped to nodes via spatial snapping in a projected coordinate system, yielding a month-specific, risk-annotated network.
+For each month $t$, we build an undirected graph $G_t=(V_t,E_t)$ from the street network: nodes are segment endpoints and edges are street segments with length $\ell_e$ and segment risk $r_{e,t}$. Junction identifiers and risks are mapped to nodes via spatial snapping in a projected coordinate system, yielding a month-specific, risk-annotated network.\footnote{Implementation details and hyperparameter settings are documented in our repository at \url{https://github.com/ytobiaz/data_literacy}.}
 
 \paragraph{Safety-aware routing.}
-We compare shortest-distance routes with alternatives that reduce estimated risk under a distance constraint. Each edge $e=(u,v)$ has cost
+We compare shortest-distance routes with alternatives that reduce estimated crash risk under a bounded detour. For month $t$, route length is
+\[
+L(P)=\sum_{e\in P}\ell_e.
+\]
+To account for segment- and junction-level exposure, the risk contribution of edge $e=(u,v)$ is
+\[
+\rho_{e,t}=r_{e,t}+\eta\,\frac{r_{u,t}+r_{v,t}}{2},
+\]
+where $r_{u,t}$ and $r_{v,t}$ are junction risks (zero for non-junction nodes) and $\eta\ge 0$ weights junction risk. We interpret these exposure-normalized rates as an \emph{additive surrogate} for cumulative route risk, not probabilities. Given an origin–destination pair, the baseline route $P_{\text{dist}}$ minimizes $L(P)$. The safety-aware route solves
 \begin{equation}
-c_e=\alpha\,\ell_e+\beta\,r_{e,t}+\gamma\,\frac{r_{u,t}+r_{v,t}}{2},
-\end{equation}
-where $\alpha,\beta,\gamma$ weight distance, segment risk, and junction risk (nodes without junction risk contribute zero). Given an origin–destination pair, the baseline $P_{\text{dist}}$ minimizes length. A safety-aware route solves
-\begin{equation}
+\label{eq:safe-routing}
 \begin{aligned}
-P_{\text{safe}}=\arg\min_{P}\ & \sum_{e\in P} r_{e,t} \\
+P_{\text{safe}}=\arg\min_{P}\ & R(P)=\sum_{e\in P}\rho_{e,t} \\
 \text{s.t.}\ & L(P)\le (1+\varepsilon)\,L(P_{\text{dist}}),
 \end{aligned}
 \end{equation}
-with tolerance $\varepsilon$~\citep{ehrgott2005multicriteria}. We approximate this via a Lagrangian relaxation by minimizing a weighted combination of risk and length over a grid of trade-off parameters. Routing is performed independently by month, and results are pooled over many origin–destination pairs.
+where $\varepsilon$ is the allowable relative detour. We approximate this constrained problem via a weighted-sum sweep: for $\lambda\in\Lambda$,
+\[
+P(\lambda)=\arg\min_{P}\sum_{e\in P}\bigl(\rho_{e,t}+\lambda\,\ell_e\bigr),
+\]
+then select among feasible candidates (respecting the detour) the route with minimal $R(P)$, breaking ties by shorter $L(P)$. Routing is performed independently by month; origin–destination pairs disconnected in month $t$ after exposure filtering are excluded for that month.
 
 \paragraph{Evaluation metrics.}
 For each pair, we report the relative length increase
-\begin{equation}
+\[
 \Delta_L=\frac{L(P_{\text{safe}})-L(P_{\text{dist}})}{L(P_{\text{dist}})}
-\end{equation}
+\]
 and the relative risk reduction
-\begin{equation}
+\[
 \Delta_R=\frac{R(P_{\text{dist}})-R(P_{\text{safe}})}{R(P_{\text{dist}})},
-\end{equation}
-where $R(P)=\sum_{e\in P} r_{e,t}$ is the sum of segment risks along route $P$. Pairs with $R(P_{\text{dist}})=0$ are excluded from $\Delta_R$. These metrics quantify how small detours trade distance for reductions in empirically observed crash risk.
-
+\]
+with $R(P)=\sum_{e\in P}\rho_{e,t}$. Pairs with $R(P_{\text{dist}})=0$ are excluded from $\Delta_R$ (undefined denominator). These metrics quantify how limited detours trade distance for reductions in exposure-normalized crash risk.
 
 
 % How to make a figure
@@ -255,7 +266,9 @@ where $R(P)=\sum_{e\in P} r_{e,t}$ is the sum of segment risks along route $P$. 
 
 \section{Discussion \& Conclusion}\label{sec:conclusion}
 % Use this section to briefly summarize the entire text. Highlight limitations and problems, but also make clear statements where they are possible and supported by the analysis. 
+\subsection{Discussion}
 
+\subsection{Conclusion}
 \newpage
 
 % \section*{Contribution Statement}
