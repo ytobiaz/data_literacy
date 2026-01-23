@@ -3,7 +3,7 @@
 ## Setup
 1) clone repository
 2) download input datasets:
-    * from the [destatis unfallatlas](https://unfallatlas.statistikportal.de/?BL=BB%20=%20Brandenburg) select _Accident Atlas and Open Data_, then download accident data csv-files for years 2016-2024 and unzip them. Store them in `data/input/accidents`.
+    * from the [destatis unfallatlas](https://unfallatlas.statistikportal.de/?BL=BB%20=%20Brandenburg) select _Accident Atlas and Open Data_, then download accident data csv-files for years 2019-2023 and unzip them. Store them in `data/input/accidents`.
     * download [strava data for berlin](https://zenodo.org/records/15332147/files/berlin_data.parquet?download=1) and [graph geometry data for berlin](https://zenodo.org/records/15332147/files/berlin_graph_geometry.parquet?download=1). Store them in `data/input/strava`.
     * download the [Berlin Bike Counting Stations Data](https://www.berlin.de/sen/uvk/_assets/verkehr/verkehrsplanung/radverkehr/weitere-radinfrastruktur/zaehlstellen-und-fahrradbarometer/gesamtdatei-stundenwerte.xlsx?ts=1752674590) and store them in `data/input/counting_stations`
 3) create virtual environment
