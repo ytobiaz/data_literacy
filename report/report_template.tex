@@ -149,30 +149,29 @@ bicycle safety analysis and safety-informed routing on urban street networks.\to
   \label{fig:visual_app}
 \end{figure*}
 
-Cycling safety analyses often rely on raw crash counts, which conflate danger with demand: streets that attract many cyclists tend to accumulate more incidents even 
-when per-rider risk is low~\citep{luecken2018}. This obscures intrinsically risky locations and limits both targeted interventions and everyday route choice, 
-especially in dense urban networks such as Berlin~\citep{Uijtdewilligen01092024}. We address this by estimating bicycle crash risk per unit of cyclist exposure on 
-the street network and propagating these estimates to route-level scores suitable for navigation. Our study combines police-recorded crashes from the German 
-\emph{Unfallatlas} (Berlin subset)~\citep{Unfallatlas2025} with a city-wide dataset of measured bicycle volumes at the street-segment level~\citep{kaiser_2025_15332147}. 
-We compute exposure-normalized risk for individual street segments and, motivated by the concentration of crashes at intersections, derive junction-level risk by 
-aggregating volumes from adjoining segments. Risk is estimated at monthly resolution and can be conditioned on contextual factors such as time of day and weather to 
-capture temporal variability. We then aggregate segment- and junction-level risk to evaluate arbitrary routes and compare alternatives that reduce estimated risk 
-while maintaining comparable convenience in terms of distance or travel time~\citep{isprs-archives-XLIII-B4-2022-427-2022}. Our work makes the following contributions: 
-(i) a reproducible pipeline for exposure-normalized crash risk at segment and junction levels using measured volumes; (ii) a framework for context-conditional risk 
-analysis; and (iii) a route-scoring procedure that integrates network-level risk into safety-aware routing under convenience constraints.\todo{may add research questions for clarity}
+Cycling safety analyses often rely on raw crash counts, which conflate danger with demand: streets that attract many cyclists tend to accumulate more incidents even when per-rider risk
+is low~\citep{luecken2018}. This obscures intrinsically risky locations and limits both targeted interventions and everyday route choice, especially in dense urban networks such as Berlin~\citep{Uijtdewilligen01092024}. 
+We address this by estimating bicycle crash risk per unit of cyclist exposure on the street network in a way that remains stable under sparse or unevenly distributed observations, and 
+propagating these estimates to route-level scores suitable for navigation. Our study combines police-recorded crashes from the German \emph{Unfallatlas} (Berlin subset)~\citep{Unfallatlas2025} with 
+a city-wide dataset of measured bicycle volumes at the street-segment level~\citep{kaiser_2025_15332147}. We compute exposure-normalized risk for individual street segments and, motivated by 
+the concentration of crashes at intersections, derive junction-level risk by aggregating volumes from adjoining segments. Risk is estimated at monthly resolution and can be conditioned on 
+contextual factors such as time of day and weather to capture temporal variability. We then aggregate segment- and junction-level risk to evaluate arbitrary routes and compare alternatives 
+that reduce estimated risk while maintaining comparable convenience in terms of distance or travel time, see Figure~\ref{fig:visual_app}. We address the question: how can exposure-normalized 
+crash risk be estimated from measured bicycle volumes and integrated into context-aware routing? Our work makes the following contributions: (i) a reproducible pipeline for estimating 
+exposure-normalized crash risk at street and junction levels from measured cyclist volumes, with support for context-conditional analysis; and (ii) a route-scoring method that integrates 
+network-level risk into safety-aware routing under convenience constraints.
 
 The paper is organized as follows: we review related work in Section~\ref{sec:relatedw}, describe the data and methods in Section~\ref{sec:data_and_methods}, present the 
 results in Section~\ref{sec:results}, and discuss and conclude in Section~\ref{sec:conclusion}.
 
 \section{Related Work}\label{sec:relatedw}
-To avoid conflating danger with demand, prior work normalizes bicycle crashes by cyclist exposure~\citep{luecken2018}. City-scale studies show that 
-exposure-normalized risk yields more informative spatial patterns than raw counts and that finer temporal resolution improves inference, while noting persistent 
-under-reporting in police records~\citep{Uijtdewilligen01092024}. A central challenge is obtaining reliable exposure: some approaches extrapolate city-wide volumes 
-from sparse counters using learning-based models and multi-source features, with short measurement campaigns improving predictions at new locations~\citep{Kaiser_Klein_Kaack_2025}, 
-whereas more recent efforts provide street-segment datasets of measured bicycle volumes, enabling downstream safety analyses without modeling exposure~\citep{kaiser2025spatiotemporalgraphneuralnetwork}. 
-At the network level, studies define risk as crashes per unit exposure on links and address practical issues such as spatial snapping of crashes, allocating events 
-near intersections, and integrating safety metrics into routing under convenience constraints~\citep{isprs-archives-XLIII-B4-2022-427-2022}. Intersection safety is 
-critical: case analyses document strong crash concentrations at junctions and stress controlling for exposure when comparing infrastructure types or locations~\citep{futuretransp1030037}. 
+To avoid conflating danger with demand, prior work normalizes bicycle crashes by cyclist exposure~\citep{luecken2018}. City-scale studies show that exposure-normalized risk yields more 
+informative spatial patterns than raw counts and that finer temporal resolution improves inference, while noting persistent under-reporting in police records~\citep{Uijtdewilligen01092024}. 
+A central challenge is obtaining reliable exposure: some approaches extrapolate city-wide volumes from sparse counters using learning-based models and multi-source features, with short 
+measurement campaigns improving predictions at new locations~\citep{Kaiser_Klein_Kaack_2025}, whereas more recent efforts provide street-segment datasets of measured bicycle volumes, enabling 
+downstream safety analyses without modeling exposure~\citep{kaiser2025spatiotemporalgraphneuralnetwork}. At the network level, studies define risk as crashes per unit exposure on links and 
+address practical issues such as spatial snapping of crashes, allocating events near intersections, and integrating safety metrics into routing under convenience constraints~\citep{isprs-archives-XLIII-B4-2022-427-2022}. 
+Intersection safety is critical: case analyses document strong crash concentrations at junctions and stress controlling for exposure when comparing infrastructure types or locations~\citep{futuretransp1030037}. 
 Building on exposure-normalized analysis~\citep{Uijtdewilligen01092024}, the availability of measured volumes~\citep{Kaiser_Klein_Kaack_2025,kaiser2025spatiotemporalgraphneuralnetwork}, 
 and advances in safety-aware routing~\citep{isprs-archives-XLIII-B4-2022-427-2022}, we estimate crash risk for Berlin at street-segment and junction levels using 
 measured exposure, support context-conditional risk analysis, and propagate network-level risk to route-level scores.
@@ -181,35 +180,50 @@ measured exposure, support context-conditional risk analysis, and propagate netw
 % In this section, describe \emph{what you did}. Roughly speaking, explain what data you worked with, how or from where it was collected, it's structure and size. Explain your analysis, and any specific choices you made in it. Depending on the nature of your project, you may focus more or less on certain aspects. If you collected data yourself, explain the collection process in detail. If you downloaded data from the net, show an exploratory analysis that builds intuition for the data, and shows that you know the data well. If you are doing a custom analysis, explain how it works and why it is the right choice. If you are using a standard tool, it may still help to briefly outline it. Cite relevant works. You can use the \verb|\citep| and \verb|\citet| commands for this purpose \citep{mackay2003information}.
 
 \subsection{Data}\label{sec:data}
-We combine police-recorded bicycle crashes with measured cyclist exposure for the city of Berlin. Crash data come from the Berlin subset of the German 
-\emph{Unfallatlas}~\citep{Unfallatlas2025} filtered for bicycle-related incidents, and exposure is provided by a city-wide dataset of measured bicycle volumes 
-aggregated at the street-segment level~\citep{kaiser2025spatiotemporalgraphneuralnetwork}. Together these sources enable exposure-normalized safety analysis at 
-network scale. The street network is represented as polyline segments with associated monthly cyclist counts; crash locations are matched to segments via 
-nearest-segment assignment in a projected coordinate system. To reflect the concentration of crashes at intersections, we identify junctions as nodes where at least 
-three segments meet and assign crashes within a fixed radius to the nearest junction; junction exposure is derived from the exposures of incident segments. All layers 
-are harmonized to a common network topology and coordinate reference system to produce consistent monthly panels at the segment and junction levels. The resulting 
-dataset spans 2019–2023 and covers 4{,}958 street segments and 2{,}924 junctions in Berlin. After spatial matching to the street network and exposure data, the 
-analysis includes 33{,}181 bicycle crashes. At monthly resolution, crash events are sparse: in a typical month, fewer than 5\% of segments and about 3\% of junctions record at least one crash, while most have none. This sparsity motivates exposure-normalized risk estimation and constrained routing to assess safety–convenience trade-offs.
+We combine police-recorded bicycle crashes with measured cyclist exposure for the city of Berlin. Crash data are drawn from the Berlin subset of the German \emph{Unfallatlas}~\citep{Unfallatlas2025} 
+and filtered for bicycle-related incidents. Exposure comes from a city-wide dataset of measured bicycle volumes aggregated at the street-segment level~\citep{kaiser2025spatiotemporalgraphneuralnetwork}. 
+The street network is represented as polyline segments with associated monthly cyclist counts. The resulting dataset spans 2019--2023 and covers 4{,}958 street segments and 2{,}924 junctions, 
+with 33{,}181 recorded bicycle crashes. At monthly resolution the data are sparse: in a typical month fewer than 5\% of segments and about 3\% of junctions record at least one crash, and 
+some periods include segments with zero measured exposure. This sparsity motivates the exposure-normalized risk estimation and small-count stabilization described in Section~\ref{sec:methods}.
 
 \paragraph{Preprocessing.}
-We aggregate crashes and exposure to monthly resolution; segments (or months) with zero measured exposure are excluded for that period. Junctions are derived from network topology, and 
-crashes within the junction radius are assigned accordingly. The outputs are monthly segment- and junction-level panels used in all subsequent analyses.
+To enable network-scale analysis, all layers are harmonized to a common street-network topology and a projected coordinate reference system. Crash locations are matched to segments using 
+nearest-segment assignment. To capture the concentration of crashes at intersections, we identify junctions as nodes where at least three segments meet; crashes within a fixed radius are 
+assigned to the nearest junction, and junction exposure is computed from the exposures of incident segments. Matched crashes and exposures are aggregated to monthly resolution. During 
+aggregation, segments and months with zero measured exposure are identified. To obtain more stable risk estimates, we apply an Empirical Bayes approach (outlined in Section~\ref{sec:methods}). 
+The resulting monthly panels at the segment and junction levels serve as inputs to all risk scoring and routing analyses.\footnote{Implementation details and hyperparameters at \url{https://github.com/ytobiaz/data_literacy}.}
 
 \subsection{Methods}\label{sec:methods}
-\paragraph{Exposure-normalized risk.}
-For each street segment $s$ and month $t$, let $A_{s,t}$ denote the number of police-recorded bicycle crashes and $E_{s,t}$ the measured cyclist exposure. Segment risk is
+\paragraph{Empirical Bayes exposure-normalized risk.}
+For each street segment $s$ and month $t$, let $A_{s,t}$ denote the number of police-recorded bicycle crashes and $E_{s,t}$ the measured cyclist exposure. We model crash counts as
 \[
-r_{s,t}=\frac{A_{s,t}}{E_{s,t}},
+A_{s,t}\mid \lambda_{s,t} \sim \text{Poisson}(E_{s,t}\lambda_{s,t}),
 \]
-reported as accidents per 10{,}000 trips; segments with $E_{s,t}=0$ in month $t$ are excluded for that month~\citep{HADDAK20162025,Uijtdewilligen01092024}. To capture the concentration of crashes near intersections, we also estimate junction risk. A junction is any node with degree $\ge 3$; crashes within a fixed radius of its centroid are assigned to that junction. Because a traversal typically contributes exposure to two incident segments (entering and exiting), we approximate junction exposure by a half-sum of incident segment exposures,
+where $\lambda_{s,t}$ is the latent crash rate per unit exposure. To stabilize estimation under low or zero exposure, we adopt an Empirical Bayes Poisson--Gamma model with prior
+\[
+\lambda_{s,t} \sim \text{Gamma}(\alpha,\beta),
+\]
+where $\alpha$ and $\beta$ are estimated from the marginal distribution of segment-level counts and exposures within each month. The resulting posterior mean,
+\[
+r_{s,t}
+= \mathbb{E}[\lambda_{s,t}\mid A_{s,t},E_{s,t}]
+= \frac{A_{s,t}+\alpha}{E_{s,t}+\beta},
+\]
+serves as our exposure-normalized segment risk. This estimator shrinks unstable rates toward the network-wide mean and remains well-defined for $E_{s,t}=0$, in which case $r_{s,t}$ equals
+the prior mean $\alpha/\beta$.
+
+To capture the concentration of crashes near intersections, we also estimate junction risk. A junction is any node with degree $\ge 3$; crashes within a fixed radius of its centroid are 
+assigned to that junction. Because a traversal typically contributes exposure to two incident segments (entering and exiting), we approximate junction exposure by a half-sum of incident segment exposures,
 \begin{equation}
 \label{eq:half-sum}
 E_{v,t}=\tfrac{1}{2}\sum_{s\in\mathcal{I}(v)}E_{s,t},
 \end{equation}
-which avoids double-counting. While this specific halving correction is, to our knowledge, not standard, aggregating exposure over incident links is common when turning movements are unavailable~\citep{hakkert2002uses,WANG2020105838}. Junction risk $r_{v,t}$ is defined analogously and reported per 10{,}000 trips. We estimate all risks at monthly resolution to separate temporal regimes and enable conditioning on context (e.g., time of day, weather).
+which avoids double-counting. While this specific halving correction is, to our knowledge, not standard, aggregating exposure over incident links is common when turning movements are unavailable~\citep{hakkert2002uses,WANG2020105838}. 
+Junction risk $r_{v,t}$ is defined analogously using the same Empirical Bayes estimator. We estimate all risks at monthly resolution to separate temporal regimes and enable conditioning on context (e.g., time of day, weather).
 
 \paragraph{Routing graph.}
-For each month $t$, we build an undirected graph $G_t=(V_t,E_t)$ from the street network: nodes are segment endpoints and edges are street segments with length $\ell_e$ and segment risk $r_{e,t}$. Junction identifiers and risks are mapped to nodes via spatial snapping in a projected coordinate system, yielding a month-specific, risk-annotated network.\footnote{Implementation details and hyperparameter settings are documented in our repository at \url{https://github.com/ytobiaz/data_literacy}.}
+For each month $t$, we build an undirected graph $G_t=(V_t,E_t)$ from the street network: nodes are segment endpoints and edges are street segments with length $\ell_e$ and segment risk $r_{e,t}$. 
+Junction identifiers and risks are mapped to nodes via spatial snapping in a projected coordinate system, yielding a month-specific, risk-annotated network.
 
 \paragraph{Safety-aware routing.}
 We compare shortest-distance routes with alternatives that reduce estimated crash risk under a bounded detour. For month $t$, route length is
@@ -220,7 +234,8 @@ To account for segment- and junction-level exposure, the risk contribution of ed
 \[
 \rho_{e,t}=r_{e,t}+\eta\,\frac{r_{u,t}+r_{v,t}}{2},
 \]
-where $r_{u,t}$ and $r_{v,t}$ are junction risks (zero for non-junction nodes) and $\eta\ge 0$ weights junction risk. We interpret these exposure-normalized rates as an \emph{additive surrogate} for cumulative route risk, not probabilities. Given an origin–destination pair, the baseline route $P_{\text{dist}}$ minimizes $L(P)$. The safety-aware route solves
+where $r_{u,t}$ and $r_{v,t}$ are junction risks (zero for non-junction nodes) and $\eta\ge 0$ weights junction risk. We interpret these exposure-normalized rates as an \emph{additive surrogate} 
+for cumulative route risk, not probabilities. Given an origin–destination pair, the baseline route $P_{\text{dist}}$ minimizes $L(P)$. The safety-aware route solves
 \begin{equation}
 \label{eq:safe-routing}
 \begin{aligned}
@@ -232,7 +247,7 @@ where $\varepsilon$ is the allowable relative detour. We approximate this constr
 \[
 P(\lambda)=\arg\min_{P}\sum_{e\in P}\bigl(\rho_{e,t}+\lambda\,\ell_e\bigr),
 \]
-then select among feasible candidates (respecting the detour) the route with minimal $R(P)$, breaking ties by shorter $L(P)$. Routing is performed independently by month; origin–destination pairs disconnected in month $t$ after exposure filtering are excluded for that month.
+then select among feasible candidates (respecting the detour) the route with minimal $R(P)$, breaking ties by shorter $L(P)$ (using Dijkstra’s algorithm). Routing is performed independently by month.
 
 \paragraph{Evaluation metrics.}
 For each pair, we report the relative length increase
@@ -266,9 +281,7 @@ with $R(P)=\sum_{e\in P}\rho_{e,t}$. Pairs with $R(P_{\text{dist}})=0$ are exclu
 
 \section{Discussion \& Conclusion}\label{sec:conclusion}
 % Use this section to briefly summarize the entire text. Highlight limitations and problems, but also make clear statements where they are possible and supported by the analysis. 
-\subsection{Discussion}
 
-\subsection{Conclusion}
 \newpage
 
 % \section*{Contribution Statement}
