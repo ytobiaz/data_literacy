@@ -151,15 +151,15 @@ bicycle safety analysis and safety-informed routing on urban street networks.\to
 
 Cycling safety analyses often rely on raw crash counts, which conflate danger with demand: streets that attract many cyclists tend to accumulate more incidents even when per-rider risk
 is low~\citep{luecken2018}. This obscures intrinsically risky locations and limits both targeted interventions and everyday route choice, especially in dense urban networks such as Berlin~\citep{Uijtdewilligen01092024}. 
-We address this by estimating bicycle crash risk per unit of cyclist exposure on the street network in a way that remains stable under sparse or unevenly distributed observations, and 
-propagating these estimates to route-level scores suitable for navigation. Our study combines police-recorded crashes from the German \emph{Unfallatlas} (Berlin subset)~\citep{Unfallatlas2025} with 
-a city-wide dataset of measured bicycle volumes at the street-segment level~\citep{kaiser_2025_15332147}. We compute exposure-normalized risk for individual street segments and, motivated by 
-the concentration of crashes at intersections, derive junction-level risk by aggregating volumes from adjoining segments. Risk is estimated at monthly resolution and can be conditioned on 
-contextual factors such as time of day and weather to capture temporal variability. We then aggregate segment- and junction-level risk to evaluate arbitrary routes and compare alternatives 
-that reduce estimated risk while maintaining comparable convenience in terms of distance or travel time, see Figure~\ref{fig:visual_app}. We address the question: how can exposure-normalized 
-crash risk be estimated from measured bicycle volumes and integrated into context-aware routing? Our work makes the following contributions: (i) a reproducible pipeline for estimating 
-exposure-normalized crash risk at street and junction levels from measured cyclist volumes, with support for context-conditional analysis; and (ii) a route-scoring method that integrates 
-network-level risk into safety-aware routing under convenience constraints.
+We address this by estimating exposure-adjusted crash risk on the street network via a relative-risk formulation that separates cyclist demand from intrinsic danger and remains stable under 
+sparse or unevenly distributed observations. The resulting estimates are transformed into expected crash costs and propagated to route-level scores suitable for navigation. Our study combines 
+police-recorded crashes from the German Unfallatlas (Berlin subset)~\citep{Unfallatlas2025} with a city-wide dataset of measured bicycle volumes at the street-segment level~\citep{kaiser_2025_15332147}.
+We compute exposure-adjusted relative risk for individual street segments and, motivated by the concentration of crashes at intersections, derive junction-level risk by aggregating volumes 
+from adjoining segments. Risk is estimated at monthly resolution and can be conditioned on contextual factors such as time of day and weather to capture temporal variability. We then aggregate 
+segment- and junction-level expected crash costs to evaluate arbitrary routes and compare alternatives that reduce estimated risk while maintaining comparable convenience in terms of distance 
+or travel time, see Figure~\ref{fig:visual_app}. We address the question: how can exposure-adjusted relative crash risk be estimated from measured bicycle volumes and integrated into context-aware
+routing? Our work makes the following contributions: (i) a reproducible pipeline for estimating exposure-adjusted relative crash risk at street and junction levels from measured cyclist volumes, 
+with support for context-conditional analysis; and (ii) a route-scoring method that integrates network-level risk into safety-aware routing under convenience constraints.
 
 The paper is organized as follows: we review related work in Section~\ref{sec:relatedw}, describe the data and methods in Section~\ref{sec:data_and_methods}, present the 
 results in Section~\ref{sec:results}, and discuss and conclude in Section~\ref{sec:conclusion}.
@@ -172,9 +172,9 @@ measurement campaigns improving predictions at new locations~\citep{Kaiser_Klein
 downstream safety analyses without modeling exposure~\citep{kaiser2025spatiotemporalgraphneuralnetwork}. At the network level, studies define risk as crashes per unit exposure on links and 
 address practical issues such as spatial snapping of crashes, allocating events near intersections, and integrating safety metrics into routing under convenience constraints~\citep{isprs-archives-XLIII-B4-2022-427-2022}. 
 Intersection safety is critical: case analyses document strong crash concentrations at junctions and stress controlling for exposure when comparing infrastructure types or locations~\citep{futuretransp1030037}. 
-Building on exposure-normalized analysis~\citep{Uijtdewilligen01092024}, the availability of measured volumes~\citep{Kaiser_Klein_Kaack_2025,kaiser2025spatiotemporalgraphneuralnetwork}, 
-and advances in safety-aware routing~\citep{isprs-archives-XLIII-B4-2022-427-2022}, we estimate crash risk for Berlin at street-segment and junction levels using 
-measured exposure, support context-conditional risk analysis, and propagate network-level risk to route-level scores.
+Building on exposure-normalized analysis~\citep{Uijtdewilligen01092024}, the availability of measured bicycle volumes~\citep{Kaiser_Klein_Kaack_2025,kaiser2025spatiotemporalgraphneuralnetwork}, 
+and advances in safety-aware routing~\citep{isprs-archives-XLIII-B4-2022-427-2022}, we estimate exposure-adjusted crash risk for Berlin at street-segment and junction levels, enable context-conditional
+risk analysis, and integrate network-level risk into routing decisions.
 
 \section{Data and Methods}\label{sec:data_and_methods}
 % In this section, describe \emph{what you did}. Roughly speaking, explain what data you worked with, how or from where it was collected, it's structure and size. Explain your analysis, and any specific choices you made in it. Depending on the nature of your project, you may focus more or less on certain aspects. If you collected data yourself, explain the collection process in detail. If you downloaded data from the net, show an exploratory analysis that builds intuition for the data, and shows that you know the data well. If you are doing a custom analysis, explain how it works and why it is the right choice. If you are using a standard tool, it may still help to briefly outline it. Cite relevant works. You can use the \verb|\citep| and \verb|\citet| commands for this purpose \citep{mackay2003information}.
@@ -194,7 +194,7 @@ aggregation, segments and months with zero measured exposure are identified. To 
 The resulting monthly panels at the segment and junction levels serve as inputs to all risk scoring and routing analyses.\footnote{Implementation details and hyperparameters at \url{https://github.com/ytobiaz/data_literacy}.}
 
 \subsection{Methods}\label{sec:methods}
-\paragraph{Empirical Bayes exposure-normalized risk.}
+\paragraph{Empirical Bayes exposure-normalized risk.}\todo{change this paragraph to relative-risk EB}
 For each street segment $s$ and month $t$, let $A_{s,t}$ denote the number of police-recorded bicycle crashes and $E_{s,t}$ the measured cyclist exposure. We model crash counts as
 \[
 A_{s,t}\mid \lambda_{s,t} \sim \text{Poisson}(E_{s,t}\lambda_{s,t}),
