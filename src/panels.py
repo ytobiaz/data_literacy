@@ -1,9 +1,12 @@
 from __future__ import annotations
 
 from typing import Mapping, Sequence
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import geopandas as gpd
+import matplotlib.pyplot as plt
 
 from .accidents import ACCIDENT_COLUMNS_EN
 
@@ -130,15 +133,22 @@ def merge_exposure_and_accidents(
     *,
     merge_keys: Sequence[str] = ("counter_name", "year", "month"),
     trip_col: str = "sum_strava_total_trip_count",
+    how: str = "outer",
 ) -> pd.DataFrame:
     """
     Merge exposure and accidents at segment×year×month.
 
-    Uses an OUTER merge so we can explicitly see:
-      - accident months with missing exposure rows
-      - exposure months with zero accidents
+    Args:
+        final_exposure_ym: Strava traffic exposure panel (segment × year × month)
+        accidents_agg_ym_rich: Aggregated accidents panel (segment × year × month)
+        merge_keys: Columns to merge on
+        trip_col: Name of trip count column
+        how: Type of merge ('left', 'right', 'outer', 'inner'). Default 'outer' shows:
+          - accident months with missing exposure rows
+          - exposure months with zero accidents
 
-    Downstream, you can filter to exposure>0 for modeling risk.
+    Returns:
+        Merged panel. Downstream, filter to exposure>0 for modeling risk.
     """
 
     merge_keys = list(merge_keys)
@@ -146,7 +156,7 @@ def merge_exposure_and_accidents(
     merged = final_exposure_ym.merge(
         accidents_agg_ym_rich,
         on=merge_keys,
-        how="outer",
+        how=how,
         validate="one_to_one",
     )
 
@@ -166,129 +176,291 @@ def merge_exposure_and_accidents(
     return merged
 
 
-def build_core_risk_panel(
-    merged_accidents_strava_ym: pd.DataFrame,
-    *,
+
+def plot_merged_panel_quality_overview(
+    merged_panel: pd.DataFrame,
+    segment_geometry: gpd.GeoDataFrame | None = None,
     trip_col: str = "sum_strava_total_trip_count",
-    sensor_col: str = "sum_count",
-) -> pd.DataFrame:
-    full = merged_accidents_strava_ym.copy()
-
-    key_cols = ["counter_name", "year", "month"]
-    segment_cols = [c for c in ["geometry"] if c in full.columns]
-    exposure_cols = [c for c in [trip_col, sensor_col] if c in full.columns]
-    acc_core_cols = [c for c in ["total_accidents"] if c in full.columns]
-
-    severity_cols = [
-        c
-        for c in full.columns
-        if c.startswith("acc_injury_severity_count_") or c.startswith("acc_injury_severity_share_")
-    ]
-
-    accident_type_cols = [
-        c
-        for c in full.columns
-        if c.startswith("acc_accident_type_count_") or c.startswith("acc_accident_type_share_")
-    ]
-
-    accident_kind_cols = [
-        c
-        for c in full.columns
-        if c.startswith("acc_accident_kind_count_") or c.startswith("acc_accident_kind_share_")
-    ]
-
-    light_cols = [
-        c
-        for c in full.columns
-        if c.startswith("acc_light_condition_count_") or c.startswith("acc_light_condition_share_")
-    ]
-
-    road_cols = [
-        c
-        for c in full.columns
-        if c.startswith("acc_road_condition_count_") or c.startswith("acc_road_condition_share_")
-    ]
-
-    weekday_type_cols = [
-        c
-        for c in full.columns
-        if c.startswith("acc_weekday_type_count_") or c.startswith("acc_weekday_type_share_")
-    ]
-
-    time_of_day_cols = [
-        c
-        for c in full.columns
-        if c.startswith("acc_time_of_day_count_") or c.startswith("acc_time_of_day_share_")
-    ]
-
-    cols_keep = (
-        key_cols
-        + segment_cols
-        + exposure_cols
-        + acc_core_cols
-        + severity_cols
-        + accident_type_cols
-        + accident_kind_cols
-        + light_cols
-        + road_cols
-        + weekday_type_cols
-        + time_of_day_cols
+    accident_col: str = "total_accidents",
+    figsize=(14, 10),
+    use_tueplots=True,
+    save_path: str | Path | None = None,
+) -> tuple:
+    """
+    Create comprehensive quality check visualization for merged accident-exposure panel.
+    
+    Creates a 2x2 grid with 4 diagnostic plots:
+    - Accidents vs Traffic Exposure scatter
+    - Segment Totals: Trips vs Accidents
+    - Distribution of accidents per segment by month (boxplot)
+    - Geospatial map of accidents (if geometry provided)
+    
+    Displays quality status inline.
+    
+    Parameters
+    ----------
+    merged_panel : DataFrame
+        Merged segment×year×month panel with traffic and accident data
+    segment_geometry : GeoDataFrame, optional
+        Segment geometries for mapping accidents, by default None
+    trip_col : str, optional
+        Name of trip count column, by default "sum_strava_total_trip_count"
+    accident_col : str, optional
+        Name of accident count column, by default "total_accidents"
+    figsize : tuple, optional
+        Figure size (width, height), by default (14, 10)
+    use_tueplots : bool, optional
+        Whether to use tueplots ICML2024 stylesheet, by default True
+    save_path : str | Path | None, optional
+        Path to save the figure, by default None
+    
+    Returns
+    -------
+    tuple
+        (fig, axes) matplotlib figure and axes objects
+    """
+    # Apply tueplots styling
+    if use_tueplots:
+        from tueplots import bundles
+        from tueplots.constants.color import palettes
+        plt.rcParams.update(bundles.icml2024(column="full", nrows=2, ncols=2))
+        colors = palettes.tue_plot
+    else:
+        colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b']
+    
+    main_color = colors[0]
+    accent_color = colors[1]
+    third_color = colors[2]
+    
+    # Create 2x2 grid
+    fig, axes = plt.subplots(2, 2, figsize=figsize)
+    axes_flat = axes.flatten()
+    
+    # ===== PLOT 1: Accident vs Exposure scatter =====
+    ax1 = axes_flat[0]
+    has_accidents = merged_panel[accident_col].notna()
+    ax1.scatter(
+        merged_panel[trip_col],
+        merged_panel.loc[has_accidents, accident_col],
+        alpha=0.5,
+        s=25,
+        color=accent_color,
+        edgecolors='none'
     )
-
-    seen: set[str] = set()
-    cols_keep = [c for c in cols_keep if not (c in seen or seen.add(c))]
-
-    core_panel = full[cols_keep].copy()
-
-    if trip_col in core_panel.columns:
-        core_panel["monthly_strava_trips"] = core_panel[trip_col]
-
-    if "total_accidents" in core_panel.columns and "monthly_strava_trips" in core_panel.columns:
-        denom = core_panel["monthly_strava_trips"].replace(0, np.nan)
-        core_panel["risk_accidents_per_trip"] = core_panel["total_accidents"] / denom
-        core_panel["risk_accidents_per_10k_trips"] = core_panel["risk_accidents_per_trip"] * 10_000
-
-    return core_panel
-
-
-def sanity_check_merge(
-    *,
-    merged_accidents_strava_ym: pd.DataFrame,
-    accidents_agg_ym_rich: pd.DataFrame,
-    final_exposure_ym: pd.DataFrame,
-    merge_keys: Sequence[str] = ("counter_name", "year", "month"),
-) -> dict[str, object]:
-    merge_keys = list(merge_keys)
-
-    exposure_duplicates = int(final_exposure_ym.duplicated(subset=merge_keys).sum())
-    if exposure_duplicates:
-        raise AssertionError(f"Found {exposure_duplicates} duplicate keys in Strava exposure table")
-
-    exposure_index = pd.MultiIndex.from_frame(final_exposure_ym[merge_keys]).unique()
-    accident_index = pd.MultiIndex.from_frame(accidents_agg_ym_rich[merge_keys]).unique()
-
-    segments_with_accidents = int(exposure_index.isin(accident_index).sum())
-    segments_without_accidents = int(len(exposure_index) - segments_with_accidents)
-
-    accidents_missing_mask = ~accident_index.isin(exposure_index)
-    missing_count = int(accidents_missing_mask.sum())
-
-    merged_total = (
-        float(merged_accidents_strava_ym["total_accidents"].sum())
-        if "total_accidents" in merged_accidents_strava_ym.columns
-        else float("nan")
+    ax1.set_title('Accidents vs Traffic Exposure', fontweight='bold', fontsize=14)
+    ax1.set_xlabel('Monthly Trips (log scale)', fontsize=13, fontweight='bold')
+    ax1.set_ylabel('Accident Count', fontsize=13, fontweight='bold')
+    ax1.set_xscale('log')
+    ax1.grid(True, alpha=0.3)
+    ax1.tick_params(labelsize=11)
+    
+    # ===== PLOT 2: Segment-level summary: trips vs accidents =====
+    ax2 = axes_flat[1]
+    seg_stats = merged_panel.groupby('counter_name').agg({
+        trip_col: 'sum',
+        accident_col: 'sum'
+    }).dropna()
+    ax2.scatter(
+        seg_stats[trip_col],
+        seg_stats[accident_col],
+        alpha=0.5,
+        s=25,
+        color=third_color,
+        edgecolors='none'
     )
-    source_total = (
-        float(accidents_agg_ym_rich["total_accidents"].sum())
-        if "total_accidents" in accidents_agg_ym_rich.columns
-        else float("nan")
-    )
+    ax2.set_title('Segment Totals: Trips vs Accidents', fontweight='bold', fontsize=14)
+    ax2.set_xlabel('Total Trips 2019-2023 (log scale)', fontsize=13, fontweight='bold')
+    ax2.set_ylabel('Total Accidents', fontsize=13, fontweight='bold')
+    ax2.set_xscale('log')
+    ax2.grid(True, alpha=0.3)
+    ax2.tick_params(labelsize=11)
+    
+    # ===== PLOT 3: Distribution of accidents per segment per month =====
+    ax3 = axes_flat[2]
+    
+    # Calculate all accidents per segment per month (including zeros)
+    all_acc_per_seg_month = []
+    for month in range(1, 13):
+        month_mask = merged_panel['month'] == month
+        acc_per_seg = merged_panel[month_mask].groupby('counter_name')[accident_col].sum()
+        # Include all segments (including those with 0 accidents)
+        all_acc_per_seg_month.extend(acc_per_seg.values)
+    
+    # Create histogram of accidents per segment per month
+    max_acc = int(max(all_acc_per_seg_month)) if all_acc_per_seg_month else 0
+    bins = range(0, max_acc + 2)
+    ax3.hist(all_acc_per_seg_month, bins=bins, color=main_color, edgecolor='black', linewidth=0.5)
+    
+    # Calculate statistics for legend
+    mean_acc = np.mean(all_acc_per_seg_month)
+    median_acc = np.median(all_acc_per_seg_month)
+    
+    # Add vertical lines for mean and median
+    ax3.axvline(mean_acc, color=accent_color, linestyle='--', linewidth=2, label=f'Mean: {mean_acc:.2f}')
+    ax3.axvline(median_acc, color=third_color, linestyle='--', linewidth=2, label=f'Median: {median_acc:.2f}')
+    
+    ax3.set_title('Distribution: Accidents per Segment per Month', fontweight='bold', fontsize=14)
+    ax3.set_xlabel('Accident Count (per Segment per Month)', fontsize=13, fontweight='bold')
+    ax3.set_ylabel('Frequency (Number of Observations)', fontsize=13, fontweight='bold')
+    ax3.grid(True, alpha=0.3, axis='y')
+    ax3.tick_params(labelsize=11)
+    ax3.legend(loc='upper right', fontsize=10)
+    
+    # ===== PLOT 4: Geospatial distribution of total accidents by segment =====
+    ax4 = axes_flat[3]
+    if segment_geometry is not None:
+        # Plot segment network
+        if isinstance(segment_geometry, gpd.GeoDataFrame):
+            segment_geometry.plot(ax=ax4, color='lightgray', linewidth=0.5, alpha=0.6)
+        
+        # Aggregate accidents by segment and visualize
+        seg_acc = merged_panel.groupby('counter_name')[accident_col].sum().reset_index()
+        seg_acc_geo = segment_geometry.merge(seg_acc, left_on='counter_name', right_on='counter_name', how='left')
+        
+        # Plot segments colored by accident count with colorbar
+        vmin = seg_acc_geo[accident_col].min()
+        vmax = seg_acc_geo[accident_col].max()
+        seg_acc_geo.plot(
+            ax=ax4,
+            column=accident_col,
+            cmap='YlOrRd',
+            linewidth=1.5,
+            alpha=0.8,
+            legend=True,
+            cax=None,
+            vmin=vmin,
+            vmax=vmax
+        )
+        ax4.set_title('Geospatial Distribution: Total Accidents by Segment', fontweight='bold', fontsize=14)
+        ax4.set_xlabel('Longitude', fontsize=13, fontweight='bold')
+        ax4.set_ylabel('Latitude', fontsize=13, fontweight='bold')
+        ax4.tick_params(labelsize=10)
+        ax4.ticklabel_format(style='plain', axis='both')
+        ax4.grid(True, alpha=0.2)
+    else:
+        # Show summary statistics if no geometry
+        summary_stats = merged_panel[[trip_col, accident_col]].describe()
+        ax4.axis('off')
+        ax4.text(0.1, 0.9, 'Summary Statistics', fontsize=14, fontweight='bold', transform=ax4.transAxes)
+        
+        stats_text = f"""
+{trip_col}:
+  Mean: {summary_stats.loc['mean', trip_col]:.0f}
+  Median: {merged_panel[trip_col].median():.0f}
+  Std: {summary_stats.loc['std', trip_col]:.0f}
 
-    return {
-        "segments_with_accidents": segments_with_accidents,
-        "segments_without_accidents": segments_without_accidents,
-        "accident_groups_missing_exposure": missing_count,
-        "merged_total_accidents": merged_total,
-        "source_total_accidents": source_total,
-        "lost_accidents_due_to_missing_exposure": source_total - merged_total if np.isfinite(source_total) and np.isfinite(merged_total) else None,
+{accident_col}:
+  Mean: {summary_stats.loc['mean', accident_col]:.2f}
+  Median: {merged_panel[accident_col].median():.0f}
+  Std: {summary_stats.loc['std', accident_col]:.2f}
+        """
+        ax4.text(0.1, 0.5, stats_text, fontsize=11, transform=ax4.transAxes, 
+                family='monospace', bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.5))
+    
+    plt.subplots_adjust(left=0.1, right=0.95, top=0.95, bottom=0.1, hspace=0.3, wspace=0.3)
+    
+    if save_path is not None:
+        plt.savefig(save_path, dpi=300, bbox_inches='tight')
+        print(f"Saved figure: {save_path}")
+    
+    plt.show()
+    
+    # Print quality report after visualization
+    _print_quality_checks(merged_panel, trip_col, accident_col)
+    
+    return fig, axes
+
+
+def _print_quality_checks(
+    merged_panel: pd.DataFrame,
+    trip_col: str = "sum_strava_total_trip_count",
+    accident_col: str = "total_accidents",
+) -> None:
+    """
+    Internal function to print quality check report.
+    Called automatically by plot_merged_panel_quality_overview.
+    """
+    quality_results = check_merged_panel_quality(merged_panel, trip_col, accident_col)
+    
+    print("\n" + "="*28 + "SUMMARY STATISTICS" + "="*28)
+    for check_name, result in quality_results.items():
+        print(f"\n[{result['status']}] {check_name}")
+        print(f"   {result['message']}")
+        print(f"   Value: {result['value']}")
+
+
+def check_merged_panel_quality(
+    merged_panel: pd.DataFrame,
+    trip_col: str = "sum_strava_total_trip_count",
+    accident_col: str = "total_accidents",
+) -> dict:
+    """
+    Comprehensive data quality checks for merged accident-exposure panel.
+    
+    Returns [PASS]/[FAIL] status for each validation criterion,
+    following the same pattern as raw data quality checks.
+    
+    Parameters
+    ----------
+    merged_panel : DataFrame
+        Merged segment×year×month panel
+    trip_col : str
+        Name of trip count column
+    accident_col : str
+        Name of accident count column
+    
+    Returns
+    -------
+    dict
+        Quality check results with status, message, and value for each check
+    """
+    checks = {}
+    
+    # 1. Temporal consistency: all segments should have all months
+    temporal_check = merged_panel.groupby('counter_name').apply(
+        lambda g: len(g) == merged_panel['year'].nunique() * 12
+    )
+    checks['temporal_consistency'] = {
+        'status': 'PASS' if temporal_check.all() else 'WARN',
+        'message': f'{temporal_check.sum()}/{len(temporal_check)} segments have complete temporal data',
+        'value': f'{(temporal_check.sum() / len(temporal_check) * 100):.1f}%'
     }
+    
+    # 2. Negative values check - show which columns have negatives
+    numeric_cols = merged_panel.select_dtypes(include=[np.number]).columns
+    cols_with_negatives = []
+    has_negatives = False
+    for col in numeric_cols:
+        if (merged_panel[col] < 0).any():
+            has_negatives = True
+            cols_with_negatives.append(col)
+    
+    negative_msg = 'No negative values in numeric columns' if not has_negatives else f'Found negative values in: {", ".join(cols_with_negatives)}'
+    checks['no_negative_values'] = {
+        'status': 'FAIL' if has_negatives else 'PASS',
+        'message': negative_msg,
+        'value': '0' if not has_negatives else 'Multiple'
+    }
+    
+    # 3. Data plausibility: accidents should not exceed trips
+    trip_col_name = 'sum_strava_total_trip_count'
+    accident_col_name = 'total_accidents'
+    
+    if trip_col_name in merged_panel.columns and accident_col_name in merged_panel.columns:
+        # Filter rows where both values are present
+        valid_mask = merged_panel[trip_col_name].notna() & merged_panel[accident_col_name].notna()
+        valid_data = merged_panel[valid_mask]
+        
+        if len(valid_data) > 0:
+            # Count rows where accidents > trips (implausible)
+            implausible = (valid_data[accident_col_name] > valid_data[trip_col_name]).sum()
+            implausible_pct = (implausible / len(valid_data)) * 100
+            
+            plausibility_msg = f'{implausible} rows ({implausible_pct:.2f}%) have more accidents than trips'
+            checks['plausibility_accidents_vs_trips'] = {
+                'status': 'PASS' if implausible == 0 else 'WARN' if implausible_pct < 1 else 'FAIL',
+                'message': plausibility_msg,
+                'value': f'{implausible_pct:.2f}%'
+            }
+    
+    return checks

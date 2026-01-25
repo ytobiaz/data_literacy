@@ -82,7 +82,7 @@ def load_segment_geometry(
 
 def plot_segment_quality_overview(
     segments_gdf,
-    figsize=(12, 12),
+    figsize=(6, 6),
     use_tueplots=True,
     save_path=None,
 ):
@@ -94,7 +94,7 @@ def plot_segment_quality_overview(
     segments_gdf : GeoDataFrame
         Road network segments with geometry, counter_name, latitude, longitude
     figsize : tuple, optional
-        Figure size (width, height), by default (16, 12)
+        Figure size (width, height), by default (6, 6)
     use_tueplots : bool, optional
         Whether to use tueplots ICML2024 stylesheet, by default True
     save_path : str | Path | None, optional
@@ -104,7 +104,7 @@ def plot_segment_quality_overview(
     if use_tueplots:
         from tueplots import bundles
         from tueplots.constants.color import palettes
-        plt.rcParams.update(bundles.icml2024(column="full", nrows=1, ncols=3))
+        plt.rcParams.update(bundles.icml2024(column="full", nrows=1, ncols=2))
         colors = palettes.tue_plot
     else:
         colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b']
@@ -112,31 +112,25 @@ def plot_segment_quality_overview(
     main_color = colors[0]
     accent_color = colors[1]
     
-    width = figsize[0]
-    figheight = width / 3
-    fig, axes = plt.subplots(1, 3, figsize=(width, figheight))
-    # Ensure axes is a flat array for 1x3 layout
-    if isinstance(axes, np.ndarray):
-        ax1, ax2, ax3 = axes.flatten()
-    else:
-        ax1 = axes
-        ax2 = None
-        ax3 = None
+    width = 8
+    figheight = width / 2
+    fig, axes = plt.subplots(1, 2, figsize=(width, figheight))
+    # Ensure axes is a flat array for 1x2 layout
+    ax1, ax2 = axes.flatten() if isinstance(axes, np.ndarray) else (axes[0], axes[1])
 
-    for _ax in (ax1, ax2, ax3):
+    for _ax in (ax1, ax2):
         if _ax is not None:
             _ax.set_box_aspect(1)
     
     # 1. Segment length distribution
-    # 1. Segment length distribution
     if 'geometry' in segments_gdf.columns:
         segment_lengths = segments_gdf.geometry.length
         ax1.hist(segment_lengths, bins=50, color=main_color, edgecolor='black', linewidth=0.5)
-        ax1.set_title('Segment Length Distribution', fontweight='bold', fontsize=13)
-        ax1.set_xlabel('Length (m)', fontsize=14, fontweight='bold')
-        ax1.set_ylabel('Count', fontsize=14, fontweight='bold')
+        ax1.set_title('Segment Length Distribution', fontweight='bold', fontsize=12)
+        ax1.set_xlabel('Length (m)', fontsize=11, fontweight='bold')
+        ax1.set_ylabel('Count', fontsize=11, fontweight='bold')
         ax1.grid(True, alpha=0.3, axis='y')
-        ax1.tick_params(labelsize=11)
+        ax1.tick_params(labelsize=10)
         # Add statistics
         median_len = segment_lengths.median()
         ax1.axvline(median_len, color=accent_color, linestyle='--', linewidth=2, 
@@ -146,20 +140,29 @@ def plot_segment_quality_overview(
         ax1.text(0.5, 0.5, 'geometry not available', ha='center', va='center', fontsize=11)
         ax1.set_title('Segment Length Distribution', fontweight='bold', fontsize=13)
     
-    # 2. Detailed street network map (central area)
-    # 2. Detailed street network map (central area)
+    # 2. Detailed street network map
     if 'geometry' in segments_gdf.columns and len(segments_gdf) > 0:
         try:
+            # Convert to WGS84 for proper lat/lon display if in projected CRS
+            if segments_gdf.crs and segments_gdf.crs.is_projected:
+                segments_display = segments_gdf.to_crs(epsg=4326)
+            else:
+                segments_display = segments_gdf
+            
             # Plot all segments with thin lines to show street network detail
-            segments_gdf.plot(ax=ax2, color=main_color, linewidth=0.8, alpha=0.7)
-            ax2.set_title('Street Network Detail', fontweight='bold', fontsize=13)
-            ax2.set_xlabel('Easting (m)', fontsize=11, fontweight='bold')
-            ax2.set_ylabel('Northing (m)', fontsize=11, fontweight='bold')
-            ax2.tick_params(labelsize=9)
-            ax2.ticklabel_format(style='scientific', axis='both', scilimits=(0,0))
-            ax2.set_aspect('equal')
+            segments_display.plot(ax=ax2, color=main_color, linewidth=0.8, alpha=0.7)
+            ax2.set_title('Street Network Detail', fontweight='bold', fontsize=12)
+            ax2.set_xlabel('Longitude', fontsize=11, fontweight='bold')
+            ax2.set_ylabel('Latitude', fontsize=11, fontweight='bold')
+            ax2.tick_params(labelsize=10)
+            # Format coordinates properly (e.g., 52.5 instead of 52.500000)
+            from matplotlib.ticker import FormatStrFormatter
+            ax2.xaxis.set_major_formatter(FormatStrFormatter('%.2f'))
+            ax2.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
+            # Use adjustable aspect ratio for geographic coordinates (lat/lon have different scales)
+            ax2.set_aspect('auto')
             ax2.grid(True, alpha=0.2, linestyle='--')
-            # Add count
+            # Add segment count annotation
             ax2.text(0.05, 0.95, f'n={len(segments_gdf):,}', transform=ax2.transAxes,
                     verticalalignment='top', fontsize=9,
                     bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
@@ -169,77 +172,22 @@ def plot_segment_quality_overview(
         ax2.text(0.5, 0.5, 'geometry not available', ha='center', va='center', fontsize=11)
         ax2.set_title('Street Network Detail', fontweight='bold', fontsize=13)
     
-    # 3. Coordinate density heatmap (latitude/longitude) with street network overlay
-    if 'latitude' in segments_gdf.columns and 'longitude' in segments_gdf.columns:
-        valid_mask = segments_gdf['latitude'].notna() & segments_gdf['longitude'].notna()
-        lat_valid = segments_gdf.loc[valid_mask, 'latitude']
-        lon_valid = segments_gdf.loc[valid_mask, 'longitude']
-        
-        if len(lat_valid) > 0:
-            # Build heatmap from lat/lon
-            hist, xedges, yedges = np.histogram2d(lon_valid, lat_valid, bins=30)
-            im = ax3.imshow(hist.T, origin='lower', 
-                          extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]],
-                          cmap='YlOrRd', aspect='auto', interpolation='bilinear')
-            
-            # Overlay street network lines for clarity
-            for idx, row in segments_gdf.iterrows():
-                if 'geometry' in segments_gdf.columns and row['geometry'] is not None:
-                    try:
-                        geom = row['geometry']
-                        if hasattr(geom, 'coords'):
-                            coords = list(geom.coords)
-                            lons = [pt[1] if isinstance(pt, tuple) and len(pt) > 1 else getattr(pt, 'x', None) for pt in coords]
-                            lats = [pt[0] if isinstance(pt, tuple) and len(pt) > 0 else getattr(pt, 'y', None) for pt in coords]
-                            # Try to extract lon/lat from projected coords (using segment_gdf lat/lon if available)
-                            if 'latitude' in segments_gdf.columns and 'longitude' in segments_gdf.columns:
-                                if row['latitude'] is not None and row['longitude'] is not None:
-                                    # Use only the segment's representative lat/lon for simplicity
-                                    pass
-                    except:
-                        pass
-            
-            # Simpler approach: overlay segment endpoints or a scatter of segment coords
-            segment_coords_lon = []
-            segment_coords_lat = []
-            for idx, row in segments_gdf.iterrows():
-                if row['longitude'] is not None and row['latitude'] is not None:
-                    segment_coords_lon.append(row['longitude'])
-                    segment_coords_lat.append(row['latitude'])
-            
-            if len(segment_coords_lon) > 0:
-                ax3.scatter(segment_coords_lon, segment_coords_lat, 
-                          s=1, color='darkred', alpha=0.3, label='Segment points')
-            
-            ax3.set_title('Segment Coordinate Density with Network', fontweight='bold', fontsize=13)
-            ax3.set_xlabel('Longitude', fontsize=11, fontweight='bold')
-            ax3.set_ylabel('Latitude', fontsize=11, fontweight='bold')
-            ax3.tick_params(labelsize=9)
-            cbar = colorbar(im, ax=ax3)
-            cbar.set_label('Count', fontsize=10)
-            cbar.ax.tick_params(labelsize=9)
-        else:
-            ax3.text(0.5, 0.5, 'No valid coordinates', ha='center', va='center', fontsize=11)
-    else:
-        ax3.text(0.5, 0.5, 'Coordinates not available', ha='center', va='center', fontsize=11)
-        ax3.set_title('Segment Coordinate Density with Network', fontweight='bold', fontsize=13)
-    
-    # Removed bottom row plots (latitude, complexity, longitude) per request
+    # Removed long segments map per request
     
     # Store validation results for summary (not plotted)
     validation_results = {}
     
-    # Test 1: All geometries valid
+    # Validation Test 1: All geometries valid
     if 'geometry' in segments_gdf.columns:
         invalid_geom = (~segments_gdf.geometry.is_valid).sum()
         validation_results['Valid Geometry'] = (invalid_geom == 0, f'All geometries are valid (invalid: {invalid_geom})')
     
-    # Test 2: No empty geometries
+    # Validation Test 2: No empty geometries
     if 'geometry' in segments_gdf.columns:
         empty_geom = segments_gdf.geometry.is_empty.sum()
         validation_results['No Empty Geometry'] = (empty_geom == 0, f'No empty geometries (empty: {empty_geom})')
     
-    # Test 3: Coordinate range check (Berlin area)
+    # Validation Test 3: Coordinate range check (Berlin area)
     if 'latitude' in segments_gdf.columns and 'longitude' in segments_gdf.columns:
         lat_valid = segments_gdf['latitude'].notna()
         lon_valid = segments_gdf['longitude'].notna()
@@ -250,14 +198,14 @@ def plot_segment_quality_overview(
         validation_results['Coordinate Range (Berlin)'] = (lat_range_ok and lon_range_ok, 
                                                            f'Coordinates within Berlin bounds (lat: 52.3-52.7, lon: 13.0-13.8)')
     
-    # Test 4: No duplicate segment names
+    # Validation Test 4: No duplicate segment names
     if 'counter_name' in segments_gdf.columns:
         n_segments = len(segments_gdf)
         n_unique = segments_gdf['counter_name'].nunique()
         validation_results['Unique Segment IDs'] = (n_segments == n_unique, 
                                                     f'All segment IDs are unique (total: {n_segments}, unique: {n_unique})')
     
-    # Test 5: Reasonable segment lengths (not too short/long)
+    # Validation Test 5: Reasonable segment lengths (not too short/long)
     if 'geometry' in segments_gdf.columns:
         lengths = segments_gdf.geometry.length
         too_short = (lengths < 1).sum()
@@ -277,9 +225,7 @@ def plot_segment_quality_overview(
     plt.show()
     
     # Print summary statistics
-    print("\n" + "="*70)
-    print("SUMMARY STATISTICS")
-    print("="*70)
+    print("\n" + "="*28 + "SUMMARY STATISTICS" + "="*28)
     print(f"Total segments: {len(segments_gdf):,}")
     print(f"Number of columns: {len(segments_gdf.columns)}")
     
@@ -301,4 +247,3 @@ def plot_segment_quality_overview(
     else:
         print(f"\nNo missing values detected!")
     
-    print("="*70)
