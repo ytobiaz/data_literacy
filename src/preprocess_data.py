@@ -29,7 +29,7 @@ def preprocess_accident_data():
     print(f"Loaded {len(csv_files)} files -> combined shape: {df_all.shape}")
 
     # drop columns that are not relevant or don't contain information
-    df_all.drop(columns=["OBJECTID", "UIDENTSTLA", "OBJECTID_1", "UIDENTSTLAE", "OID_", "FID", "LICHT", "PLST"], inplace=True)
+    df_all.drop(columns=["OBJECTID", "UIDENTSTLA", "OBJECTID_1", "UIDENTSTLAE", "OID_", "FID", "LICHT", "PLST"], inplace=True, errors="ignore") # somehow had to add erros="ignore", even though the code worked before
     print(f"Dropped irrelevant columns -> shape: {df_all.shape}")
 
     # drop all accidents that did not involve bicycles (column 'IstRad' != 1)

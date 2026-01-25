@@ -186,7 +186,7 @@ The street network is represented as polyline segments with associated monthly c
 with 33{,}181 recorded bicycle crashes. At monthly resolution the data are sparse: in a typical month fewer than 5\% of segments and about 3\% of junctions record at least one crash, and 
 some periods include segments with zero measured exposure. This sparsity motivates the exposure-normalized risk estimation and small-count stabilization described in Section~\ref{sec:methods}.
 
-\paragraph{Preprocessing.}
+\paragraph{Preprocessing.}\todo{adjust or drop sentence regarding segments with zero measured exposure} 
 To enable network-scale analysis, all layers are harmonized to a common street-network topology and a projected coordinate reference system. Crash locations are matched to segments using 
 nearest-segment assignment. To capture the concentration of crashes at intersections, we identify junctions as nodes where at least three segments meet; crashes within a fixed radius are 
 assigned to the nearest junction, and junction exposure is computed from the exposures of incident segments. Matched crashes and exposures are aggregated to monthly resolution. During 
