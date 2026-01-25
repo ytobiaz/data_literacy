@@ -56,58 +56,6 @@ def column_stability_summary(df: pd.DataFrame, *, group_col: str = "counter_name
     return summary_df.sort_values("segments_varying", ascending=True).reset_index(drop=True)
 
 
-def categorize_strava_features(summary_df: pd.DataFrame, df: pd.DataFrame) -> pd.DataFrame:
-    """Categorize Strava columns into feature groups and compute statistics.
-    
-    Parameters
-    ----------
-    summary_df : pd.DataFrame
-        Output from column_stability_summary with columns: column, segments_total, segments_varying
-    df : pd.DataFrame
-        Original Strava dataframe to extract dtypes
-        
-    Returns
-    -------
-    pd.DataFrame
-        Summary statistics by feature category with columns: total_cols, constant_cols, varying_cols, percent_constant
-    """
-    
-    def _categorize_column(col_name: str) -> str:
-        """Assign column to a feature category based on name."""
-        col_lower = col_name.lower()
-        if any(x in col_lower for x in ['street', 'lane', 'speed', 'maxspeed', 'road', 'surface', 'width']):
-            return 'Infrastructure'
-        elif any(x in col_lower for x in ['degree', 'betweenness', 'closeness']):
-            return 'Connectivity'
-        elif any(x in col_lower for x in ['strava', 'count', 'trip']):
-            return 'Strava'
-        elif any(x in col_lower for x in ['weather', 'temp', 'rain', 'sunshine', 'wind']):
-            return 'Weather'
-        elif any(x in col_lower for x in ['motorized', 'car', 'vehicle']):
-            return 'Motorized'
-        elif any(x in col_lower for x in ['population', 'income', 'unemployment']):
-            return 'Socioeconomic'
-        else:
-            return 'Other'
-    
-    # Add category column
-    summary_with_cat = summary_df.copy()
-    summary_with_cat['category'] = summary_with_cat['column'].apply(_categorize_column)
-    
-    # Aggregate by category
-    category_stats = summary_with_cat.groupby('category').agg(
-        total_cols=('column', 'count'),
-        constant_cols=('segments_varying', lambda s: (s == 0).sum()),
-        varying_cols=('segments_varying', lambda s: (s > 0).sum()),
-    )
-    
-    category_stats['percent_constant'] = (
-        category_stats['constant_cols'] / category_stats['total_cols'] * 100
-    ).round(1)
-    
-    return category_stats.sort_values('percent_constant', ascending=False)
-
-
 def build_exposure_panel_segment_year_month(
     strava_berlin_data: pd.DataFrame,
     *,
@@ -240,7 +188,7 @@ def build_exposure_panel_segment_year_month(
 
 def plot_strava_quality_overview(
     strava_df,
-    figsize=(16, 8.4),
+    figsize=(12, 8),
     use_tueplots=True,
     save_path=None,
 ):
@@ -262,7 +210,7 @@ def plot_strava_quality_overview(
     if use_tueplots:
         from tueplots import bundles
         from tueplots.constants.color import palettes
-        plt.rcParams.update(bundles.icml2024(column="full", nrows=2, ncols=3))
+        plt.rcParams.update(bundles.icml2024(column="full", nrows=2, ncols=2))
         colors = palettes.tue_plot
     else:
         colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b']
@@ -270,7 +218,7 @@ def plot_strava_quality_overview(
     main_color = colors[0]
     accent_color = colors[1]
     
-    fig, axes = plt.subplots(2, 3, figsize=figsize)
+    fig, axes = plt.subplots(2, 2, figsize=figsize)
     
     # 1. Temporal coverage - Records per month (with outlier labels)
     ax1 = axes[0, 0]
@@ -346,36 +294,8 @@ def plot_strava_quality_overview(
         ax2.text(0.5, 0.5, 'date or strava_total_trip_count not available', ha='center', va='center', fontsize=11)
         ax2.set_title('Total Trips per Month', fontweight='bold', fontsize=13)
     
-    # 3. Segment coverage over time
-    ax3 = axes[0, 2]
-    if 'date' in strava_df.columns and 'counter_name' in strava_df.columns:
-        dates = pd.to_datetime(strava_df['date'], errors='coerce')
-        df_temp = pd.DataFrame({'date': dates, 'counter_name': strava_df['counter_name']})
-        df_temp = df_temp.dropna(subset=['date'])
-        df_temp['year_month'] = df_temp['date'].dt.to_period('M')
-        
-        if len(df_temp) > 0:
-            segment_counts = df_temp.groupby('year_month')['counter_name'].nunique()
-            ax3.plot(segment_counts.index.astype(str), segment_counts.values, 
-                    color=main_color, linewidth=2, marker='o', markersize=3)
-            ax3.set_title('Unique Segments per Month', fontweight='bold', fontsize=13)
-            ax3.set_xlabel('Year-Month', fontsize=11, fontweight='bold')
-            ax3.set_ylabel('Unique Segments', fontsize=14, fontweight='bold')
-            ax3.tick_params(labelsize=9, axis='x', rotation=45)
-            ax3.tick_params(labelsize=11, axis='y')
-            ax3.grid(True, alpha=0.3, axis='y')
-            # Show every 6th label
-            xticks = ax3.get_xticks()
-            if len(xticks) > 12:
-                ax3.set_xticks(xticks[::6])
-        else:
-            ax3.text(0.5, 0.5, 'No valid data', ha='center', va='center', fontsize=11)
-    else:
-        ax3.text(0.5, 0.5, 'date or counter_name not available', ha='center', va='center', fontsize=11)
-        ax3.set_title('Segment Coverage', fontweight='bold', fontsize=13)
-    
-    # 4. Traffic distribution across segments (histogram including zeros)
-    ax4 = axes[1, 0]
+    # 3. Traffic distribution across segments (histogram including zeros)
+    ax3 = axes[1, 0]
     if 'counter_name' in strava_df.columns and 'strava_total_trip_count' in strava_df.columns:
         df_temp = strava_df[['counter_name', 'strava_total_trip_count']].copy()
         # Include segments with missing trip counts as zero
@@ -387,13 +307,13 @@ def plot_strava_quality_overview(
             
             if len(segment_traffic) > 0:
                 # Create histogram
-                ax4.hist(segment_traffic.values, bins=50, color=main_color, 
+                ax3.hist(segment_traffic.values, bins=50, color=main_color, 
                         edgecolor='black', linewidth=0.5)
-                ax4.set_title('Segment Traffic Distribution', fontweight='bold', fontsize=13)
-                ax4.set_xlabel('Total Trips per Segment', fontsize=14, fontweight='bold')
-                ax4.set_ylabel('Number of Segments', fontsize=14, fontweight='bold')
-                ax4.tick_params(labelsize=11)
-                ax4.grid(True, alpha=0.3, axis='y')
+                ax3.set_title('Segment Traffic Distribution', fontweight='bold', fontsize=13)
+                ax3.set_xlabel('Total Trips per Segment', fontsize=14, fontweight='bold')
+                ax3.set_ylabel('Number of Segments', fontsize=14, fontweight='bold')
+                ax3.tick_params(labelsize=11)
+                ax3.grid(True, alpha=0.3, axis='y')
                 
                 # Add statistics
                 zeros = (segment_traffic == 0).sum()
@@ -401,60 +321,23 @@ def plot_strava_quality_overview(
                 zero_pct = zeros / total_segments * 100
                 median = segment_traffic.median()
                 mean = segment_traffic.mean()
-                ax4.text(0.95, 0.95, 
-                        f'Zero traffic: {zeros}/{total_segments} ({zero_pct:.1f}%)\n'
-                        f'Median: {median:.0f}\n'
-                        f'Mean: {mean:.0f}', 
-                        transform=ax4.transAxes, ha='right', va='top', fontsize=9,
-                        bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
+                ax3.text(0.98, 0.97, 
+                        f'Zero traffic: {zeros:,} ({zero_pct:5.1f}%)\n'
+                        f'Median: {median:>8.0f}\n'
+                        f'Mean:   {mean:>8.0f}', 
+                        transform=ax3.transAxes, ha='right', va='top', fontsize=8,
+                        family='monospace',
+                        bbox=dict(boxstyle='round', facecolor='white', alpha=0.85))
             else:
-                ax4.text(0.5, 0.5, 'No segment data', ha='center', va='center', fontsize=11)
+                ax3.text(0.5, 0.5, 'No segment data', ha='center', va='center', fontsize=11)
         else:
-            ax4.text(0.5, 0.5, 'No valid data', ha='center', va='center', fontsize=11)
+            ax3.text(0.5, 0.5, 'No valid data', ha='center', va='center', fontsize=11)
     else:
-        ax4.text(0.5, 0.5, 'counter_name or trip_count not available', ha='center', va='center', fontsize=11)
-        ax4.set_title('Segment Traffic Distribution', fontweight='bold', fontsize=13)
+        ax3.text(0.5, 0.5, 'counter_name or trip_count not available', ha='center', va='center', fontsize=11)
+        ax3.set_title('Segment Traffic Distribution', fontweight='bold', fontsize=13)
     
-    # 5. Segment-level outliers (box plot)
-    ax5 = axes[1, 1]
-    if 'counter_name' in strava_df.columns and 'strava_total_trip_count' in strava_df.columns:
-        df_temp = strava_df[['counter_name', 'strava_total_trip_count']].copy()
-        df_temp['strava_total_trip_count'] = df_temp['strava_total_trip_count'].fillna(0)
-        
-        if len(df_temp) > 0:
-            segment_traffic = df_temp.groupby('counter_name')['strava_total_trip_count'].sum()
-            
-            if len(segment_traffic) > 0:
-                bp = ax5.boxplot([segment_traffic.values], vert=False, widths=0.5,
-                                 patch_artist=True,
-                                 boxprops=dict(facecolor=main_color, alpha=0.7),
-                                 medianprops=dict(color='red', linewidth=2),
-                                 whiskerprops=dict(color=main_color, linewidth=1.5),
-                                 capprops=dict(color=main_color, linewidth=1.5))
-                ax5.set_title('Segment Traffic Outliers', fontweight='bold', fontsize=13)
-                ax5.set_xlabel('Total Trips per Segment', fontsize=14, fontweight='bold')
-                ax5.set_yticks([])
-                ax5.tick_params(labelsize=11)
-                ax5.grid(True, alpha=0.3, axis='x')
-                
-                # Add outlier count
-                Q1 = segment_traffic.quantile(0.25)
-                Q3 = segment_traffic.quantile(0.75)
-                IQR = Q3 - Q1
-                outliers = segment_traffic[(segment_traffic < Q1 - 1.5*IQR) | (segment_traffic > Q3 + 1.5*IQR)]
-                ax5.text(0.95, 0.95, f'Outliers: {len(outliers)}/{len(segment_traffic)}', 
-                        transform=ax5.transAxes, ha='right', va='top', fontsize=9,
-                        bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
-            else:
-                ax5.text(0.5, 0.5, 'No segment data', ha='center', va='center', fontsize=11)
-        else:
-            ax5.text(0.5, 0.5, 'No valid data', ha='center', va='center', fontsize=11)
-    else:
-        ax5.text(0.5, 0.5, 'Required columns not available', ha='center', va='center', fontsize=11)
-        ax5.set_title('Segment Traffic Outliers', fontweight='bold', fontsize=13)
-    
-    # 6. Trip count temporal outliers
-    ax6 = axes[1, 2]
+    # 4. Trip count temporal outliers
+    ax4 = axes[1, 1]
     if 'date' in strava_df.columns and 'strava_total_trip_count' in strava_df.columns:
         dates = pd.to_datetime(strava_df['date'], errors='coerce')
         df_temp = pd.DataFrame({'date': dates, 'trips': strava_df['strava_total_trip_count']})
@@ -473,31 +356,28 @@ def plot_strava_quality_overview(
                 upper_bound = Q3 + 1.5 * IQR
                 
                 # Plot
-                ax6.plot(daily_trips.index, daily_trips.values, color=main_color, 
+                ax4.plot(daily_trips.index, daily_trips.values, color=main_color, 
                         linewidth=0.5, alpha=0.5)
                 
-                # Highlight outliers
-                outliers = daily_trips[(daily_trips < lower_bound) | (daily_trips > upper_bound)]
-                ax6.scatter(outliers.index, outliers.values, color='red', s=20, 
-                           alpha=0.7, label=f'Outliers ({len(outliers)})')
+                # Highlight top 5 outliers
+                outliers = daily_trips[(daily_trips < lower_bound) | (daily_trips > upper_bound)].sort_values(ascending=False).head(5)
+                ax4.scatter(outliers.index, outliers.values, color='red', s=30, 
+                           alpha=0.7, label=f'Top 5')
                 
-                ax6.axhline(y=upper_bound, color='red', linestyle='--', linewidth=1, alpha=0.5)
-                ax6.axhline(y=lower_bound, color='red', linestyle='--', linewidth=1, alpha=0.5)
-                
-                ax6.set_title('Daily Trip Count Outliers', fontweight='bold', fontsize=13)
-                ax6.set_xlabel('Date', fontsize=11, fontweight='bold')
-                ax6.set_ylabel('Total Daily Trips', fontsize=14, fontweight='bold')
-                ax6.tick_params(labelsize=9, axis='x', rotation=45)
-                ax6.tick_params(labelsize=11, axis='y')
-                ax6.grid(True, alpha=0.3, axis='y')
-                ax6.legend(loc='upper right', fontsize=8)
+                ax4.set_title('Daily Trip Count', fontweight='bold', fontsize=13)
+                ax4.set_xlabel('Date', fontsize=11, fontweight='bold')
+                ax4.set_ylabel('Total Daily Trips', fontsize=14, fontweight='bold')
+                ax4.tick_params(labelsize=9, axis='x', rotation=45)
+                ax4.tick_params(labelsize=11, axis='y')
+                ax4.grid(True, alpha=0.3, axis='y')
+                ax4.legend(loc='upper left', fontsize=8)
             else:
-                ax6.text(0.5, 0.5, 'No daily data', ha='center', va='center', fontsize=11)
+                ax4.text(0.5, 0.5, 'No daily data', ha='center', va='center', fontsize=11)
         else:
-            ax6.text(0.5, 0.5, 'No valid data', ha='center', va='center', fontsize=11)
+            ax4.text(0.5, 0.5, 'No valid data', ha='center', va='center', fontsize=11)
     else:
-        ax6.text(0.5, 0.5, 'date or trip_count not available', ha='center', va='center', fontsize=11)
-        ax6.set_title('Daily Trip Count Outliers', fontweight='bold', fontsize=13)
+        ax4.text(0.5, 0.5, 'date or trip_count not available', ha='center', va='center', fontsize=11)
+        ax4.set_title('Daily Trip Count Outliers', fontweight='bold', fontsize=13)
     
     # Adjust layout
     fig.subplots_adjust(hspace=0.4, wspace=0.35)
@@ -529,15 +409,8 @@ def plot_strava_quality_overview(
                 'No valid dates found'
             )
     
-    # Test 2: Required columns present
-    required_cols = ['counter_name', 'date', 'strava_total_trip_count', 'latitude', 'longitude']
-    missing_cols = [col for col in required_cols if col not in strava_df.columns]
-    validation_results['Required Columns Present'] = (
-        len(missing_cols) == 0,
-        f'All required columns present' if len(missing_cols) == 0 else f'Missing columns: {missing_cols}'
-    )
     
-    # Test 3: No duplicate records (counter_name + date)
+    # Test 2: No duplicate records (counter_name + date)
     if 'counter_name' in strava_df.columns and 'date' in strava_df.columns:
         duplicates = strava_df.duplicated(subset=['counter_name', 'date'], keep=False).sum()
         validation_results['No Duplicate Records (segment+date)'] = (
@@ -545,15 +418,32 @@ def plot_strava_quality_overview(
             f'Unique records by segment+date' if duplicates == 0 else f'Duplicate records: {duplicates:,}'
         )
     
-    # Test 4: Positive trip counts
+    # Test 4: Non-negative trip counts
     if 'strava_total_trip_count' in strava_df.columns:
         trip_counts = strava_df['strava_total_trip_count'].dropna()
         if len(trip_counts) > 0:
             negative_counts = (trip_counts < 0).sum()
+            neg_cols_with_negs = []
+            if negative_counts > 0:
+                neg_cols_with_negs = ['strava_total_trip_count']
             validation_results['Non-negative Trip Counts'] = (
                 negative_counts == 0,
-                f'All trip counts non-negative' if negative_counts == 0 else f'Negative trip counts: {negative_counts:,}'
+                f'All trip counts non-negative' if negative_counts == 0 else f'Negative trip counts: {negative_counts:,} in columns: {", ".join(neg_cols_with_negs)}'
             )
+    
+    # Test 4b: Segments with zero total traffic (should have no zero-traffic segments)
+    if 'counter_name' in strava_df.columns and 'strava_total_trip_count' in strava_df.columns:
+        df_temp = strava_df[['counter_name', 'strava_total_trip_count']].copy()
+        df_temp['strava_total_trip_count'] = df_temp['strava_total_trip_count'].fillna(0)
+        segment_traffic = df_temp.groupby('counter_name')['strava_total_trip_count'].sum()
+        zero_segments = (segment_traffic == 0).sum()
+        zero_segment_pct = zero_segments / len(segment_traffic) * 100
+        # Should have zero segments with zero traffic
+        zero_traffic_ok = zero_segments == 0
+        validation_results['No Segments with Zero Traffic'] = (
+            zero_traffic_ok,
+            f'Zero traffic found in {zero_segments} segments ({zero_segment_pct:.1f}%)' if zero_segments > 0 else 'No segments with zero traffic'
+        )
     
     # Test 5: Segment coverage consistency
     if 'counter_name' in strava_df.columns:
@@ -567,99 +457,47 @@ def plot_strava_quality_overview(
             f'{n_unique_segments:,} unique segments, avg {avg_records_per_segment:.0f} records/segment'
         )
     
-    # Test 6: Segment-level outliers check
-    if 'counter_name' in strava_df.columns and 'strava_total_trip_count' in strava_df.columns:
-        df_temp = strava_df[['counter_name', 'strava_total_trip_count']].copy()
-        df_temp['strava_total_trip_count'] = df_temp['strava_total_trip_count'].fillna(0)
-        segment_traffic = df_temp.groupby('counter_name')['strava_total_trip_count'].sum()
-        
-        if len(segment_traffic) > 0:
-            Q1 = segment_traffic.quantile(0.25)
-            Q3 = segment_traffic.quantile(0.75)
-            IQR = Q3 - Q1
-            outliers = segment_traffic[(segment_traffic < Q1 - 1.5*IQR) | (segment_traffic > Q3 + 1.5*IQR)]
-            outlier_pct = len(outliers) / len(segment_traffic) * 100
-            # Outliers should be less than 10% of segments
-            outliers_ok = outlier_pct < 10
-            validation_results['Segment Traffic Outliers (<10%)'] = (
-                outliers_ok,
-                f'{len(outliers)} outliers ({outlier_pct:.1f}% of {len(segment_traffic)} segments)'
-            )
-    
-    # Test 7: Temporal gaps check
+    # Test 7: Temporal coverage and gaps check
     if 'date' in strava_df.columns:
         dates = pd.to_datetime(strava_df['date'], errors='coerce')
         valid_dates = dates.dropna()
         
         if len(valid_dates) > 0:
-            date_range = pd.date_range(valid_dates.min(), valid_dates.max(), freq='D')
+            min_date = valid_dates.min()
+            max_date = valid_dates.max()
+            date_range = pd.date_range(min_date, max_date, freq='D')
             daily_counts = valid_dates.value_counts()
             gaps = [d for d in date_range if d not in daily_counts.index]
             gap_pct = len(gaps) / len(date_range) * 100
             # Less than 5% missing days is acceptable
             gaps_ok = gap_pct < 5
-            validation_results['Temporal Coverage Gaps (<5%)'] = (
+            validation_results['Temporal Coverage'] = (
                 gaps_ok,
-                f'{len(gaps)} missing days ({gap_pct:.1f}% of {len(date_range)} days)'
+                f'{min_date.date()} to {max_date.date()}, {len(gaps)} missing days ({gap_pct:.1f}% of {len(date_range)})'
             )
     
-    # Test 8: Missing data in key columns
-    key_columns = ['date', 'counter_name', 'strava_total_trip_count']
-    available_cols = [col for col in key_columns if col in strava_df.columns]
-    
-    if len(available_cols) > 0:
-        max_missing_pct = 0
-        max_missing_col = None
-        for col in available_cols:
-            missing_pct = strava_df[col].isna().sum() / len(strava_df) * 100
-            if missing_pct > max_missing_pct:
-                max_missing_pct = missing_pct
-                max_missing_col = col
-        
-        # Key columns should have less than 10% missing
-        missing_ok = max_missing_pct < 10
-        validation_results['Key Columns Missing Data (<10%)'] = (
-            missing_ok,
-            f'Max missing: {max_missing_pct:.1f}% in {max_missing_col}' if max_missing_col else 'No missing data'
+    # Test 8: Missing values check in coordinates
+    if 'latitude' in strava_df.columns and 'longitude' in strava_df.columns:
+        lat_missing = strava_df['latitude'].isna().sum()
+        lon_missing = strava_df['longitude'].isna().sum()
+        coord_missing_ok = (lat_missing == 0) and (lon_missing == 0)
+        coord_desc = 'All coordinates present' if coord_missing_ok else f'Missing: latitude={lat_missing}, longitude={lon_missing}'
+        validation_results['Missing Values in Coordinates'] = (
+            coord_missing_ok,
+            coord_desc
         )
     
-    # Test 9: Daily trip count outliers
-    if 'date' in strava_df.columns and 'strava_total_trip_count' in strava_df.columns:
-        dates = pd.to_datetime(strava_df['date'], errors='coerce')
-        df_temp = pd.DataFrame({'date': dates, 'trips': strava_df['strava_total_trip_count']})
-        df_temp = df_temp.dropna(subset=['date', 'trips'])
-        
-        if len(df_temp) > 0:
-            daily_trips = df_temp.groupby('date')['trips'].sum()
-            
-            if len(daily_trips) > 0:
-                Q1 = daily_trips.quantile(0.25)
-                Q3 = daily_trips.quantile(0.75)
-                IQR = Q3 - Q1
-                outliers = daily_trips[(daily_trips < Q1 - 1.5*IQR) | (daily_trips > Q3 + 1.5*IQR)]
-                outlier_pct = len(outliers) / len(daily_trips) * 100
-                # Less than 5% daily outliers is acceptable
-                outliers_ok = outlier_pct < 5
-                validation_results['Daily Trip Count Outliers (<5%)'] = (
-                    outliers_ok,
-                    f'{len(outliers)} outlier days ({outlier_pct:.1f}% of {len(daily_trips)} days)'
-                )
-    
     # Print summary statistics
-    print("\n" + "="*70)
-    print("SUMMARY STATISTICS - STRAVA EXPOSURE DATA")
-    print("="*70)
+    print("\n" + "="*21 + " SUMMARY STATISTICS " + "="*21)
     print(f"Total records: {len(strava_df):,}")
     print(f"Number of columns: {len(strava_df.columns)}")
     
     # Data Quality Checks
-    print("\n" + "-"*70)
-    print("DATA QUALITY CHECKS")
-    print("-"*70)
+    print("\nData Quality Checks:")
     for test_name, (result, description) in validation_results.items():
-        status = 'PASS' if result else 'FAIL'
-        print(f"\n[{status}] {test_name}")
-        print(f"  Description: {description}")
+        status = '[PASS]' if result else '[FAIL]'
+        print(f"{status} {test_name}")
+        print(f"  {description}")
     
     # Unique segments
     if 'counter_name' in strava_df.columns:
@@ -703,19 +541,6 @@ def plot_strava_quality_overview(
             print(f"  - Max: {trip_counts.max():.1f}")
             print(f"  - Total trips: {trip_counts.sum():,.0f}")
     
-    # Missing values
-    missing_by_col = strava_df.isnull().sum()
-    missing_by_col = missing_by_col[missing_by_col > 0].sort_values(ascending=False)
-    
-    if len(missing_by_col) > 0:
-        print(f"\nMissing values by column (top 10):")
-        for col, count in list(missing_by_col.items())[:10]:
-            pct = count / len(strava_df) * 100
-            print(f"  {col}: {count:,} ({pct:.1f}%)")
-    else:
-        print(f"\nNo missing values detected!")
-    
-    print("="*70)
 
 
 def get_daily_outlier_days(strava_df):
@@ -774,5 +599,110 @@ def get_daily_outlier_days(strava_df):
         'Type': ['High' if x > upper_bound else 'Low' for x in outlier_days.values]
     }).reset_index(drop=True)
     
-    return result
+    return result  
+
+
+def filter_zero_traffic_years(exposure_panel: pd.DataFrame, trip_col: str = 'sum_strava_total_trip_count') -> pd.DataFrame:
+    """Remove segments with zero traffic in any year.
+    
+    Ensures temporal consistency: each segment must have at least some traffic in every year
+    it appears in the dataset. This avoids confounding exposure variation with years where
+    a segment was not monitored or had no activity.
+    
+    Args:
+        exposure_panel: Segment × year × month aggregated panel
+        trip_col: Name of the trip count column (default: sum_strava_total_trip_count)
+    
+    Returns:
+        Filtered panel with segments having zero traffic in any year removed
+    """
+    # Identify segments with zero traffic in ANY year
+    seg_year_trips = exposure_panel.groupby(['counter_name', 'year'])[trip_col].sum()
+    zero_year_segs = seg_year_trips[seg_year_trips == 0].index.get_level_values('counter_name').unique()
+    
+    # Filter to keep only segments without zero-traffic years
+    filtered = exposure_panel[~exposure_panel['counter_name'].isin(zero_year_segs)].copy()
+    
+    n_removed = exposure_panel['counter_name'].nunique() - filtered['counter_name'].nunique()
+    print(f"Removed {n_removed} segments with zero traffic in any year")
+    print(f"Segments remaining: {filtered['counter_name'].nunique():,} (from {exposure_panel['counter_name'].nunique():,})")
+    
+    return filtered
+
+
+def compute_segment_filter_impact(exposure_panel: pd.DataFrame, trip_col: str = 'sum_strava_total_trip_count') -> pd.DataFrame:
+    """Compute impact of different filtering criteria on segment loss.
+    
+    Args:
+        exposure_panel: Segment × year × month aggregated panel
+        trip_col: Name of the trip count column (default: sum_strava_total_trip_count)
+    
+    Returns:
+        DataFrame with filter criteria and resulting segment counts
+    """
+    
+    if 'counter_name' not in exposure_panel.columns:
+        print("ERROR: 'counter_name' column not found in exposure panel")
+        return pd.DataFrame()
+    
+    # Find trip count column
+    if trip_col not in exposure_panel.columns:
+        trip_col = 'sum_strava_total_trip_count'
+        if trip_col not in exposure_panel.columns:
+            print(f"ERROR: No trip count column found. Available columns: {exposure_panel.columns.tolist()}")
+            return pd.DataFrame()
+    
+    # Ensure trip_col is numeric
+    exposure_panel = exposure_panel.copy()
+    exposure_panel[trip_col] = pd.to_numeric(exposure_panel[trip_col], errors='coerce').fillna(0)
+    
+    baseline_segments = exposure_panel['counter_name'].nunique()
+    results = []
+    
+    # Criterion 1: Segments with zero total traffic across all time
+    seg_total_trips = exposure_panel.groupby('counter_name')[trip_col].sum()
+    segments_nonzero = (seg_total_trips > 0).sum()
+    loss_nonzero = baseline_segments - segments_nonzero
+    loss_pct_nonzero = loss_nonzero / baseline_segments * 100
+    
+    results.append({
+        'Filter Criterion': 'Remove segments with 0 traffic (all time)',
+        'Segments Remaining': segments_nonzero,
+        'Segments Lost': loss_nonzero,
+        'Loss %': loss_pct_nonzero
+    })
+    
+    # Criterion 2: Segments with zero traffic in ANY year
+    seg_year_trips = exposure_panel.groupby(['counter_name', 'year'])[trip_col].sum()
+    zero_year_segs = seg_year_trips[seg_year_trips == 0].index.get_level_values('counter_name').unique()
+    segments_no_zero_years = baseline_segments - len(zero_year_segs)
+    loss_zero_years = len(zero_year_segs)
+    loss_pct_zero_years = loss_zero_years / baseline_segments * 100
+    
+    results.append({
+        'Filter Criterion': 'Remove segments with 0 traffic in any year',
+        'Segments Remaining': segments_no_zero_years,
+        'Segments Lost': loss_zero_years,
+        'Loss %': loss_pct_zero_years
+    })
+    
+    # Criterion 3: Segments with zero traffic in ANY month
+    zero_month_segs = exposure_panel[exposure_panel[trip_col] == 0]['counter_name'].unique()
+    segments_no_zero_months = baseline_segments - len(zero_month_segs)
+    loss_zero_months = len(zero_month_segs)
+    loss_pct_zero_months = loss_zero_months / baseline_segments * 100
+    
+    results.append({
+        'Filter Criterion': 'Remove segments with 0 traffic in any month',
+        'Segments Remaining': segments_no_zero_months,
+        'Segments Lost': loss_zero_months,
+        'Loss %': loss_pct_zero_months
+    })
+    
+    # Format results
+    results_df = pd.DataFrame(results)
+    
+    return results_df
+
+
 
