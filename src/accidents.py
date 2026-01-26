@@ -19,13 +19,10 @@ from .utils import data_path
 ACCIDENT_COLUMNS_EN: dict[str, str] = {
     # IDs & metadata
     "OBJECTID": "object_id",
-    "OBJECTID_1": "object_id_alt",
     "OID_": "oid",
-    "FID": "fid",
     "source_file": "source_file",
 
     # Unique accident identifiers
-    "UIDENTSTLA": "accident_id",
     "UIDENTSTLAE": "accident_id_extended",
 
     # Administrative divisions
@@ -50,16 +47,12 @@ ACCIDENT_COLUMNS_EN: dict[str, str] = {
     "IstPKW": "involved_passenger_car",
     "IstFuss": "involved_pedestrian",
     "IstKrad": "involved_motorcycle",
-    "IstSonstig": "involved_other_vehicle_old",
     "IstGkfz": "involved_goods_vehicle",
     "IstSonstige": "involved_other_vehicle",
-    "IstStrasse": "involved_road",
     "IstStrassenzustand": "road_condition_flag",
 
     # Environmental conditions
-    "LICHT": "light_condition_old",
     "ULICHTVERH": "light_condition",
-    "STRZUSTAND": "road_condition",
 
     # Data quality
     "PLST": "plausibility_level",
@@ -241,7 +234,7 @@ def add_temporal_features(accidents_bike_berlin: pd.DataFrame) -> pd.DataFrame:
 
 def plot_accident_quality_overview(
     accidents_df: pd.DataFrame, 
-    figsize: tuple = (16, 12),
+    figsize: tuple = (14, 10),
     use_tueplots: bool = True,
     save_path: str | Path | None = None,
 ) -> None:
@@ -505,9 +498,7 @@ def plot_accident_quality_overview(
     plt.show()
 
     # Print summary statistics
-    print("\n" + "="*70)
-    print("SUMMARY STATISTICS")
-    print("="*70)
+    print("\n" + "="*28 + "SUMMARY STATISTICS" + "="*28)
     print(f"Total accidents: {len(accidents_df):,}")
     print(f"Date range: {accidents_df['year'].min()} - {accidents_df['year'].max()}")
     print(f"Number of columns: {len(accidents_df.columns)}")
@@ -520,8 +511,8 @@ def plot_accident_quality_overview(
         n_unique = non_null_ids.nunique()
         n_duplicates = n_total_non_null - n_unique
         n_null = accidents_df['accident_id_extended'].isna().sum()
-        status = '✓ PASS' if n_duplicates == 0 else '✗ FAIL'
-        print(f"Duplicate check (accident_id_extended): {status}")
+        status = '[PASS]' if n_duplicates == 0 else '[FAIL]'
+        print(f"\n{status} Duplicate check (accident_id_extended)")
         print(f"  - Total non-null records: {n_total_non_null:,}")
         print(f"  - Unique IDs: {n_unique:,}")
         print(f"  - Duplicates: {n_duplicates}")
@@ -529,17 +520,17 @@ def plot_accident_quality_overview(
     
     # Temporal validity check
     if 'year' in accidents_df.columns:
-        min_year = 2016  # Expected earliest year
-        max_year = 2024  # Expected latest year
+        min_year = 2019  # Expected earliest year
+        max_year = 2023  # Expected latest year
         past_dates = (accidents_df['year'] < min_year).sum()
         future_dates = (accidents_df['year'] > max_year).sum()
-        temporal_status = 'PASS' if (past_dates == 0 and future_dates == 0) else 'FAIL'
-        print(f"\nTemporal validity check: {temporal_status}")
+        temporal_status = '[PASS]' if (past_dates == 0 and future_dates == 0) else '[FAIL]'
+        print(f"\n{temporal_status} Temporal validity check ({min_year}-{max_year})")
         if past_dates > 0:
             print(f"  - Records before {min_year}: {past_dates}")
         if future_dates > 0:
             print(f"  - Records after {max_year}: {future_dates}")
-        if temporal_status == 'PASS':
+        if temporal_status == '[PASS]':
             print(f"  - All records within expected range ({min_year}-{max_year})")
     
     # Coordinate bounds check (Berlin)
@@ -551,8 +542,8 @@ def plot_accident_quality_overview(
                 (accidents_df.geometry.x < min_x) | (accidents_df.geometry.x > max_x) |
                 (accidents_df.geometry.y < min_y) | (accidents_df.geometry.y > max_y)
             ).sum()
-            coord_status = 'PASS' if out_of_bounds == 0 else 'FAIL'
-            print(f"\nCoordinate bounds check (Berlin): {coord_status}")
+            coord_status = '[PASS]' if out_of_bounds == 0 else '[FAIL]'
+            print(f"\n{coord_status} Coordinate bounds check (Berlin)")
             if out_of_bounds > 0:
                 print(f"  - Records outside Berlin bounds: {out_of_bounds}")
             else:
@@ -560,33 +551,30 @@ def plot_accident_quality_overview(
         except Exception as e:
             print(f"\nCoordinate bounds check: ERROR - {str(e)}")
     
-    # Plausibility check
-    if 'plausibility_check' in accidents_df.columns:
-        plausibility_counts = accidents_df['plausibility_check'].value_counts().sort_index()
-        print(f"\nPlausibility check distribution:")
-        for level, count in plausibility_counts.items():
-            if level == 1:
-                desc = "Regular proceedings"
-            elif level == 2:
-                desc = "Advanced proceedings (bicycles)"
-            else:
-                desc = f"Unknown level {level}"
-            pct = count / len(accidents_df) * 100
-            print(f"  Level {level} ({desc}): {count:,} ({pct:.1f}%)")
+    # Missing values in accident features and coordinates only
+    print(f"\nMissing values in accident features and geographic columns:")
     
-    # Missing values breakdown by column
-    missing_by_col = accidents_df.isnull().sum()
+    # Define accident and geo columns
+    accident_feature_cols = [
+        'year', 'month', 'hour', 'weekday', 'weekday_type', 'time_of_day',
+        'injury_severity', 'accident_kind', 'accident_type', 'light_condition',
+        'involved_bicycle', 'involved_passenger_car', 'involved_pedestrian',
+        'involved_motorcycle', 'involved_goods_vehicle', 'involved_other_vehicle',
+        'road_condition_flag'
+    ]
+    
+    geo_cols = ['LINREFX', 'LINREFY', 'XGCSWGS84', 'YGCSWGS84']
+    
+    all_feature_cols = accident_feature_cols + geo_cols
+    all_feature_cols = [c for c in all_feature_cols if c in accidents_df.columns]
+    
+    missing_by_col = accidents_df[all_feature_cols].isnull().sum()
     missing_by_col = missing_by_col[missing_by_col > 0].sort_values(ascending=False)
     
     if len(missing_by_col) > 0:
-        print(f"\nMissing values by column:")
         for col, count in missing_by_col.items():
             pct = count / len(accidents_df) * 100
             print(f"  {col}: {count:,} ({pct:.1f}%)")
-        total_missing = accidents_df.isnull().sum().sum()
-        missing_pct = total_missing / accidents_df.size * 100
-        print(f"\nTotal missing values: {total_missing:,} ({missing_pct:.2f}% of all cells)")
     else:
-        print(f"\nNo missing values detected!")
-    print("="*70)
+        print(f"  No missing values in accident features and geographic columns!")
 

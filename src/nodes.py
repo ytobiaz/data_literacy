@@ -252,7 +252,11 @@ def build_node_exposure_panel_from_segments(
     trip_col: str = "sum_strava_total_trip_count",
     counter_col: str = "counter_name",
 ) -> pd.DataFrame:
-    """Aggregate segment exposure to node×year×month by summing a trip_col."""
+    """Aggregate segment exposure to node×year×month by summing a trip_col.
+    
+    Applies 0.5 correction factor to account for double-counting:
+    each segment contributes to 2 nodes (start/end).
+    """
 
     for col in [counter_col, "year", "month", trip_col]:
         if col not in segment_exposure_ym.columns:
@@ -276,53 +280,120 @@ def build_node_exposure_panel_from_segments(
 
     node_exposure_ym = (
         segment_exposure_nodes.groupby(["node_id", "year", "month"], observed=True)
-        .agg(monthly_strava_trips=(trip_col, "sum"))
+        .agg(monthly_strava_trips=(trip_col, "sum")) 
         .reset_index()
     )
+    
+    # Account for double-counting: each segment contributes to 2 nodes (start/end)
+    node_exposure_ym["monthly_strava_trips"] = node_exposure_ym["monthly_strava_trips"] * 0.5
 
     return node_exposure_ym
 
 
-def build_node_risk_panel(
+def print_node_exposure_quality_summary(
     node_exposure_ym: pd.DataFrame,
-    acc_node_ym: pd.DataFrame,
     crossings_gdf: GeoDataFrame,
-) -> GeoDataFrame:
-    """Combine node exposure and node accidents into a node-level risk panel.
-    IMPORTANT:
-    We must keep the union of node×year×month from exposure and accidents.
-    Otherwise accidents that occur in months without exposure rows disappear.
+    *,
+    trip_col: str = "monthly_strava_trips",
+) -> None:
+    """Print quality summary for node-level exposure panel.
+    
+    Displays quality checks in the same format as plot_merged_panel_quality_overview.
+    
+    Parameters
+    ----------
+    node_exposure_ym : DataFrame
+        Node exposure panel (crossing × year × month)
+    crossings_gdf : GeoDataFrame
+        Reference crossing nodes
+    trip_col : str, optional
+        Name of trip count column, by default "monthly_strava_trips"
     """
-    node_panel_ym = node_exposure_ym.merge(
-        acc_node_ym,
-        on=["node_id", "year", "month"],
-        how="outer",
-    )
+    quality_results = {}
     
-    # Fill missing metrics
-    if "monthly_strava_trips" not in node_exposure_ym.columns:
-        raise KeyError("Expected 'monthly_strava_trips' in node_exposure_ym")
+    # 1. Dataset structure check
+    total_records = len(node_exposure_ym)
+    unique_crossings = node_exposure_ym['node_id'].nunique()
+    total_crossings = len(crossings_gdf)
     
-    node_panel_ym["monthly_strava_trips"] = node_panel_ym["monthly_strava_trips"].fillna(0)
-    node_panel_ym["total_accidents"] = node_panel_ym["total_accidents"].fillna(0)
+    quality_results['dataset_structure'] = {
+        'status': 'PASS',
+        'message': f'{total_records:,} records (crossing × year × month combinations)',
+        'value': f'{unique_crossings:,} unique crossings'
+    }
     
-    # Fill missing factor columns (counts and shares) with 0
-    for col in node_panel_ym.columns:
-        if col.startswith("acc_") and ("_count_" in col or "_share_" in col):
-            node_panel_ym[col] = node_panel_ym[col].fillna(0)
+    # 2. Coverage check (crossings with ANY exposure data)
+    # NOTE: This shows how many crossings have at least one record in the panel.
+    # Missing crossings (100% - coverage%) have NO records at all (not present in dataset).
+    coverage_pct = (unique_crossings / total_crossings * 100) if total_crossings > 0 else 0
+    status = 'PASS' if coverage_pct >= 90 else 'WARN'
+    missing_crossings = total_crossings - unique_crossings
+    quality_results['crossing_coverage'] = {
+        'status': status,
+        'message': f'{unique_crossings:,} / {total_crossings:,} crossings present in panel ({missing_crossings:,} crossings absent)',
+        'value': f'{coverage_pct:.1f}%'
+    }
     
-    # Add geometry
-    node_panel_ym = node_panel_ym.merge(
-        crossings_gdf[["node_id", "geometry"]],
-        on="node_id",
-        how="left",
-    )
+    # 3. Temporal coverage check
+    if 'year' in node_exposure_ym.columns and 'month' in node_exposure_ym.columns:
+        min_year = node_exposure_ym['year'].min()
+        max_year = node_exposure_ym['year'].max()
+        expected_months = int((max_year - min_year + 1) * 12)
+        unique_ym = node_exposure_ym[['year', 'month']].drop_duplicates()
+        actual_months = len(unique_ym)
+        
+        temporal_status = 'PASS' if actual_months == expected_months else 'WARN'
+        quality_results['temporal_coverage'] = {
+            'status': temporal_status,
+            'message': f'Years: {min_year:.0f}–{max_year:.0f}, {actual_months} / {expected_months} expected year-month combinations',
+            'value': f'{actual_months} months'
+        }
     
-    # Risk is undefined when trips are 0 -> use NaN denominator
-    denom = node_panel_ym["monthly_strava_trips"].replace(0, np.nan)
+    # 4. Trip volume statistics (per month per crossing)
+    if trip_col in node_exposure_ym.columns:
+        trip_stats = node_exposure_ym[trip_col].describe()
+        quality_results['trip_volume_per_month'] = {
+            'status': 'INFO',
+            'message': f'Trips/month per crossing: Mean={trip_stats["mean"]:,.0f}, Median={trip_stats["50%"]:,.0f}, Std={trip_stats["std"]:,.0f}',
+            'value': f'Range: {trip_stats["min"]:,.0f}–{trip_stats["max"]:,.0f}'
+        }
+        
+        # 5. Missing values check (NaN in trip column among existing records)
+        # NOTE: This checks for NaN values in existing records, NOT for absent crossings
+        missing_trips = node_exposure_ym[trip_col].isna().sum()
+        missing_pct = (missing_trips / len(node_exposure_ym) * 100) if len(node_exposure_ym) > 0 else 0
+        missing_status = 'PASS' if missing_trips == 0 else 'WARN'
+        quality_results['no_missing_values_in_records'] = {
+            'status': missing_status,
+            'message': f'{missing_trips:,} records with NaN trip values (among {total_records:,} existing records)',
+            'value': f'{missing_pct:.2f}%'
+        }
+        
+        # 6. Zero trip records check (per month)
+        zero_trips_per_month = (node_exposure_ym[trip_col] == 0).sum()
+        zero_pct_per_month = (zero_trips_per_month / len(node_exposure_ym) * 100) if len(node_exposure_ym) > 0 else 0
+        zero_status_per_month = 'INFO' if zero_trips_per_month > 0 else 'PASS'
+        quality_results['zero_trip_records_per_month'] = {
+            'status': zero_status_per_month,
+            'message': f'{zero_trips_per_month:,} month-records with zero trips (out of {total_records:,} total records)',
+            'value': f'{zero_pct_per_month:.2f}%'
+        }
+        
+        # 7. Zero trip crossings check (total across all time)
+        crossing_totals = node_exposure_ym.groupby('node_id')[trip_col].sum()
+        zero_crossings_total = (crossing_totals == 0).sum()
+        zero_crossings_pct = (zero_crossings_total / unique_crossings * 100) if unique_crossings > 0 else 0
+        zero_total_status = 'WARN' if zero_crossings_total > 0 else 'PASS'
+        quality_results['zero_trip_crossings_all_time'] = {
+            'status': zero_total_status,
+            'message': f'{zero_crossings_total:,} crossings with zero total trips across all years (2019-2023)',
+            'value': f'{zero_crossings_pct:.2f}%'
+        }
     
-    # Multiply by 0.5 to account for double-counting
-    node_panel_ym["risk_accidents_per_trip"] = 0.5 * (node_panel_ym["total_accidents"] / denom)
-    node_panel_ym["risk_accidents_per_10k_trips"] = node_panel_ym["risk_accidents_per_trip"] * 10_000
-    
-    return gpd.GeoDataFrame(node_panel_ym, geometry="geometry", crs=crossings_gdf.crs)
+    # Print results in same format as plot_merged_panel_quality_overview
+    print("\n" + "="*20 + "NODE EXPOSURE QUALITY SUMMARY" + "="*20)
+    for check_name, result in quality_results.items():
+        print(f"\n[{result['status']}] {check_name}")
+        print(f"   {result['message']}")
+        print(f"   Value: {result['value']}")
+
