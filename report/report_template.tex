@@ -158,7 +158,7 @@ or travel time, see \cref{fig:visual_app}. We address the question: how can expo
 routing? Our work makes the following contributions: (i) a reproducible pipeline for estimating exposure-adjusted relative crash risk at street and junction levels from measured cyclist volumes, 
 with support for context-conditional analysis; and (ii) a route-scoring method that integrates network-level risk into safety-aware routing under convenience constraints.
 
-\paragraph{Related Work.}
+\paragraph{Related work.}
 To avoid conflating danger with demand, prior work normalizes bicycle crashes by cyclist exposure~\citep{luecken2018}. City-scale studies show that exposure-normalized risk yields more 
 informative spatial patterns than raw counts and that finer temporal resolution improves inference, while noting persistent under-reporting in police records~\citep{Uijtdewilligen01092024}. 
 A central challenge is obtaining reliable exposure: some approaches extrapolate city-wide volumes from sparse counters using learning-based models and multi-source features, with short 
@@ -176,13 +176,12 @@ We combine police-recorded bicycle crashes with measured cyclist exposure for th
 and filtered for bicycle-related incidents. Exposure comes from a city-wide dataset of measured bicycle volumes aggregated at the street-segment level~\citep{kaiser2025spatiotemporalgraphneuralnetwork}. 
 The street network is represented as polyline segments with associated monthly cyclist counts. The resulting dataset spans 2019--2023 and covers 4{,}958 street segments and 2{,}924 junctions, 
 with 33{,}181 recorded bicycle crashes. At monthly resolution the data are sparse: in a typical month fewer than 5\% of segments and about 3\% of junctions record at least one crash, and 
-some periods include segments with zero measured exposure. This sparsity motivates the exposure-normalized risk estimation and small-count stabilization described in \cref{sec:methods}.
+some periods include segments with zero measured exposure.
 
-\paragraph{Preprocessing.}
 To enable network-scale analysis, all layers are harmonized to a common street-network topology and a projected coordinate reference system. Crash locations are matched to segments using 
 nearest-segment assignment. To capture the concentration of crashes at intersections, we identify junctions as nodes where at least three segments meet; crashes within a fixed radius are 
 assigned to the nearest junction, and junction exposure is computed from the exposures of incident segments. Matched crashes and exposures are aggregated to monthly resolution, and segments 
-and months with zero exposure are identified and dropped. To obtain stable risk estimates under sparse observations, monthly aggregates are pooled to yearly totals and an Empirical Bayes 
+and months with zero exposure are dropped. To obtain stable risk estimates under sparse observations, monthly aggregates are pooled to yearly totals and an Empirical Bayes 
 approach is applied as described in \cref{sec:methods}. The resulting yearly segment- and junction-level risk estimates serve as inputs to all routing analyses.
 
 \section{Methods}\label{sec:methods}
