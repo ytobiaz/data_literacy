@@ -5,168 +5,40 @@ from branca import colormap as cm
 from scipy.stats import gamma
 
 
-def zero_trip_accident_map_by_year(segments_df, junction_df, year, *, coordinates=(52.518589, 13.376665), zoom=12):
-    # yearly aggregation
-    seg_year = (
-        segments_df[segments_df["year"] == year]
-        .groupby("counter_name", as_index=False)
-        .agg(geometry=("geometry", "first"),
-             trips=("monthly_strava_trips", "sum"),
-             accidents=("total_accidents", "sum"))
-    )
-    seg_year = gpd.GeoDataFrame(seg_year, geometry="geometry", crs=segments_df.crs)
+def ensure_active_geometry(gdf: gpd.GeoDataFrame, geometry_col: str = "geometry") -> gpd.GeoDataFrame:
+    """Return a GeoDataFrame with a valid active geometry column.
 
-    jn_year = (
-        junction_df[junction_df["year"] == year]
-        .groupby("node_id", as_index=False)
-        .agg(geometry=("geometry", "first"),
-             trips=("monthly_strava_trips", "sum"),
-             accidents=("total_accidents", "sum"))
-    )
-    jn_year = gpd.GeoDataFrame(jn_year, geometry="geometry", crs=junction_df.crs)
+    Groupby/agg operations in pandas can drop the active geometry metadata
+    (e.g., leaving the active geometry name as "0"). This helper restores a
+    consistent active geometry column so downstream geospatial methods like
+    ``to_crs`` work reliably.
+    """
+    if not isinstance(gdf, gpd.GeoDataFrame):
+        gdf = gpd.GeoDataFrame(gdf, geometry=geometry_col)
 
-    seg_zero = seg_year[(seg_year["trips"] == 0) & (seg_year["accidents"] > 0)]
-    jn_zero = jn_year[(jn_year["trips"] == 0) & (jn_year["accidents"] > 0)]
+    # If the active geometry is missing but a geometry-typed column exists,
+    # make it active again.
+    if geometry_col in gdf.columns:
+        gdf = gdf.set_geometry(geometry_col)
 
-    m = folium.Map(location=coordinates, zoom_start=zoom, tiles=None)
-    folium.TileLayer(
-        tiles="https://basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png",
-        attr="©CartoDB",
-        name="CartoDB Light No Labels",
-    ).add_to(m)
+    return gdf
 
-    if not seg_zero.empty:
-        folium.GeoJson(
-            seg_zero[["counter_name", "trips", "accidents", "geometry"]],
-            name=f"Segments trips=0 & accidents>0 ({year})",
-            style_function=lambda feat: {"color": "red", "weight": 5, "opacity": 0.9},
-            tooltip=folium.GeoJsonTooltip(
-                fields=["counter_name", "trips", "accidents"],
-                aliases=["Segment", "Trips (year sum)", "Accidents (year sum)"],
-                localize=True,
-            ),
-        ).add_to(m)
 
-    if not jn_zero.empty:
-        for _, r in jn_zero.iterrows():
-            folium.CircleMarker(
-                location=[r.geometry.y, r.geometry.x],
-                radius=4,
-                color="red",
-                fill=True,
-                fill_color="red",
-                fill_opacity=0.9,
-                tooltip=f"Junction {int(r['node_id'])} | trips=0 | accidents={int(r['accidents'])}",
-            ).add_to(m)
+def aggregate_junction_points(junction_df: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
+    """Aggregate to one point per junction while preserving geometry/CRS."""
+    j_plot = junction_df[junction_df.geometry.notna()].copy()
 
-    folium.LayerControl(collapsed=False).add_to(m)
-    return m
-
-def total_relative_risk_map_log(
-    segments_df,
-    junction_df,
-    *,
-    coordinates=(52.518589, 13.376665),
-    zoom=12,
-    segment_weight=5,
-    junction_radius=4,
-):
-    # aggregate over all years
-    seg_rr = (
-        segments_df.groupby("counter_name", as_index=False)
+    j_points = (
+        j_plot.groupby("node_id", as_index=False)
         .agg(
             geometry=("geometry", "first"),
-            total_accidents=("total_accidents", "sum"),
-            expected_accidents=("expected_accidents", "sum"),
+            trips=("monthly_strava_trips", "sum"),
+            accidents=("total_accidents", "sum"),
         )
     )
-    seg_rr = gpd.GeoDataFrame(seg_rr, geometry="geometry", crs=segments_df.crs)
 
-    jn_rr = (
-        junction_df.groupby("node_id", as_index=False)
-        .agg(
-            geometry=("geometry", "first"),
-            total_accidents=("total_accidents", "sum"),
-            expected_accidents=("expected_accidents", "sum"),
-        )
-    )
-    jn_rr = gpd.GeoDataFrame(jn_rr, geometry="geometry", crs=junction_df.crs)
+    return gpd.GeoDataFrame(j_points, geometry="geometry", crs=j_plot.crs)
 
-    # compute relative risk
-    seg_rr["relative_risk"] = seg_rr["total_accidents"] / seg_rr["expected_accidents"]
-    jn_rr["relative_risk"] = jn_rr["total_accidents"] / jn_rr["expected_accidents"]
-
-    # compute scale (vabs) from valid positives only
-    seg_valid = seg_rr["relative_risk"].replace([np.inf, -np.inf], np.nan)
-    jn_valid = jn_rr["relative_risk"].replace([np.inf, -np.inf], np.nan)
-    all_valid = np.concatenate([
-        seg_valid[seg_valid > 0].to_numpy(),
-        jn_valid[jn_valid > 0].to_numpy(),
-    ])
-    vabs = np.nanpercentile(np.abs(np.log10(all_valid)), 99) if all_valid.size else 1.0
-    vabs = max(vabs, 0.1)
-
-    # floor tied to scale
-    floor = 10 ** (-vabs)
-
-    # set 0/NaN/inf to floor, then log
-    seg_rr["relative_risk"] = seg_rr["relative_risk"].replace([np.inf, -np.inf], np.nan).fillna(0.0)
-    jn_rr["relative_risk"] = jn_rr["relative_risk"].replace([np.inf, -np.inf], np.nan).fillna(0.0)
-
-    seg_rr["relative_risk"] = seg_rr["relative_risk"].clip(lower=floor)
-    jn_rr["relative_risk"] = jn_rr["relative_risk"].clip(lower=floor)
-
-    seg_rr["log_rr"] = np.log10(seg_rr["relative_risk"])
-    jn_rr["log_rr"] = np.log10(jn_rr["relative_risk"])
-
-    # diverging colormap: green -> yellow -> red
-    colormap = cm.LinearColormap(
-        colors=["green", "yellow", "red"],
-        vmin=-vabs,
-        vmax=vabs,
-        index=[-vabs, 0.0, vabs],
-    )
-    colormap.caption = "log10(relative risk) | 0 = RR 1.0"
-
-    m = folium.Map(location=coordinates, zoom_start=zoom, tiles=None)
-    folium.TileLayer(
-        tiles="https://basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png",
-        attr="©CartoDB",
-    ).add_to(m)
-
-    if not seg_rr.empty:
-        def seg_style_fn(feat):
-            lr = float(feat["properties"]["log_rr"])
-            lr = max(min(lr, vabs), -vabs)
-            return {"color": colormap(lr), "weight": segment_weight, "opacity": 0.9}
-
-        folium.GeoJson(
-            seg_rr[["counter_name", "log_rr", "relative_risk", "geometry"]],
-            name="Segments (log10 RR)",
-            style_function=seg_style_fn,
-            tooltip=folium.GeoJsonTooltip(
-                fields=["counter_name", "relative_risk"],
-                aliases=["Segment", "Relative risk"],
-                localize=True,
-            ),
-        ).add_to(m)
-
-    if not jn_rr.empty:
-        for _, r in jn_rr.iterrows():
-            lr = max(min(float(r["log_rr"]), vabs), -vabs)
-            folium.CircleMarker(
-                location=[r.geometry.y, r.geometry.x],
-                radius=junction_radius,
-                color=colormap(lr),
-                fill=True,
-                fill_color=colormap(lr),
-                fill_opacity=0.9,
-                tooltip=f"Junction {int(r['node_id'])} | RR={r['relative_risk']:.2f}",
-            ).add_to(m)
-
-    colormap.add_to(m)
-    folium.LayerControl(collapsed=False).add_to(m)
-    return m
 
 
 def estimate_alpha_simple_moments(df, y_col, yhat_col, *, alpha_min=1e-6, alpha_max=1e6):
@@ -189,124 +61,154 @@ def estimate_alpha_simple_moments(df, y_col, yhat_col, *, alpha_min=1e-6, alpha_
 
     return alpha
 
-def total_relative_risk_map_log_eb_sig(
+
+
+def plot_rr_map(
     segments_df,
     junction_df,
-    alpha,
     *,
-    coordinates=(52.518589, 13.376665),
+    show="both",  # "both" | "segments" | "junctions"
+    metric="raw_rr",  # "raw_rr" | any column name
+    seg_metric_col=None,
+    jn_metric_col=None,
     zoom=12,
-    segment_weight=5,
+    coordinates=None,
+    segment_weight=4,
     junction_radius=4,
-    ci=0.95
+    clip_percentile=99,
 ):
+    import geopandas as gpd
+    import numpy as np
+    import folium
+    from branca import colormap as cm
 
-    # aggregate over all years
-    seg_agg = {
-        "geometry": ("geometry", "first"),
-        "total_accidents": ("total_accidents", "sum"),
-        "expected_accidents": ("expected_accidents", "sum"),
-        "total_trips": ("monthly_strava_trips", "sum"),
-    }
+    def _ensure_geo(gdf, geometry_col="geometry"):
+        if not isinstance(gdf, gpd.GeoDataFrame):
+            gdf = gpd.GeoDataFrame(gdf, geometry=geometry_col)
+        if geometry_col in gdf.columns:
+            gdf = gdf.set_geometry(geometry_col)
+        return gdf
 
-    seg_rr = (
-        segments_df.groupby("counter_name", as_index=False)
-        .agg(**seg_agg)
-    )
-    seg_rr = gpd.GeoDataFrame(seg_rr, geometry="geometry", crs=segments_df.crs)
-
-    jn_rr = (
-        junction_df.groupby("node_id", as_index=False)
-        .agg(
+    def _aggregate(df, id_col, extra_cols=()):
+        agg_spec = dict(
             geometry=("geometry", "first"),
             total_accidents=("total_accidents", "sum"),
-            expected_accidents=("expected_accidents", "sum"),
-            total_trips=("monthly_strava_trips", "sum"),
         )
-    )
-    jn_rr = gpd.GeoDataFrame(jn_rr, geometry="geometry", crs=junction_df.crs)
 
-    # EB-smoothed relative risk
-    seg_rr["relative_risk"] = (seg_rr["total_accidents"] + alpha) / (seg_rr["expected_accidents"] + alpha)
-    jn_rr["relative_risk"] = (jn_rr["total_accidents"] + alpha) / (jn_rr["expected_accidents"] + alpha)
+        if "sum_strava_total_trip_count" in df.columns:
+            agg_spec["exposure"] = ("sum_strava_total_trip_count", "sum")
+        elif "monthly_strava_trips" in df.columns:
+            agg_spec["exposure"] = ("monthly_strava_trips", "sum")
+        elif "exposure" in df.columns:
+            agg_spec["exposure"] = ("exposure", "sum")
 
-    # EB CIs
-    q_lo = (1.0 - ci) / 2.0
-    q_hi = 1.0 - q_lo
+        for c in extra_cols:
+            if c and c in df.columns:
+                agg_spec[c] = (c, "first")
+        out = df.groupby(id_col, as_index=False).agg(**agg_spec)
+        return gpd.GeoDataFrame(out, geometry="geometry", crs=df.crs)
 
-    seg_a = alpha + seg_rr["total_accidents"]
-    seg_rate = alpha + seg_rr["expected_accidents"]
-    seg_rr["rr_lo"] = gamma.ppf(q_lo, a=seg_a, scale=1.0 / seg_rate)
-    seg_rr["rr_hi"] = gamma.ppf(q_hi, a=seg_a, scale=1.0 / seg_rate)
+    def _resolve_metric(df, kind, metric_name, metric_col):
+        if metric_col is not None:
+            if metric_col not in df.columns:
+                raise KeyError(f"{kind}: metric column {metric_col!r} not in dataframe")
+            return metric_col
 
-    jn_a = alpha + jn_rr["total_accidents"]
-    jn_rate = alpha + jn_rr["expected_accidents"]
-    jn_rr["rr_lo"] = gamma.ppf(q_lo, a=jn_a, scale=1.0 / jn_rate)
-    jn_rr["rr_hi"] = gamma.ppf(q_hi, a=jn_a, scale=1.0 / jn_rate)
+        if metric_name == "raw_rr" and "raw_rr" not in df.columns:
+            raise KeyError(
+                f"{kind}: metric 'raw_rr' not found. "
+                f"Pass seg_metric_col/jn_metric_col or compute it before plotting."
+            )
 
-    # significance vs 1
-    seg_rr["sig"] = np.where(seg_rr["rr_lo"] > 1.0, "above",
-                      np.where(seg_rr["rr_hi"] < 1.0, "below", "ns"))
-    jn_rr["sig"] = np.where(jn_rr["rr_lo"] > 1.0, "above",
-                      np.where(jn_rr["rr_hi"] < 1.0, "below", "ns"))
+        if metric_name not in df.columns:
+            raise KeyError(
+                f"{kind}: metric {metric_name!r} not found. "
+                f"Pass seg_metric_col/jn_metric_col or ensure it exists before aggregation."
+            )
+        return metric_name
 
-    # compute scale (vabs) from valid positives only
-    seg_valid = seg_rr["relative_risk"].replace([np.inf, -np.inf], np.nan)
-    jn_valid = jn_rr["relative_risk"].replace([np.inf, -np.inf], np.nan)
-    all_valid = np.concatenate([
-        seg_valid[seg_valid > 0].to_numpy(),
-        jn_valid[jn_valid > 0].to_numpy(),
-    ])
-    vabs = np.nanpercentile(np.abs(np.log10(all_valid)), 99) if all_valid.size else 1.0
+    if show not in {"both", "segments", "junctions"}:
+        raise ValueError("show must be one of: 'both', 'segments', 'junctions'")
+
+    segments_df = _ensure_geo(segments_df)
+    junction_df = _ensure_geo(junction_df)
+
+    seg = _aggregate(segments_df, "counter_name", extra_cols=[metric, seg_metric_col]) if show in {"both", "segments"} else None
+    jn = _aggregate(junction_df, "node_id", extra_cols=[metric, jn_metric_col]) if show in {"both", "junctions"} else None
+
+    seg_metric = None
+    if seg is not None:
+        seg_metric = _resolve_metric(seg, "segments", metric, seg_metric_col)
+        seg[seg_metric] = seg[seg_metric].replace([np.inf, -np.inf], np.nan).fillna(0.0)
+
+    jn_metric = None
+    if jn is not None:
+        jn_metric = _resolve_metric(jn, "junctions", metric, jn_metric_col)
+        jn[jn_metric] = jn[jn_metric].replace([np.inf, -np.inf], np.nan).fillna(0.0)
+
+    vals = []
+    if seg is not None:
+        vals.append(seg.loc[seg[seg_metric] > 0, seg_metric].to_numpy())
+    if jn is not None:
+        vals.append(jn.loc[jn[jn_metric] > 0, jn_metric].to_numpy())
+    all_pos = np.concatenate([v for v in vals if v.size]) if vals else np.array([])
+
+    vabs = float(np.nanpercentile(np.abs(np.log10(all_pos)), clip_percentile)) if all_pos.size else 1.0
     vabs = max(vabs, 0.1)
-
     floor = 10 ** (-vabs)
 
-    seg_rr["relative_risk"] = seg_rr["relative_risk"].replace([np.inf, -np.inf], np.nan).fillna(0.0)
-    jn_rr["relative_risk"] = jn_rr["relative_risk"].replace([np.inf, -np.inf], np.nan).fillna(0.0)
+    if seg is not None:
+        seg["_metric"] = seg[seg_metric].clip(lower=floor)
+        seg["_log_rr"] = np.log10(seg["_metric"])
+        seg_wgs = seg.to_crs(epsg=4326)
+    else:
+        seg_wgs = None
 
-    seg_rr["relative_risk"] = seg_rr["relative_risk"].clip(lower=floor)
-    jn_rr["relative_risk"] = jn_rr["relative_risk"].clip(lower=floor)
+    if jn is not None:
+        jn["_metric"] = jn[jn_metric].clip(lower=floor)
+        jn["_log_rr"] = np.log10(jn["_metric"])
+        jn_wgs = jn.to_crs(epsg=4326)
+    else:
+        jn_wgs = None
 
-    seg_rr["log_rr"] = np.log10(seg_rr["relative_risk"])
-    jn_rr["log_rr"] = np.log10(jn_rr["relative_risk"])
+    if coordinates is not None:
+        center = coordinates
+    elif jn_wgs is not None and len(jn_wgs):
+        center = [float(jn_wgs.geometry.y.mean()), float(jn_wgs.geometry.x.mean())]
+    elif seg_wgs is not None and len(seg_wgs):
+        center = [float(seg_wgs.geometry.centroid.y.mean()), float(seg_wgs.geometry.centroid.x.mean())]
+    else:
+        center = (52.518589, 13.376665)
 
-    # diverging colormap: green -> yellow -> red
-    colormap = cm.LinearColormap(
+    cmap = cm.LinearColormap(
         colors=["green", "yellow", "red"],
         vmin=-vabs,
         vmax=vabs,
         index=[-vabs, 0.0, vabs],
     )
-    colormap.caption = "log10(EB-smoothed RR) | 0 = RR 1.0"
+    cmap.caption = f"log10({seg_metric or jn_metric or metric})"
 
-    m = folium.Map(location=coordinates, zoom_start=zoom, tiles=None)
-    folium.TileLayer(
-        tiles="https://basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png",
-        attr="©CartoDB",
-    ).add_to(m)
+    m = folium.Map(location=center, zoom_start=zoom, tiles="CartoDB positron")
 
-    if not seg_rr.empty:
-        def seg_style_fn(feat):
-            sig = feat["properties"]["sig"]
-            if sig == "below":
-                rr_for_color = float(feat["properties"]["rr_hi"])  # upper limit (<1)
-            elif sig == "above":
-                rr_for_color = float(feat["properties"]["rr_lo"])  # lower limit (>1)
-            else:
-                rr_for_color = 1.0  # not significant
+    if seg_wgs is not None and len(seg_wgs):
+        seg_fields = ["counter_name", seg_metric]
+        seg_aliases = ["Segment", seg_metric]
+        if "exposure" in seg_wgs.columns:
+            seg_fields.append("exposure")
+            seg_aliases.append("Exposure")
+        if "total_accidents" in seg_wgs.columns:
+            seg_fields.append("total_accidents")
+            seg_aliases.append("Accidents")
 
-            lr = np.log10(rr_for_color)
+        def _seg_style(feat):
+            lr = float(feat["properties"]["_log_rr"])
             lr = max(min(lr, vabs), -vabs)
-            return {"color": colormap(lr), "weight": segment_weight, "opacity": 0.9}
-
-        seg_fields = ["counter_name", "relative_risk", "rr_lo", "rr_hi", "sig", "total_accidents", "total_trips"]
-        seg_aliases = ["Segment", "EB RR", "CI lo", "CI hi", "Significance", "Accidents", "Strava trips"]
+            return {"color": cmap(lr), "weight": segment_weight, "opacity": 0.85}
 
         folium.GeoJson(
-            seg_rr[seg_fields + ["log_rr", "geometry"]],
-            name="Segments (EB log10 RR)",
-            style_function=seg_style_fn,
+            seg_wgs[seg_fields + ["_log_rr", "geometry"]],
+            name=f"Segments ({seg_metric})",
+            style_function=_seg_style,
             tooltip=folium.GeoJsonTooltip(
                 fields=seg_fields,
                 aliases=seg_aliases,
@@ -314,138 +216,131 @@ def total_relative_risk_map_log_eb_sig(
             ),
         ).add_to(m)
 
-    if not jn_rr.empty:
-        for _, r in jn_rr.iterrows():
-            if r["sig"] == "below":
-                rr_for_color = r["rr_hi"]
-            elif r["sig"] == "above":
-                rr_for_color = r["rr_lo"]
-            else:
-                rr_for_color = 1.0
-
-            lr = np.log10(rr_for_color)
-            lr = max(min(lr, vabs), -vabs)
+    if jn_wgs is not None and len(jn_wgs):
+        for _, r in jn_wgs.iterrows():
+            if r.geometry is None or not np.isfinite(r.geometry.x) or not np.isfinite(r.geometry.y):
+                continue
+            lr = max(min(float(r["_log_rr"]), vabs), -vabs)
+            exposure_txt = f" | exposure={float(r['exposure']):.0f}" if "exposure" in jn_wgs.columns else ""
+            accidents_txt = (
+                f" | accidents={int(r['total_accidents'])}"
+                if "total_accidents" in jn_wgs.columns and np.isfinite(r["total_accidents"])
+                else ""
+            )
             folium.CircleMarker(
                 location=[r.geometry.y, r.geometry.x],
                 radius=junction_radius,
-                color=colormap(lr),
+                color=cmap(lr),
                 fill=True,
-                fill_color=colormap(lr),
+                fill_color=cmap(lr),
                 fill_opacity=0.9,
+                weight=1,
                 tooltip=(
-                    f"Junction {int(r['node_id'])} | EB RR={r['relative_risk']:.2f} "
-                    f"[{r['rr_lo']:.2f}, {r['rr_hi']:.2f}] | {r['sig']} | "
-                    f"Accidents={int(r['total_accidents'])} | Trips={int(r['total_trips'])}"
+                    f"node_id={int(r.node_id)} | {jn_metric}={float(r[jn_metric]):.2f}"
+                    f"{exposure_txt}{accidents_txt}"
                 ),
             ).add_to(m)
 
-    colormap.add_to(m)
+    cmap.add_to(m)
     folium.LayerControl(collapsed=False).add_to(m)
     return m
 
-def total_relative_risk_map_log_eb(
-    segments_df,
-    junction_df,
-    alpha,
+def add_secure_rr(df, rr="rr_eb", lo="rr_eb_lo", hi="rr_eb_hi", out="rr_secure"):
+    sig_below = df[hi] < 1.0
+    sig_above = df[lo] > 1.0
+    df[out] = np.select(
+        [sig_below, sig_above],
+        [df[hi], df[lo]],
+        default=1.0,
+    )
+    return df
+
+
+def plot_rr_map_with_accidents(
+    top_segments_df,
+    top_junctions_df,
+    accidents_df,
     *,
-    coordinates=(52.518589, 13.376665),
+    metric="rr_secure",
+    year_col="year",
+    severity_col="injury_severity",
+    lon_col="XGCSWGS84",
+    lat_col="YGCSWGS84",
     zoom=12,
-    segment_weight=5,
+    coordinates=None,
+    segment_weight=4,
     junction_radius=4,
+    clip_percentile=99,
 ):
-    # aggregate over all years
-    seg_rr = (
-        segments_df.groupby("counter_name", as_index=False)
-        .agg(
-            geometry=("geometry", "first"),
-            total_accidents=("total_accidents", "sum"),
-            expected_accidents=("expected_accidents", "sum"),
+    import geopandas as gpd
+    import numpy as np
+    import folium
+    import pandas as pd
+
+    m = plot_rr_map(
+        top_segments_df,
+        top_junctions_df,
+        show="both",
+        metric=metric,
+        zoom=zoom,
+        coordinates=coordinates,
+        segment_weight=segment_weight,
+        junction_radius=junction_radius,
+        clip_percentile=clip_percentile,
+    )
+
+    if not isinstance(accidents_df, gpd.GeoDataFrame) or accidents_df.geometry.name not in accidents_df.columns:
+        if lon_col not in accidents_df.columns or lat_col not in accidents_df.columns:
+            raise KeyError(f"Accidents dataframe must have geometry or {lon_col!r}/{lat_col!r} columns.")
+
+        acc_df = accidents_df.copy()
+        acc_df[lon_col] = pd.to_numeric(acc_df[lon_col], errors="coerce")
+        acc_df[lat_col] = pd.to_numeric(acc_df[lat_col], errors="coerce")
+        acc_df = acc_df.dropna(subset=[lon_col, lat_col])
+
+        accidents_gdf = gpd.GeoDataFrame(
+            acc_df,
+            geometry=gpd.points_from_xy(acc_df[lon_col], acc_df[lat_col]),
+            crs="EPSG:4326",
         )
-    )
-    seg_rr = gpd.GeoDataFrame(seg_rr, geometry="geometry", crs=segments_df.crs)
+    else:
+        accidents_gdf = accidents_df.copy()
 
-    jn_rr = (
-        junction_df.groupby("node_id", as_index=False)
-        .agg(
-            geometry=("geometry", "first"),
-            total_accidents=("total_accidents", "sum"),
-            expected_accidents=("expected_accidents", "sum"),
-        )
-    )
-    jn_rr = gpd.GeoDataFrame(jn_rr, geometry="geometry", crs=junction_df.crs)
+    required_cols = {year_col, severity_col}
+    missing = required_cols - set(accidents_gdf.columns)
+    if missing:
+        raise KeyError(f"Accidents dataframe missing required columns: {sorted(missing)}")
 
-    # EB-smoothed relative risk
-    seg_rr["relative_risk"] = (seg_rr["total_accidents"] + alpha) / (seg_rr["expected_accidents"] + alpha)
-    jn_rr["relative_risk"] = (jn_rr["total_accidents"] + alpha) / (jn_rr["expected_accidents"] + alpha)
+    accidents_gdf = accidents_gdf[accidents_gdf.geometry.notna()].copy()
 
-    # compute scale (vabs) from valid positives only
-    seg_valid = seg_rr["relative_risk"].replace([np.inf, -np.inf], np.nan)
-    jn_valid = jn_rr["relative_risk"].replace([np.inf, -np.inf], np.nan)
-    all_valid = np.concatenate([
-        seg_valid[seg_valid > 0].to_numpy(),
-        jn_valid[jn_valid > 0].to_numpy(),
-    ])
-    vabs = np.nanpercentile(np.abs(np.log10(all_valid)), 99) if all_valid.size else 1.0
-    vabs = max(vabs, 0.1)
+    years = sorted(accidents_gdf[year_col].dropna().unique().tolist())
+    severities = sorted(accidents_gdf[severity_col].dropna().unique().tolist())
 
-    # floor tied to scale
-    floor = 10 ** (-vabs)
+    for year in years:
+        for severity in severities:
+            subset = accidents_gdf[
+                (accidents_gdf[year_col] == year) & (accidents_gdf[severity_col] == severity)
+            ]
+            if subset.empty:
+                continue
+            layer = folium.FeatureGroup(
+                name=f"Accidents {year} | severity {severity}",
+                show=False,
+            )
+            for _, r in subset.iterrows():
+                if r.geometry is None or not np.isfinite(r.geometry.x) or not np.isfinite(r.geometry.y):
+                    continue
+                folium.CircleMarker(
+                    location=[r.geometry.y, r.geometry.x],
+                    radius=2,
+                    color="#333333",
+                    fill=True,
+                    fill_color="#333333",
+                    fill_opacity=0.6,
+                    weight=0,
+                    tooltip=f"{year_col}={year} | {severity_col}={severity}",
+                ).add_to(layer)
+            layer.add_to(m)
 
-    # set 0/NaN/inf to floor, then log
-    seg_rr["relative_risk"] = seg_rr["relative_risk"].replace([np.inf, -np.inf], np.nan).fillna(0.0)
-    jn_rr["relative_risk"] = jn_rr["relative_risk"].replace([np.inf, -np.inf], np.nan).fillna(0.0)
-
-    seg_rr["relative_risk"] = seg_rr["relative_risk"].clip(lower=floor)
-    jn_rr["relative_risk"] = jn_rr["relative_risk"].clip(lower=floor)
-
-    seg_rr["log_rr"] = np.log10(seg_rr["relative_risk"])
-    jn_rr["log_rr"] = np.log10(jn_rr["relative_risk"])
-
-    # diverging colormap: green -> yellow -> red
-    colormap = cm.LinearColormap(
-        colors=["green", "yellow", "red"],
-        vmin=-vabs,
-        vmax=vabs,
-        index=[-vabs, 0.0, vabs],
-    )
-    colormap.caption = "log10(EB-smoothed RR) | 0 = RR 1.0"
-
-    m = folium.Map(location=coordinates, zoom_start=zoom, tiles=None)
-    folium.TileLayer(
-        tiles="https://basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png",
-        attr="©CartoDB",
-    ).add_to(m)
-
-    if not seg_rr.empty:
-        def seg_style_fn(feat):
-            lr = float(feat["properties"]["log_rr"])
-            lr = max(min(lr, vabs), -vabs)
-            return {"color": colormap(lr), "weight": segment_weight, "opacity": 0.9}
-
-        folium.GeoJson(
-            seg_rr[["counter_name", "log_rr", "relative_risk", "geometry"]],
-            name="Segments (EB log10 RR)",
-            style_function=seg_style_fn,
-            tooltip=folium.GeoJsonTooltip(
-                fields=["counter_name", "relative_risk"],
-                aliases=["Segment", "EB RR"],
-                localize=True,
-            ),
-        ).add_to(m)
-
-    if not jn_rr.empty:
-        for _, r in jn_rr.iterrows():
-            lr = max(min(float(r["log_rr"]), vabs), -vabs)
-            folium.CircleMarker(
-                location=[r.geometry.y, r.geometry.x],
-                radius=junction_radius,
-                color=colormap(lr),
-                fill=True,
-                fill_color=colormap(lr),
-                fill_opacity=0.9,
-                tooltip=f"Junction {int(r['node_id'])} | EB RR={r['relative_risk']:.2f}",
-            ).add_to(m)
-
-    colormap.add_to(m)
     folium.LayerControl(collapsed=False).add_to(m)
     return m
