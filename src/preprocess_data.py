@@ -2,7 +2,7 @@ from pathlib import Path
 import pandas as pd
 
 def preprocess_accident_data():
-    csv_dir = Path(Path(__file__).parent.parent / "data" / "csv")
+    csv_dir = Path(Path(__file__).parent.parent / "data" / "accidents")
     csv_files = sorted(csv_dir.glob("*.csv"))
 
     if not csv_files:
