@@ -16,7 +16,7 @@ import geopandas as gpd
 import networkx as nx
 import numpy as np
 import pandas as pd
-from shapely.geometry import LineString, Point
+from shapely.geometry import LineString
 
 
 # Type aliases
@@ -46,7 +46,7 @@ def _risk_fallback_value(series: pd.Series, *, strategy: str = "median", default
     Decide a safe fallback risk if a segment/node risk is NaN.
 
     strategy:
-      - "median": median of observed values for that month panel
+      - "median": median of observed values
       - "mean": mean of observed values
       - "zero": always 0
       - "high": conservative high value (90th percentile if possible)
@@ -70,32 +70,33 @@ def _risk_fallback_value(series: pd.Series, *, strategy: str = "median", default
 
 def _build_node_risk_lookup(
     junction_panel_gdf: gpd.GeoDataFrame,
-    year: int,
-    month: int,
     *,
     node_id_col: str = "node_id",
-    node_risk_col: str = "rr_secure",
+    node_risk_col: str = "risk_weight",
     fallback: float = 0.0,
     fallback_strategy: str = "median",
 ) -> Dict[str, float]:
     """
-    Returns dict[node_id(str)] -> node_risk for the given (year, month).
+    Returns dict[node_id(str)] -> node_risk for pooled routing.
 
     Notes:
-      - If (year, month) missing entirely: returns {} (caller chooses behavior).
-      - If a node risk value is NaN: filled by fallback computed from the month panel.
+      - If junction_panel_gdf is empty: returns {} (caller chooses behavior).
+      - If multiple rows per node_id exist (e.g., panel data): we aggregate by mean.
+      - If a node risk value is NaN: filled by a fallback computed from observed values.
     """
     if junction_panel_gdf is None or len(junction_panel_gdf) == 0:
         return {}
 
-    j = junction_panel_gdf[(junction_panel_gdf["year"] == year) & (junction_panel_gdf["month"] == month)].copy()
+    j = junction_panel_gdf.copy()
     if j.empty:
         return {}
 
+    if node_id_col not in j.columns:
+        raise KeyError(f"Missing node id column '{node_id_col}' in junction_panel_gdf")
     if node_risk_col not in j.columns:
         raise KeyError(f"Missing node risk column '{node_risk_col}' in junction_panel_gdf")
 
-    # Ensure one row per node_id-month; if multiple exist, take mean (shouldn't happen, but safe).
+    # One row per node_id
     j = j.groupby(node_id_col, as_index=False)[node_risk_col].mean()
 
     fb = _risk_fallback_value(j[node_risk_col], strategy=fallback_strategy, default=fallback)
@@ -118,10 +119,13 @@ def _attach_node_ids_to_graph_nodes(
     We snap each crossing point to the nearest graph node (within max_snap_m).
     Stores: G.nodes[node_key]["node_id"] = <id>
 
-    Critical for applying junction risk penalties.
+    This is required for applying junction risk penalties.
     """
     if crossings_gdf is None or len(crossings_gdf) == 0:
         return
+
+    if node_id_col not in crossings_gdf.columns:
+        raise KeyError(f"Missing '{node_id_col}' in crossings_gdf")
 
     crossings_m = crossings_gdf.to_crs(epsg=metric_epsg).copy()
 
@@ -188,15 +192,15 @@ def _get_edge_data_for_step(G: nx.Graph, a, b, *, choose_by: str = "length_m") -
 
 @dataclass(frozen=True)
 class GraphBuildConfig:
-    """Configuration for graph building from segment panel data."""
+    """Configuration for graph building from segment data."""
     metric_epsg: int = 32633
     endpoint_ndigits: int = 0
     seg_id_col: str = "counter_name"
     seg_exposure_col_candidates: Tuple[str, ...] = ("monthly_strava_trips", "sum_strava_total_trip_count")
-    seg_risk_col_candidates: Tuple[str, ...] = ("rr_secure", )
+    seg_risk_col_candidates: Tuple[str, ...] = ("risk_weight",)
     risk_fallback_strategy: str = "median"   # median/mean/high/zero
     risk_fallback_default: float = 0.0
-    drop_edges_with_zero_exposure: bool = True
+    drop_edges_with_zero_exposure: bool = False  # pooled setup typically disables this
     keep_parallel_edges: bool = True
 
 
@@ -207,11 +211,9 @@ class RiskConfig:
 
 
 @dataclass(frozen=True)
-class RoutingMonthArtifacts:
-    """Output from building a routing graph for a specific month."""
+class RoutingGraphArtifacts:
+    """Output from building a routing graph."""
     G: nx.Graph
-    year: int
-    month: int
     segment_risk_col_used: str
     node_risk_col_used: Optional[str]
     notes: str
@@ -219,57 +221,63 @@ class RoutingMonthArtifacts:
 
 # Graph construction
 
-def build_routing_graph_for_month(
+def build_routing_graph(
     segments_panel_gdf: gpd.GeoDataFrame,
-    year: int,
-    month: int,
     *,
     config: GraphBuildConfig = GraphBuildConfig(),
 ) -> nx.Graph:
     """
-    Build a routing graph for one (year, month) from segment LineStrings.
+    Build a pooled routing graph from segment LineStrings.
 
     Nodes: segment endpoints (rounded in metric CRS).
     Edges carry:
       - segment_id
       - length_m
-      - seg_risk (scaled for routing; per-10k trips)
+      - seg_risk (routing weight, typically risk_weight = lambda_bar * rr_eb)
       - geometry
+
+    If segments_panel_gdf contains multiple rows per segment (e.g., a panel),
+    this function aggregates to one row per segment_id.
     """
-    df = segments_panel_gdf[(segments_panel_gdf["year"] == year) & (segments_panel_gdf["month"] == month)].copy()
-    if df.empty:
-        raise ValueError(f"No segment rows found for year={year}, month={month}")
+    df0 = segments_panel_gdf
+    if df0 is None or len(df0) == 0:
+        raise ValueError("No segment rows found in segments_panel_gdf.")
+    if df0.geometry is None:
+        raise ValueError("segments_panel_gdf must have a geometry column.")
 
-    df_m = df.to_crs(epsg=config.metric_epsg).copy()
-
-    # Pick exposure column
-    exposure_col = None
-    for c in config.seg_exposure_col_candidates:
-        if c in df_m.columns:
-            exposure_col = c
-            break
-    if exposure_col is None:
-        raise KeyError(f"Missing exposure column. Tried: {config.seg_exposure_col_candidates}")
-
-    # Pick risk column
+    # Pick risk column from the raw input
     risk_col = None
     for c in config.seg_risk_col_candidates:
-        if c in df_m.columns:
+        if c in df0.columns:
             risk_col = c
             break
     if risk_col is None:
         raise KeyError(f"Missing risk column. Tried: {config.seg_risk_col_candidates}")
 
-    # Ensure uniqueness at segment-month level
-    if df_m[[config.seg_id_col, "year", "month"]].duplicated().any():
-        dups = int(df_m[[config.seg_id_col, "year", "month"]].duplicated().sum())
-        raise ValueError(f"segments_panel_gdf has {dups} duplicate rows for (segment,year,month). Fix upstream aggregation.")
+    # Exposure column is optional in pooled mode
+    exposure_col = None
+    for c in config.seg_exposure_col_candidates:
+        if c in df0.columns:
+            exposure_col = c
+            break
 
-    df_m[exposure_col] = pd.to_numeric(df_m[exposure_col], errors="coerce")
-    if config.drop_edges_with_zero_exposure:
+    # Aggregate to one row per segment_id
+    agg = {"geometry": ("geometry", "first"), risk_col: (risk_col, "mean")}
+    if exposure_col is not None:
+        agg[exposure_col] = (exposure_col, "sum")
+
+    df = df0.groupby(config.seg_id_col, as_index=False).agg(**agg)
+
+    # Restore GeoDataFrame and project to metric CRS
+    df = gpd.GeoDataFrame(df, geometry="geometry", crs=segments_panel_gdf.crs)
+    df_m = df.to_crs(epsg=config.metric_epsg).copy()
+
+    # Optional exposure filtering (only if exposure exists)
+    if config.drop_edges_with_zero_exposure and exposure_col is not None:
+        df_m[exposure_col] = pd.to_numeric(df_m[exposure_col], errors="coerce")
         df_m = df_m[df_m[exposure_col].fillna(0) > 0].copy()
 
-    # Compute fallback risk (month-specific)
+    # Fallback risk computed over the pooled panel
     fb = _risk_fallback_value(df_m[risk_col], strategy=config.risk_fallback_strategy, default=config.risk_fallback_default)
 
     # Build graph
@@ -279,6 +287,7 @@ def build_routing_graph_for_month(
         geom = row.geometry
         if geom is None or geom.is_empty:
             continue
+
         if not isinstance(geom, LineString):
             # If MultiLineString, take the longest component
             try:
@@ -314,7 +323,7 @@ def build_routing_graph_for_month(
         )
 
     if G.number_of_edges() == 0:
-        raise ValueError(f"Graph has 0 edges for year={year}, month={month} after filtering. Check exposure coverage and filters.")
+        raise ValueError("Graph has 0 edges after filtering. Check geometry and risk inputs.")
 
     return G
 
@@ -328,7 +337,7 @@ def add_node_penalty_attributes(
 ) -> None:
     """
     Add node_penalty attribute to each edge based on junction risks at endpoints.
-    
+
     node_penalty = 0.5 * (risk_u + risk_v)
     """
     if node_risk_by_node_id is None:
@@ -371,40 +380,39 @@ def add_risk_total_attributes(
 
 # End-to-end graph builder
 
-def build_graph_with_risk_for_month(
+def build_graph_with_risk(
     segments_panel_gdf: gpd.GeoDataFrame,
-    year: int,
-    month: int,
     *,
     crossings_gdf: Optional[gpd.GeoDataFrame] = None,
     junction_panel_gdf: Optional[gpd.GeoDataFrame] = None,
     graph_cfg: GraphBuildConfig = GraphBuildConfig(),
-    node_risk_col: str = "rr_secure",
+    node_risk_col: str = "risk_weight",
     node_snap_m: float = 30.0,
     node_risk_fallback_strategy: str = "median",
     node_risk_fallback_default: float = 0.0,
     risk_cfg: RiskConfig = RiskConfig(eta=1.0),
-) -> RoutingMonthArtifacts:
+) -> RoutingGraphArtifacts:
     """
-    Build the month-specific routing graph and attach cost/risk attributes.
+    Build the pooled routing graph and attach cost and risk attributes.
 
-      1) Build graph edges from segment panel for (year, month)
+      1) Build graph edges from segment geometries and segment routing weights
       2) Optionally attach node_ids to graph nodes by snapping crossings_gdf points
-      3) Optionally build node risk lookup from junction_panel_gdf for (year, month)
-      4) Add edge costs and risk_total (segment + eta * junction penalty)
+      3) Optionally build node risk lookup from junction_panel_gdf (pooled)
+      4) Add node_penalty and risk_total attributes to edges
     """
-    G = build_routing_graph_for_month(segments_panel_gdf, year, month, config=graph_cfg)
+    G = build_routing_graph(segments_panel_gdf, config=graph_cfg)
 
     node_risk_lookup: Dict[str, float] = {}
     used_node_risk_col: Optional[str] = None
-    notes: list = []
+    notes: list[str] = []
 
-    # junction info is needed
     need_junction = (risk_cfg.eta != 0.0)
 
     if need_junction:
         if crossings_gdf is None or junction_panel_gdf is None:
-            notes.append("junction risk requested (eta!=0) but crossings_gdf/junction_panel_gdf not provided -> junction penalty set to 0.")
+            notes.append(
+                "junction risk requested (eta!=0) but crossings_gdf/junction_panel_gdf not provided, junction penalty set to 0"
+            )
         else:
             _attach_node_ids_to_graph_nodes(
                 G,
@@ -415,8 +423,6 @@ def build_graph_with_risk_for_month(
             )
             node_risk_lookup = _build_node_risk_lookup(
                 junction_panel_gdf,
-                year,
-                month,
                 node_id_col="node_id",
                 node_risk_col=node_risk_col,
                 fallback=node_risk_fallback_default,
@@ -430,7 +436,6 @@ def build_graph_with_risk_for_month(
     add_node_penalty_attributes(G, node_risk_by_node_id=node_risk_lookup)
     add_risk_total_attributes(G, risk_cfg=risk_cfg)
 
-    # Determine which segment risk column was used (for transparency)
     seg_risk_col_used = None
     for c in graph_cfg.seg_risk_col_candidates:
         if c in segments_panel_gdf.columns:
@@ -442,10 +447,8 @@ def build_graph_with_risk_for_month(
     if risk_cfg.eta != 0.0:
         notes.append(f"Risk objective uses eta={risk_cfg.eta} for junction penalty weighting.")
 
-    return RoutingMonthArtifacts(
+    return RoutingGraphArtifacts(
         G=G,
-        year=year,
-        month=month,
         segment_risk_col_used=seg_risk_col_used,
         node_risk_col_used=used_node_risk_col,
         notes=" ".join(notes).strip(),
@@ -455,12 +458,12 @@ def build_graph_with_risk_for_month(
 # Verification utilities
 
 def verify_graph_sanity(
-    artifacts: RoutingMonthArtifacts,
+    artifacts: RoutingGraphArtifacts,
     *,
     expect_junction_penalties: bool = False,
 ) -> Dict[str, Union[int, float, str]]:
     """
-    Quick, paper-friendly sanity checks:
+    Quick sanity checks:
       - graph non-empty
       - risk magnitude reasonable
       - node_penalty and risk_total ranges
@@ -490,5 +493,8 @@ def verify_graph_sanity(
     }
 
     if expect_junction_penalties and attached_nodes == 0:
-        out["warning"] = "Expected junction penalties, but no graph nodes have node_id attached. Check snapping tolerance and CRS."
+        out["warning"] = (
+            "Expected junction penalties, but no graph nodes have node_id attached. "
+            "Check snapping tolerance and CRS."
+        )
     return out
