@@ -74,7 +74,7 @@ def _build_node_risk_lookup(
     month: int,
     *,
     node_id_col: str = "node_id",
-    node_risk_col: str = "risk_accidents_per_10k_trips",
+    node_risk_col: str = "rr_secure",
     fallback: float = 0.0,
     fallback_strategy: str = "median",
 ) -> Dict[str, float]:
@@ -193,8 +193,7 @@ class GraphBuildConfig:
     endpoint_ndigits: int = 0
     seg_id_col: str = "counter_name"
     seg_exposure_col_candidates: Tuple[str, ...] = ("monthly_strava_trips", "sum_strava_total_trip_count")
-    seg_risk_col_candidates: Tuple[str, ...] = ("risk_accidents_per_10k_trips", "risk_accidents_per_trip")
-    auto_scale_trip_risk_to_per_10k: bool = True
+    seg_risk_col_candidates: Tuple[str, ...] = ("rr_secure", )
     risk_fallback_strategy: str = "median"   # median/mean/high/zero
     risk_fallback_default: float = 0.0
     drop_edges_with_zero_exposure: bool = True
@@ -300,10 +299,6 @@ def build_routing_graph_for_month(
             seg_risk = fb
         seg_risk = float(seg_risk)
 
-        # If only per-trip risk exists, scale to per-10k for routing stability
-        if (risk_col == "risk_accidents_per_trip") and config.auto_scale_trip_risk_to_per_10k:
-            seg_risk *= 10_000.0
-
         if u not in G:
             G.add_node(u, x=u[0], y=u[1])
         if v not in G:
@@ -384,7 +379,7 @@ def build_graph_with_risk_for_month(
     crossings_gdf: Optional[gpd.GeoDataFrame] = None,
     junction_panel_gdf: Optional[gpd.GeoDataFrame] = None,
     graph_cfg: GraphBuildConfig = GraphBuildConfig(),
-    node_risk_col: str = "risk_accidents_per_10k_trips",
+    node_risk_col: str = "rr_secure",
     node_snap_m: float = 30.0,
     node_risk_fallback_strategy: str = "median",
     node_risk_fallback_default: float = 0.0,
@@ -443,10 +438,6 @@ def build_graph_with_risk_for_month(
             break
     if seg_risk_col_used is None:
         seg_risk_col_used = "(unknown)"
-
-    # If per-trip risk was used but scaled, note it
-    if seg_risk_col_used == "risk_accidents_per_trip" and graph_cfg.auto_scale_trip_risk_to_per_10k:
-        notes.append("Scaled segment risk_accidents_per_trip by 10,000 for routing stability (per-10k trips).")
 
     if risk_cfg.eta != 0.0:
         notes.append(f"Risk objective uses eta={risk_cfg.eta} for junction penalty weighting.")
