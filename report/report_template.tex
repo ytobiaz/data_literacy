@@ -41,6 +41,33 @@
 % Attempt to make hyperref and algorithmic work together better:
 \newcommand{\theHalgorithm}{\arabic{algorithm}}
 
+% command for plotting legend colorbar of risk map figure
+\newcommand{\coolwarmbox}{%
+  \tikz[baseline]{
+    \begin{scope}[yshift=0.1ex]
+      \draw[black!70]
+        (0,0) rectangle (4em,1ex);
+      \shade[
+        shading=axis,
+        shading angle=0,
+        left color=TUblue,
+        middle color= TUgray,
+        right color=TUgray
+      ]
+      (0,0) rectangle (2em,1ex);
+      \shade[
+        shading=axis,
+        shading angle=0,
+        left color=TUgray,
+        middle color=TUgray,
+        right color=TUred
+      ]
+      (1.9em,0) rectangle (4em,1ex);
+    \end{scope}
+  }%
+}
+
+
 \usepackage[accepted]{icml2025}
 
 % For theorems and such
@@ -325,7 +352,7 @@ This distribution of those calculated risks is displayed in Figure~\ref{fig:risk
 \begin{figure}[h]
   \centering
   \includegraphics{figs/risk_segments.pdf}
-  \caption{Risk per segment for the area of Berlin. The colors indicate the log-scaled risk for each plotted segment and junction.}
+  \caption{Risk levels across segments and junctions in the Berlin area. Colors (\coolwarmbox) represent the log-scaled risk, ranging from blue (low risk) to red (high risk).}
   \label{fig:risk_segments}
 \end{figure}
 
