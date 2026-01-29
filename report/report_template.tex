@@ -193,7 +193,18 @@ approach is applied as described in \cref{sec:methods}. The resulting yearly seg
 
 \section{Methods}\label{sec:methods}
 \paragraph{Empirical Bayes relative risk.}
-For each network entity $i$, either a street segment or a junction, and month $t$, let $A_{i,t}$ denote the number of police-recorded bicycle crashes and $E_{i,t}$ the measured cyclist exposure. We assume that, within a given month, crash incidence is proportional to exposure under a ``no special risk'' baseline. This yields the expected number of crashes
+For each month $t$, let $A_{s,t}$ and $E_{s,t}$ denote the number of police-recorded bicycle crashes and the measured cyclist exposure on street segment $s$. Junction crashes
+$A_{v,t}$ are defined as crashes occurring within a fixed radius of the centroid of junction $v$. Because a traversal typically contributes exposure to two incident segments, 
+entering and exiting, we approximate junction exposure by a half-sum of incident segment exposures,
+\[
+E_{v,t}=\tfrac{1}{2}\sum_{s\in\mathcal I(v)} E_{s,t},
+\]
+which avoids double-counting. Aggregating exposure over incident links is common when turning movements are unavailable~\citep{hakkert2002uses,WANG2020105838}.
+
+For notational convenience, we index both street segments and junctions by a generic entity index $i$, with $A_{i,t}$ and $E_{i,t}$ denoting the corresponding crash and exposure 
+quantities.
+
+We assume that, within a given month, crash incidence is proportional to exposure under a ``no special risk'' baseline. This yields the expected number of crashes
 \[
 \widehat{A}_{i,t}
 = A_{\cdot t}\,\frac{E_{i,t}}{E_{\cdot t}},
@@ -229,13 +240,6 @@ r_i
 = \frac{A_i+\alpha}{\widehat{A}_i+\alpha}
 \]
 serves as our Empirical Bayes smoothed relative risk. This estimator shrinks extreme values toward $1$, with stronger shrinkage for entities with low expected crash counts.
-
-To capture the concentration of crashes near intersections, we estimate junction-level relative risk analogously. A junction is defined as any network node with degree $\ge 3$, and crashes within a fixed radius of its centroid are assigned to that junction. Because a traversal typically contributes exposure to two incident segments, entering and exiting, we approximate junction exposure by a half-sum of incident segment exposures,
-\begin{equation}
-\label{eq:half-sum}
-E_v=\tfrac{1}{2}\sum_{s\in\mathcal{I}(v)} E_s,
-\end{equation}
-which avoids double-counting. Aggregating exposure over incident links is common when turning movements are unavailable~\citep{hakkert2002uses,WANG2020105838}. Junction crashes and exposures enter the same pooled Empirical Bayes formulation as segments.
 
 \paragraph{Risk rescaling for routing.}
 Relative risk estimates are dimensionless and reflect risk conditional on exposure. To obtain additive weights suitable for routing, we rescale relative risk by the pooled baseline crash rate
@@ -314,14 +318,56 @@ highlight the importance of controlling for exposure when comparing infrastructu
 
 \section{Results}\label{sec:results}
 % In this section outline your results. At this point, you are just stating the outcome of your analysis. You can highlight important aspects (``we observe a significantly higher value of $x$ over $y$''), but leave interpretation and opinion to the next section. This section absoultely \emph{must} include at least two figures.
+To evaluate the routing algorithm, we sample $n=1000$ origin--destination pairs uniformly at random and compare shortest-distance routes with safety-aware alternatives \citep{NateraOrozco2020}.
+
+
+\begin{table}[t]
+\centering
+\caption{Distance--risk trade-off under bounded detours for different junction-risk weights $\eta$.
+Values are aggregated over all origin--destination pairs. Medians are reported with interquartile
+ranges in parentheses.}
+\label{tab:routing_tradeoff}
+\begin{tabular}{@{}c c c c c@{}}
+\toprule
+$\eta$ & $\varepsilon$ & Med.\ $\Delta_L$ & Med.\ $\Delta_R$ & $P(\Delta_R>0)$ \\
+\midrule
+0.0 & 0.05 & 0.009 (0.026) & 0.246 (0.451) & 76.1 \\
+    & 0.10 & 0.025 (0.042) & 0.377 (0.388) & 86.0 \\
+    & 0.20 & 0.038 (0.072) & 0.425 (0.353) & 90.6 \\
+\addlinespace
+0.5 & 0.05 & 0.008 (0.026) & 0.208 (0.401) & 75.3 \\
+    & 0.10 & 0.026 (0.046) & 0.331 (0.370) & 86.4 \\
+    & 0.20 & 0.047 (0.089) & 0.404 (0.323) & 92.0 \\
+\addlinespace
+1.0 & 0.05 & 0.008 (0.026) & 0.185 (0.363) & 75.9 \\
+    & 0.10 & 0.028 (0.047) & 0.305 (0.345) & 86.3 \\
+    & 0.20 & 0.050 (0.086) & 0.378 (0.318) & 91.8 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\cref{tab:routing_tradeoff} summarizes the trade-off between route length and exposure-adjusted crash risk under bounded detours. Safety-aware routing identifies feasible alternatives for all 
+origin--destination pairs across detour budgets and junction-risk weights.
+
+Allowing a 10\% detour reduces exposure-adjusted crash risk by 31--38\% in median, with over 86\% of routes achieving a risk reduction for all values of the junction-risk weight. Larger detours 
+further increase these gains, reaching median reductions of 38--43\% at $\varepsilon=0.20$, while even small detours ($\varepsilon=0.05$) yield measurable reductions of 18--25\%. Across all detour
+budgets, increasing $\eta$ is associated with lower median risk reductions.
+
 
 \section{Discussion and Conclusion}\label{sec:conclusion}
 % Use this section to briefly summarize the entire text. Highlight limitations and problems, but also make clear statements where they are possible and supported by the analysis. 
+Our results indicate that substantial reductions in exposure-adjusted crash risk can be achieved with relatively small increases in route length. While higher junction-risk weights reduce the magnitude
+ of the estimated risk reduction, the distance--risk trade-off persists across all configurations, with absolute gains depending on the chosen weighting.
+
+Overall, allowing a 10\% increase in route length yields median exposure-adjusted risk reductions of 31--38\% for the majority of routes, demonstrating that safety-aware routing can effectively trade 
+modest detours for meaningful safety improvements.
+
+
 We provide implementation details, hyperparameters, and supplementary material, available at \url{https://github.com/ytobiaz/data_literacy}.
 
 \newpage
 
-% \section*{Contribution Statement}
+\section*{Contribution Statement}
 % Explain here, in one sentence per person, what each group member contributed. For example, you could write: Max Mustermann collected and prepared data. Gabi Musterfrau and John Doe performed the data analysis. Jane Doe produced visualizations. All authors will jointly wrote the text of the report. Note that you, as a group, a collectively responsible for the report. Your contributions should be roughly equal in amount and difficulty.
 
 % \section*{Notes} 

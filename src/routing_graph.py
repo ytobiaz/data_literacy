@@ -72,7 +72,7 @@ def _build_node_risk_lookup(
     junction_panel_gdf: gpd.GeoDataFrame,
     *,
     node_id_col: str = "node_id",
-    node_risk_col: str = "risk_weight",
+    node_risk_col: str = "risk_weight_secure",
     fallback: float = 0.0,
     fallback_strategy: str = "median",
 ) -> Dict[str, float]:
@@ -197,7 +197,7 @@ class GraphBuildConfig:
     endpoint_ndigits: int = 0
     seg_id_col: str = "counter_name"
     seg_exposure_col_candidates: Tuple[str, ...] = ("monthly_strava_trips", "sum_strava_total_trip_count")
-    seg_risk_col_candidates: Tuple[str, ...] = ("risk_weight",)
+    seg_risk_col_candidates: Tuple[str, ...] = ("risk_weight_secure",)
     risk_fallback_strategy: str = "median"   # median/mean/high/zero
     risk_fallback_default: float = 0.0
     drop_edges_with_zero_exposure: bool = False  # pooled setup typically disables this
@@ -233,7 +233,7 @@ def build_routing_graph(
     Edges carry:
       - segment_id
       - length_m
-      - seg_risk (routing weight, typically risk_weight = lambda_bar * rr_eb)
+      - seg_risk
       - geometry
 
     If segments_panel_gdf contains multiple rows per segment (e.g., a panel),
@@ -386,7 +386,7 @@ def build_graph_with_risk(
     crossings_gdf: Optional[gpd.GeoDataFrame] = None,
     junction_panel_gdf: Optional[gpd.GeoDataFrame] = None,
     graph_cfg: GraphBuildConfig = GraphBuildConfig(),
-    node_risk_col: str = "risk_weight",
+    node_risk_col: str = "risk_weight_secure",
     node_snap_m: float = 30.0,
     node_risk_fallback_strategy: str = "median",
     node_risk_fallback_default: float = 0.0,
