@@ -16,130 +16,6 @@ from tueplots.constants.color import palettes
 from .utils import data_path
 
 
-ACCIDENT_COLUMNS_EN: dict[str, str] = {
-    # IDs & metadata
-    "OBJECTID": "object_id",
-    "OID_": "oid",
-    "source_file": "source_file",
-
-    # Unique accident identifiers
-    "UIDENTSTLAE": "accident_id_extended",
-
-    # Administrative divisions
-    "ULAND": "land_code",
-    "UREGBEZ": "admin_region_code",
-    "UKREIS": "district_code",
-    "UGEMEINDE": "municipality_code",
-
-    # Time
-    "UJAHR": "year",
-    "UMONAT": "month",
-    "USTUNDE": "hour",
-    "UWOCHENTAG": "weekday",
-
-    # Accident classification
-    "UKATEGORIE": "injury_severity",
-    "UART": "accident_kind",
-    "UTYP1": "accident_type",
-
-    # Participants involved (0/1)
-    "IstRad": "involved_bicycle",
-    "IstPKW": "involved_passenger_car",
-    "IstFuss": "involved_pedestrian",
-    "IstKrad": "involved_motorcycle",
-    "IstGkfz": "involved_goods_vehicle",
-    "IstSonstige": "involved_other_vehicle",
-    "IstStrassenzustand": "road_condition_flag",
-
-    # Environmental conditions
-    "ULICHTVERH": "light_condition",
-
-    # Data quality
-    "PLST": "plausibility_level",
-}
-
-
-def _coerce_numeric_with_decimal_comma(df: pd.DataFrame, cols: Sequence[str]) -> pd.DataFrame:
-    for col in cols:
-        if col not in df.columns:
-            continue
-        series = df[col]
-        if pd.api.types.is_numeric_dtype(series):
-            df[col] = pd.to_numeric(series, errors="coerce")
-            continue
-        df[col] = (
-            series.astype(str)
-            .str.replace(",", ".", regex=False)
-            .pipe(pd.to_numeric, errors="coerce")
-        )
-    return df
-
-
-def load_accidents_raw(
-    csv_dir: str | Path | None = None,
-    *,
-    delimiter: str = ";",
-    decimal: str = ",",
-    low_memory: bool = False,
-) -> pd.DataFrame:
-    """Load all Unfallatlas CSVs from `data/accidents` (or a provided directory).
-
-    Keeps original column names (German), and adds a `source_file` column.
-    """
-
-    csv_dir_path = Path(csv_dir) if csv_dir is not None else data_path("accidents")
-    csv_files = sorted(csv_dir_path.glob("*.csv"))
-    if not csv_files:
-        raise FileNotFoundError(f"No CSV files found in {csv_dir_path.resolve()}")
-
-    dfs: list[pd.DataFrame] = []
-    for fp in csv_files:
-        df = pd.read_csv(fp, low_memory=low_memory, delimiter=delimiter, decimal=decimal)
-
-        # Some years use slightly different column names.
-        if "IstStrasse" in df.columns and "IstStrassenzustand" not in df.columns:
-            df = df.rename(columns={"IstStrasse": "IstStrassenzustand"})
-        if "STRZUSTAND" in df.columns and "IstStrassenzustand" not in df.columns:
-            df = df.rename(columns={"STRZUSTAND": "IstStrassenzustand"})
-        if "IstSonstig" in df.columns and "IstSonstige" not in df.columns:
-            df = df.rename(columns={"IstSonstig": "IstSonstige"})
-
-        df["source_file"] = fp.name
-        dfs.append(df)
-
-    return pd.concat(dfs, ignore_index=True)
-
-
-def prepare_accidents_bike_berlin(
-    accidents_raw: pd.DataFrame,
-    *,
-    column_map: Mapping[str, str] = ACCIDENT_COLUMNS_EN,
-    berlin_land_code: int = 11,
-) -> pd.DataFrame:
-    """Rename columns to English and filter to bicycle accidents in Berlin."""
-
-    accidents = accidents_raw.rename(columns=dict(column_map))
-
-    required_cols = {"involved_bicycle", "land_code"}
-    missing = required_cols - set(accidents.columns)
-    if missing:
-        raise KeyError(f"Missing required columns after renaming: {sorted(missing)}")
-
-    accidents_bike_berlin = (
-        accidents.loc[
-            (accidents["involved_bicycle"] == 1) & (accidents["land_code"] == berlin_land_code)
-        ]
-        .reset_index(drop=True)
-    )
-
-    # Make common coordinate columns numeric (robust to comma decimals / strings).
-    _coerce_numeric_with_decimal_comma(
-        accidents_bike_berlin,
-        cols=["XGCSWGS84", "YGCSWGS84", "LINREFX", "LINREFY"],
-    )
-
-    return accidents_bike_berlin
-
 
 def assign_accidents_to_nearest_segment(
     accidents_bike_berlin: pd.DataFrame,
@@ -318,9 +194,9 @@ def plot_accident_quality_overview(
 
     # 4. Road condition flag distribution
     ax4 = axes[1, 0]
-    if 'road_condition_flag' in accidents_df.columns:
+    if 'road_condition' in accidents_df.columns:
         surface_map = {0: 'Dry', 1: 'Wet/Damp', 2: 'Slippery\n(Winter)'}
-        surface_counts = accidents_df['road_condition_flag'].value_counts().sort_index()
+        surface_counts = accidents_df['road_condition'].value_counts().sort_index()
         surface_labels = [surface_map.get(i, f'Code {i}') for i in surface_counts.index]
         ax4.bar(surface_labels, surface_counts.values, color=main_color, edgecolor='black', linewidth=0.5)
         ax4.set_title('Accidents by Road Condition', fontweight='bold', fontsize=13)
@@ -330,7 +206,7 @@ def plot_accident_quality_overview(
         for i, v in enumerate(surface_counts.values):
             ax4.text(i, v + 50, str(v), ha='center', fontsize=10, fontweight='bold')
     else:
-        ax4.text(0.5, 0.5, 'road_condition_flag not available', ha='center', va='center', fontsize=11)
+        ax4.text(0.5, 0.5, 'road_condition not available', ha='center', va='center', fontsize=11)
         ax4.set_title('Road Condition', fontweight='bold', fontsize=12)
 
     # 5. Hourly distribution
@@ -558,9 +434,9 @@ def plot_accident_quality_overview(
     accident_feature_cols = [
         'year', 'month', 'hour', 'weekday', 'weekday_type', 'time_of_day',
         'injury_severity', 'accident_kind', 'accident_type', 'light_condition',
-        'involved_bicycle', 'involved_passenger_car', 'involved_pedestrian',
-        'involved_motorcycle', 'involved_goods_vehicle', 'involved_other_vehicle',
-        'road_condition_flag'
+        'car_involved', 'pedestrian_involved',
+        'motorcycle_involved', 'goods_vehicle_involved', 'other_vehicle_involved',
+        'road_condition'
     ]
     
     geo_cols = ['LINREFX', 'LINREFY', 'XGCSWGS84', 'YGCSWGS84']

@@ -1,7 +1,7 @@
 from pathlib import Path
 import pandas as pd
 
-def preprocess_accident_data():
+def preprocess_accident_data(save_to_parquet: bool = True):
     csv_dir = Path(Path(__file__).parent.parent / "data" / "accidents")
     csv_files = sorted(csv_dir.glob("*.csv"))
 
@@ -29,17 +29,102 @@ def preprocess_accident_data():
     print(f"Loaded {len(csv_files)} files -> combined shape: {df_all.shape}")
 
     # drop columns that are not relevant or don't contain information
-    df_all.drop(columns=["OBJECTID", "UIDENTSTLA", "OBJECTID_1", "UIDENTSTLAE", "OID_", "FID", "LICHT", "PLST"], inplace=True)
+    df_all.drop(columns=["OBJECTID", "UIDENTSTLAE", "OID_", "PLST"], inplace=True)
     print(f"Dropped irrelevant columns -> shape: {df_all.shape}")
 
     # drop all accidents that did not involve bicycles (column 'IstRad' != 1)
     df_bike = df_all[df_all['IstRad'] == 1].copy()
     print(f"Filtered to bicycle accidents -> shape: {df_bike.shape}")
+    df_bike.drop(columns=["IstRad"], inplace = True)
 
-    # only keep accidents in Berlin (column 'ULAND' == 11)
+    # only keep accidents in Berlin (column 'ULAND' == 11), then drop data about states and districts
     df_bike_berlin = df_bike[df_bike['ULAND'] == 11].copy()
-    print(f"Filtered to bicycle accidents in Berlin -> shape: {df_bike_berlin.shape}")
+    df_bike_berlin.drop(columns=["ULAND", "UREGBEZ", "UKREIS", "UGEMEINDE"], inplace=True)
+
+
+    # assign english column names
+    df_bike_berlin.rename(columns={
+        "UJAHR": "year",
+        "UMONAT": "month",
+        "USTUNDE": "hour",
+        "UWOCHENTAG": "weekday",
+        "UKATEGORIE": "injury_severity",
+        "UART": "accident_kind",
+        "UTYP1": "accident_type",
+        "IstPKW": "car_involved",
+        "IstFuss": "pedestrian_involved",
+        "IstKrad": "motorcycle_involved",
+        "IstSonstige": "other_vehicle_involved",
+        "IstGkfz": "goods_vehicle_involved",
+        "IstStrassenzustand": "road_condition",
+        "ULICHTVERH": "light_condition"
+    }, inplace=True)
+    
+    print(f"Filtered to bicycle accidents in Berlin and dropped district cols -> shape: {df_bike_berlin.shape}")
     df_bike_berlin.head()
+    if save_to_parquet:
+        # save preprocessed data to parquet
+        output_fp = Path(Path(__file__).parent.parent / "data" / "panel" / "bicycle_accidents_berlin.parquet")
+        print(f"Saving preprocessed data to {output_fp.resolve()}")
+        df_bike_berlin.to_parquet(output_fp, index=False)   
     return df_bike_berlin
 
+
+def one_hot_encode_columns(df: pd.DataFrame, columns: list[str]) -> pd.DataFrame:
+    """One-hot encode specified categorical columns in the dataframe.
+
+    Missing columns in `columns` will be skipped with a UserWarning. The input
+    list is deduplicated to avoid repeated entries.
+    """
+    # deduplicate while preserving order
+    seen = set()
+    columns_unique = [c for c in columns if not (c in seen or seen.add(c))]
+
+    present = [c for c in columns_unique if c in df.columns]
+    missing = [c for c in columns_unique if c not in df.columns]
+
+    if missing:
+        import warnings
+        warnings.warn(
+            f"One-hot encoding: these columns were not found and will be skipped: {missing}",
+            UserWarning,)
+
+    if not present:
+        # nothing to encode
+        return df.copy()
+
+    df_encoded = pd.get_dummies(df, columns=present, prefix=present, drop_first=True)
+    return df_encoded
+
+
+def aggregate_accidents_monthwise(
+    df,
+    segment_col,
+    year_col="year",
+    month_col="month"
+):
+    df = df.copy()
+
+    # total accident counter
+    df["total_accidents"] = 1
+
+    # detect one-hot encoded columns (bool or 0/1)
+    onehot_cols = [
+        c for c in df.columns
+        if c not in [segment_col, year_col, month_col]
+        and (
+            df[c].dtype == bool
+            or set(df[c].dropna().unique()).issubset({0, 1})
+        )
+    ]
+
+    agg_cols = ["total_accidents"] + onehot_cols
+
+    aggregated = (
+        df
+        .groupby([segment_col, year_col, month_col], as_index=False)[agg_cols]
+        .sum()
+    )
+
+    return aggregated
 
