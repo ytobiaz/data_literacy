@@ -59,6 +59,7 @@
 \usepackage[textsize=tiny]{todonotes}
 
 
+
 % The \icmltitle you define below is probably too long as a header.
 % Therefore, a short form for the running title is supplied here:
 \icmltitlerunning{Exposure-Adjusted Bicycle Crash Risk Estimation and Safer Routing in Berlin} % I think our title is not too long, hence we can use the same as for \icmltitle
@@ -317,6 +318,20 @@ highlight the importance of controlling for exposure when comparing infrastructu
 % \end{figure}
 
 \section{Results}\label{sec:results}
+
+One of the major outcomes of this work ist the estimation of the risk to have get injured in a bike accidents while driving on a streetsegment.
+This distribution of those calculated risks is displayed in \ref{fig:risk_segments}.
+
+
+\begin{figure}
+  \centering
+  \includegraphics{figs/risk_segments.pdf}
+  \caption{Risk per segment for the area of Berlin. The colors indicate the log-scaled risk for each plotted segment and junction.}
+  \label{fig:risk_segments}
+\end{figure}
+
+
+
 % In this section outline your results. At this point, you are just stating the outcome of your analysis. You can highlight important aspects (``we observe a significantly higher value of $x$ over $y$''), but leave interpretation and opinion to the next section. This section absoultely \emph{must} include at least two figures.
 To evaluate the routing algorithm, we sample $n=1000$ origin--destination pairs uniformly at random and compare shortest-distance routes with safety-aware alternatives \citep{NateraOrozco2020}.
 
