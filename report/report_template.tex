@@ -173,31 +173,16 @@ safety analysis and routing.\todo{rewrite/edit, when we have final results}
   \label{fig:visual_app}
 \end{figure*}
 
-% Cycling safety analyses often rely on raw crash counts, which conflate danger with demand: streets that attract many cyclists tend to accumulate more incidents even when per-rider risk is 
-% low~\citep{luecken2018}. This obscures intrinsically risky locations and limits both targeted interventions and everyday route choice, especially in dense urban networks such as Berlin~\citep{Uijtdewilligen01092024}.
-% We address this by estimating exposure-adjusted crash risk on the street network via a relative-risk formulation that separates cyclist demand from intrinsic danger and remains stable under sparse 
-% or unevenly distributed observations (\cref{sec:methods}). The resulting estimates are transformed into expected crash costs and propagated to route-level scores suitable for navigation. Our study combines police-recorded 
-% crashes from the German Unfallatlas (Berlin subset)~\citep{Unfallatlas2025} with a city-wide dataset of measured bicycle volumes at the street-segment level~\citep{kaiser_2025_15332147}. We compute 
-% exposure-adjusted relative risk for individual street segments and, motivated by the concentration of crashes at intersections, derive junction-level risk by aggregating volumes from adjoining segments. 
-% We then aggregate segment- and junction-level expected crash costs to evaluate arbitrary routes and compare alternatives that reduce estimated risk while maintaining comparable convenience in terms 
-% of distance or travel time, see \cref{fig:visual_app}. We address the question: how can exposure-adjusted relative crash risk be estimated from measured bicycle volumes and integrated into safety-aware
-% routing? Our work makes the following contributions: (i) a reproducible pipeline for estimating exposure-adjusted relative crash risk at street and junction levels from measured cyclist volumes; and 
-% (ii) a route-scoring method that integrates network-level risk into safety-aware routing under convenience constraints.
-
-Cycling safety analyses often rely on raw crash counts, which conflate danger with demand: streets that attract many cyclists tend to accumulate more incidents even when per-rider risk is 
-low~\citep{luecken2018}. This obscures intrinsically risky locations and limits both targeted interventions and everyday route choice, especially in dense urban networks such as Berlin~\citep{Uijtdewilligen01092024}.
+Cycling safety analyses often rely on raw crash counts, which conflate danger with demand: streets with high cyclist volumes tend to accumulate more incidents even when per-rider risk is low~\citep{luecken2018}. 
+This obscures intrinsically risky locations and limits both targeted interventions and everyday route choice, particularly in dense urban networks such as Berlin~\citep{Uijtdewilligen01092024}.
 We address this by estimating exposure-adjusted crash risk on the street network via a relative-risk formulation that separates cyclist demand from intrinsic danger and remains stable under sparse
 or unevenly distributed observations (\cref{sec:methods}). Using police-recorded crashes from the German \emph{Unfallatlas} (Berlin subset)~\citep{Unfallatlas2025} together with a city-wide dataset of 
-measured bicycle volumes at the street-segment level~\citep{kaiser_2025_15332147}, we compute exposure-adjusted relative risk for individual street segments and, motivated by the concentration of
-crashes at intersections, derive junction-level risk by aggregating volumes from adjoining segments. The resulting risk estimates are transformed into expected crash costs and propagated to route-level 
-scores, enabling the evaluation of arbitrary routes and comparisons between alternatives that reduce estimated risk while maintaining comparable convenience in terms of distance (\cref{sec:results}), 
-see \cref{fig:visual_app}.
-
-Taken together, this yields a reproducible pipeline for estimating exposure-adjusted crash risk at street and junction levels from measured cyclist volumes, and a route-scoring approach that 
-integrates network-level risk into safety-aware routing under a bounded detour constraint.
+measured bicycle volumes at the street-segment level~\citep{kaiser_2025_15332147}, we estimate relative risk for individual street segments and, motivated by crash concentrations at intersections, 
+derive junction-level risk by aggregating volumes from adjoining segments. These risk estimates are transformed into expected crash costs and propagated to route-level scores, enabling comparisons 
+between shortest paths and safer alternatives that reduce estimated risk under comparable distance constraints (\cref{sec:results}; see \cref{fig:visual_app}). Taken together, this yields a reproducible
+pipeline for estimating exposure-adjusted crash risk at street and junction levels from measured cyclist volumes, and a safety-aware routing approach under a bounded detour constraint.
 
 \section{Data}\label{sec:data}
-% In this section, describe \emph{what you did}. Roughly speaking, explain what data you worked with, how or from where it was collected, it's structure and size. Explain your analysis, and any specific choices you made in it. Depending on the nature of your project, you may focus more or less on certain aspects. If you collected data yourself, explain the collection process in detail. If you downloaded data from the net, show an exploratory analysis that builds intuition for the data, and shows that you know the data well. If you are doing a custom analysis, explain how it works and why it is the right choice. If you are using a standard tool, it may still help to briefly outline it. Cite relevant works. You can use the \verb|\citep| and \verb|\citet| commands for this purpose \citep{mackay2003information}.
 We combine police-recorded bicycle crashes with measured cyclist exposure for the city of Berlin. Crash data are drawn from the Berlin subset of the German \emph{Unfallatlas}~\citep{Unfallatlas2025} 
 and filtered for bicycle-related incidents. Exposure is obtained from a city-wide dataset of Strava-derived bicycle volumes aggregated at the street-segment level~\citep{kaiser2025spatiotemporalgraphneuralnetwork}. 
 We further assess how cyclist volumes derived from Strava align with official bicycle counting stations (see \cref{fig:segment_share}). The street network is represented as polyline segments with 
@@ -218,57 +203,38 @@ Crashes and exposures are aggregated to monthly resolution, with segments and mo
 over the full study period and an Empirical Bayes approach is applied (\cref{sec:methods}). The resulting segment- and junction-level risk estimates serve as inputs to all routing analyses.
 
 \section{Methods}\label{sec:methods}
-\paragraph{Empirical Bayes relative risk.}
-For each month $t$, let $A_{s,t}$ and $E_{s,t}$ denote the number of police-recorded bicycle crashes and the measured cyclist exposure on street segment $s$. Junction crashes $A_{v,t}$ are 
-defined as crashes occurring within a fixed radius of the centroid of junction $v$. Because a traversal typically contributes exposure to two incident segments, entering and exiting, we approximate
-junction exposure by a half-sum of incident segment exposures,
+\paragraph{Empirical Bayes relative risk and uncertainty.}
+For each month $t$, let $A_{s,t}$ and $E_{s,t}$ denote the number of police-recorded bicycle crashes and measured cyclist exposure on street segment $s$. Junction crashes $A_{v,t}$ are defined as 
+crashes within a fixed radius of junction $v$. Because a traversal typically contributes exposure to two incident segments, we approximate junction exposure by the half-sum of incident segment exposures,
 \[
 E_{v,t}=\tfrac{1}{2}\sum_{s\in\mathcal I(v)} E_{s,t},
 \]
-which avoids double-counting; aggregating exposure over incident links is common when turning movements are unavailable~\citep{hakkert2002uses,WANG2020105838}.
-For notational convenience, we index both street segments and junctions by a generic entity index $i$, with $A_{i,t}$ and $E_{i,t}$ denoting the corresponding crash and exposure quantities.
+a common approach when turning movements are unavailable~\citep{hakkert2002uses,WANG2020105838}.
+For notational convenience, both street segments and junctions are indexed by a generic entity index $i$, with $A_{i,t}$ and $E_{i,t}$ denoting the corresponding crash and exposure quantities.
 
-Under a ``no special risk'' baseline, we assume that within each month crash incidence is proportional to exposure, yielding the month-specific expected number of crashes
+Under a no-special-risk baseline, monthly crash incidence is assumed proportional to exposure, yielding the expected number of crashes
 \[
 \widehat{A}_{i,t}
 = A_{\cdot t}\,\frac{E_{i,t}}{E_{\cdot t}},
 \qquad
 A_{\cdot t}=\sum_i A_{i,t},\ \ E_{\cdot t}=\sum_i E_{i,t},
 \]
-where sums are taken jointly over all segments and junctions; since segment-level and junction-level crashes are disjoint by construction, the pooled totals $A_{\cdot t}$ and $E_{\cdot t}$ define a
-shared baseline. Although crashes and exposure are aggregated at monthly resolution in preprocessing, routing requires a stable long-run risk surface. We therefore aggregate crashes and baseline 
-expectations over the full study period,
+where sums are taken jointly over all segments and junctions, defining a shared baseline.
+Because routing requires a stable long-run risk surface, crashes and baseline expectations are aggregated over the full study period,
 \[
 A_i=\sum_t A_{i,t},
 \qquad
 \widehat{A}_i=\sum_t \widehat{A}_{i,t},
 \]
-and define the corresponding raw estimator of the relative risk as $A_i/\widehat{A}_i$.
+and the raw relative risk is $A_i/\widehat{A}_i$.
 
-To stabilize estimation under sparse observations, we introduce a latent relative-risk multiplier $\theta_i$ and model
+To stabilize estimation under sparsity, we introduce a latent relative-risk multiplier $\theta_i$ and model
 \[
 A_i \mid \theta_i \sim \text{Poisson}(\widehat{A}_i\,\theta_i),
 \qquad
 \theta_i \sim \text{Gamma}(\alpha,\alpha),
 \]
-where the Gamma distribution is parameterized in shape--rate form, enforcing a unit prior mean $\mathbb{E}[\theta_i]=1$~\citep{Lord2010}.
-The shrinkage parameter $\alpha$ is estimated from the pooled data using a method-of-moments estimator. By conjugacy, the posterior distribution is
-\begin{equation}
-\label{eq:gamma_dist}
-\theta_i \mid A_i,\widehat{A}_i
-\sim \text{Gamma}(A_i+\alpha,\;\widehat{A}_i+\alpha),
-\end{equation}
-and the posterior mean
-\[
-r_i
-= \mathbb{E}[\theta_i \mid A_i,\widehat{A}_i]
-= \frac{A_i+\alpha}{\widehat{A}_i+\alpha}
-\]
-serves as our Empirical Bayes smoothed relative risk, shrinking extreme values toward $1$ with stronger shrinkage for entities with low expected crash counts~\citep{Hauer2002}. Credible
-intervals are obtained from the corresponding Gamma posterior via its quantiles.
-
-\paragraph{Estimating the shrinkage parameter and uncertainty.}
-The shrinkage parameter $\alpha$ is estimated by method of moments~\citep{Morris1983}. Under the Poisson--Gamma model,
+where the Gamma prior (shape--rate) enforces $\mathbb{E}[\theta_i]=1$~\citep{Lord2010}. The shrinkage parameter $\alpha$ is estimated by method of moments~\citep{Morris1983}. Under the Poisson--Gamma model,
 \[
 \mathbb{E}[A_i] = \widehat{A}_i
 \qquad\text{and}\qquad
@@ -281,46 +247,45 @@ Equating empirical and theoretical second moments across entities yields
 \frac{\sum_i \widehat{A}_i^{\,2}}
 {\sum_i (A_i-\widehat{A}_i)^2 - \sum_i \widehat{A}_i}.
 \]
-Uncertainty in the smoothed relative risk is quantified using the Gamma posterior defined in \cref{eq:gamma_dist},
-from which $(1-\delta)$ credible intervals are obtained via the corresponding quantiles,
+By conjugacy,
+\begin{equation}
+\label{eq:gamma_dist}
+\theta_i \mid A_i,\widehat{A}_i
+\sim \text{Gamma}(A_i+\alpha,\;\widehat{A}_i+\alpha),
+\end{equation}
+and the posterior mean
 \[
-r_{i,\mathrm{lo}} = Q_{\Gamma}\!\left(\tfrac{\delta}{2}\right),
-\qquad
-r_{i,\mathrm{hi}} = Q_{\Gamma}\!\left(1-\tfrac{\delta}{2}\right),
+r_i = \frac{A_i+\alpha}{\widehat{A}_i+\alpha}
 \]
-where $Q_{\Gamma}(\cdot)$ denotes the quantile function of the Gamma distribution.
+serves as the Empirical Bayes relative risk, with stronger shrinkage for entities with low expected counts~\citep{Hauer2002}. Uncertainty is quantified using $(1-\delta)$ credible intervals obtained 
+from Gamma posterior quantiles.
 
-\paragraph{Risk rescaling for routing.}
-Relative risk estimates are dimensionless and reflect risk conditional on exposure. To obtain additive weights suitable for routing, we rescale relative risk by the pooled baseline crash rate
+\paragraph{Risk-weighted routing graph.}
+Relative risk estimates are dimensionless and conditional on exposure. To obtain additive weights for routing, we rescale relative risk by the pooled baseline crash rate
 \[
 \bar{\lambda}=\frac{A_\cdot}{E_\cdot},
 \qquad
 A_\cdot=\sum_i A_i,\ \ E_\cdot=\sum_i E_i.
 \]
-The resulting entity-level routing weight is
+The resulting routing weight is
 \[
-w_i=\bar{\lambda}\,r_i,
+w_i=\bar{\lambda}\,r_i.
 \]
-which can be interpreted as an exposure-adjusted crash rate up to a global constant. This rescaling preserves relative differences in risk while yielding quantities that aggregate naturally along routes.
-
-\paragraph{Routing graph.}
-We build an undirected graph $G=(V,E)$ from the street network. Nodes represent segment endpoints and edges represent street segments with length $\ell_e$. Each graph edge $e$ corresponds to a street
-segment $s$ and inherits its routing weight, denoted $w_e=w_s$. Junction identifiers and weights are mapped to nodes via spatial snapping in a projected coordinate system, yielding a single 
-risk-annotated network.
+We construct an undirected graph $G=(V,E)$ from the street network. Nodes correspond to segment endpoints and edges to street segments with length $\ell_e$. Each edge $e$ corresponds to a segment $s$ 
+and inherits its routing weight $w_e=w_s$. Junction identifiers and weights are mapped to nodes via spatial snapping in a projected coordinate system, yielding a single risk-annotated network.
 
 \paragraph{Safety-aware routing.}
 We compare shortest-distance routes with alternatives that reduce estimated crash risk under a bounded detour. The length of a route $P$ is
 \[
 L(P)=\sum_{e\in P}\ell_e.
 \]
-To account for both segment-level and junction-level risk, the risk contribution of edge $e=(u,v)$ is defined as
+To account for segment- and junction-level risk, the risk contribution of edge $e=(u,v)$ is
 \[
 \rho_e = w_e + \eta\,\frac{w_u+w_v}{2},
 \]
-where $w_u$ and $w_v$ are junction routing weights, set to zero for non-junction nodes, and $\eta\ge 0$ controls the contribution of junction risk. We interpret these quantities as an \emph{additive surrogate}
-for cumulative route risk, not as probabilities.
+where $w_u$ and $w_v$ are junction routing weights (zero for non-junction nodes) and $\eta\ge 0$ controls the contribution of junction risk. These quantities form an \emph{additive surrogate} for cumulative route risk.
 
-Given an origin--destination pair, the baseline route $P_{\text{dist}}$ minimizes $L(P)$. The safety-aware route solves
+For an origin--destination pair, the baseline route $P_{\text{dist}}$ minimizes $L(P)$. The safety-aware route solves
 \begin{equation}
 \label{eq:safe-routing}
 \begin{aligned}
@@ -328,11 +293,11 @@ P_{\text{safe}}=\arg\min_{P}\ & R(P)=\sum_{e\in P}\rho_e \\
 \text{s.t.}\ & L(P)\le (1+\varepsilon)\,L(P_{\text{dist}}),
 \end{aligned}
 \end{equation}
-where $\varepsilon$ is the allowable relative detour~\citep{ehrgott2005multicriteria}. We approximate this constrained problem using a weighted-sum sweep. For $\lambda\in\Lambda$,
+where $\varepsilon$ is the allowable relative detour~\citep{ehrgott2005multicriteria}. We approximate this constraint via a weighted-sum sweep: for $\lambda\in\Lambda$,
 \[
 P(\lambda)=\arg\min_{P}\sum_{e\in P}\bigl(\rho_e+\lambda\,\ell_e\bigr),
 \]
-then select among feasible candidates the route with minimal $R(P)$, breaking ties by shorter $L(P)$. Shortest paths are computed using Dijkstra’s algorithm.
+and select among feasible candidates the route minimizing $R(P)$. Shortest paths are computed with Dijkstra’s algorithm.
 
 \paragraph{Evaluation metrics.}
 For each origin--destination pair, we report the relative length increase
@@ -343,7 +308,7 @@ and the relative risk reduction
 \[
 \Delta_R=\frac{R(P_{\text{dist}})-R(P_{\text{safe}})}{R(P_{\text{dist}})}.
 \]
-Pairs with $R(P_{\text{dist}})=0$ are excluded from $\Delta_R$ due to an undefined denominator. These metrics quantify how bounded detours trade distance for reductions in exposure-adjusted crash risk.
+Pairs with $R(P_{\text{dist}})=0$ are excluded from $\Delta_R$ due to the undefined denominator. These metrics quantify the trade-off between distance and exposure-adjusted crash risk under bounded detours.
 
 \section{Related work.}\label{sec:relatedw}
 Prior work seeks to avoid conflating danger with demand by normalizing bicycle crashes by cyclist exposure~\citep{luecken2018}. City-scale studies show that exposure-normalized risk yields more
@@ -372,26 +337,19 @@ In contrast, we combine measured segment-level exposure with joint segment–jun
 % \end{figure}
 
 \section{Results}\label{sec:results}
-
 One of the major outcomes of this work ist the estimation of the risk to have get injured in a bike accidents while driving on a streetsegment.
 This distribution of those calculated risks is displayed in \cref{fig:risk_segments}.
 
-
-\begin{figure}[h]
+\begin{figure}[ht]
   \centering
   \includegraphics{figs/risk_segments.pdf}
   \caption{Risk levels across segments and junctions in the Berlin area. Colors (\coolwarmbox) represent the log-scaled risk, ranging from blue (low risk) to red (high risk).}
   \label{fig:risk_segments}
 \end{figure}
 
-
-
-
-% In this section outline your results. At this point, you are just stating the outcome of your analysis. You can highlight important aspects (``we observe a significantly higher value of $x$ over $y$''), but leave interpretation and opinion to the next section. This section absoultely \emph{must} include at least two figures.
 To evaluate the routing algorithm, we sample $n=1000$ origin--destination pairs uniformly at random and compare shortest-distance routes with safety-aware alternatives~\citep{NateraOrozco2020}.
 
-
-\begin{table}[t]
+\begin{table}[ht]
 \centering
 \caption{Distance--risk trade-off under bounded detours for different junction-risk weights $\eta$.
 Values are aggregated over all origin--destination pairs. Medians are reported with interquartile
