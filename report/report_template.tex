@@ -165,10 +165,10 @@ safety analysis and routing.\todo{rewrite/edit, when we have final results}
   \centering
   \includegraphics{figs/map_3_panels.pdf}
   \caption{\textbf{Safety-aware routing pipeline for the Berlin cycling network.}
-  Panels (a--c) are zoomed in for readability; see \cref{sec:methods} for definitions and notation.
-  (a): Police-recorded bicycle crashes in June 2021 ({\color{TUorange}points}) and street segments with measured cyclist exposure ({\color{TUgray}lines}).
-  (b): Pooled segment-level relative crash risk estimated from all available data; high-risk segments in {\color{TUred}red} correspond to the top 90th percentile of relative risk; {\color{TUdark}circles} mark junctions (degree $\ge 3$).
-  (c): Shortest path ({\color{TUblue}blue}) versus a safer alternative ({\color{TUgreen}green}) selected to reduce cumulative relative route risk under a distance-detour constraint. {\color{TUocre}Filled circle} and {\color{TUocre}cross} denote origin and destination, respectively.
+  Panels (a–c) are zoomed in for readability; see \cref{sec:methods} for definitions and notation.
+  (a) Police-recorded bicycle crashes in June 2021 ({\color{TUorange}points}) and street segments with measured cyclist exposure ({\color{TUgray}lines}).
+  (b) Pooled segment-level relative crash risk estimated from all available data; high-risk segments in {\color{TUred}red} correspond to values above the 90th percentile of relative risk; {\color{TUdark}circles} mark junctions (degree $\ge 3$).
+  (c) Shortest path ({\color{TUblue}blue}) versus a safer alternative ({\color{TUgreen}green}) selected to reduce cumulative relative route risk under a distance-detour constraint. {\color{TUocre}Filled circle} and {\color{TUocre}cross} denote origin and destination, respectively.
   }
   \label{fig:visual_app}
 \end{figure*}
@@ -182,18 +182,18 @@ derive junction-level risk by aggregating volumes from adjoining segments. These
 between shortest paths and safer alternatives that reduce estimated risk under comparable distance constraints (\cref{sec:results}; see \cref{fig:visual_app}). Taken together, this yields a reproducible
 pipeline for estimating exposure-adjusted crash risk at street and junction levels from measured cyclist volumes, and a safety-aware routing approach under a bounded detour constraint.
 
-\section{Data}\label{sec:data}
+\section{Data}\label{sec:data}\todo{cite source of official bike counting stations}
 We combine police-recorded bicycle crashes with measured cyclist exposure for the city of Berlin. Crash data are drawn from the Berlin subset of the German \emph{Unfallatlas}~\citep{Unfallatlas2025} 
 and filtered for bicycle-related incidents. Exposure is obtained from a city-wide dataset of Strava-derived bicycle volumes aggregated at the street-segment level~\citep{kaiser2025spatiotemporalgraphneuralnetwork}. 
-We further assess how cyclist volumes derived from Strava align with official bicycle counting stations (see \cref{fig:segment_share}). The street network is represented as polyline segments with 
+We further perform a consistency check between Strava-derived cyclist volumes and official bicycle counting stations (see \cref{fig:segment_share}). The street network is represented as polyline segments with 
 associated monthly cyclist counts. The dataset spans 2019--2023 and covers 4{,}335 street segments, 2{,}862 junctions, and 15{,}396 recorded bicycle crashes. At monthly resolution the data are sparse: 
 in a typical month fewer than 5\% of segments and about 3\% of junctions record at least one crash.\todo{verify the percentages}
 
 \begin{figure}[ht]
   \centering
   \includegraphics{figs/segment_share.pdf}
-  \caption{Alignment between official bicycle counts and Strava-derived cyclist volumes at the street-segment level in 2023. Points show segment-wise shares of total annual counts, with the 
-  dashed line indicating perfect agreement between the two sources.}
+  \caption{Consistency check between official bicycle counts and Strava-derived cyclist volumes at the street-segment level (2023). Points show segment-wise shares of total annual counts; the dashed 
+  line denotes equality between the two measures.}
   \label{fig:segment_share}
 \end{figure}
 
@@ -352,8 +352,9 @@ To evaluate the routing algorithm, we sample $n=1000$ origin--destination pairs 
 \begin{table}[ht]
 \centering
 \caption{Distance--risk trade-off under bounded detours for different junction-risk weights $\eta$.
-Values are aggregated over all origin--destination pairs. Medians are reported with interquartile
-ranges in parentheses.}
+Values are aggregated over all origin--destination pairs.
+Medians are reported with interquartile ranges in parentheses.
+$P(\Delta_R > 0)$ is reported in percent.}
 \label{tab:routing_tradeoff}
 \begin{tabular}{@{}c c c c c@{}}
 \toprule
