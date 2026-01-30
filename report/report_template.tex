@@ -255,7 +255,9 @@ By conjugacy,
 \end{equation}
 and the posterior mean
 \[
-r_i = \frac{A_i+\alpha}{\widehat{A}_i+\alpha}
+r_i
+= \mathbb{E}[\theta_i \mid A_i,\widehat{A}_i]
+= \frac{A_i+\alpha}{\widehat{A}_i+\alpha}
 \]
 serves as the Empirical Bayes relative risk, with stronger shrinkage for entities with low expected counts~\citep{Hauer2002}. Uncertainty is quantified using $(1-\delta)$ credible intervals obtained 
 from Gamma posterior quantiles.
