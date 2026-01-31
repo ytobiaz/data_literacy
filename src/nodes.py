@@ -24,7 +24,10 @@ def build_nodes_from_segment_endpoints(
     *,
     counter_col: str = "counter_name",
 ) -> GeoDataFrame:
-    """Create a point-per-endpoint table from segment geometries."""
+    """Extract start/end points from line segments.
+    
+    Returns GeoDataFrame with one row per endpoint, including segment ID and endpoint role (start/end).
+    """
 
     if counter_col not in segments_gdf.columns:
         raise KeyError(f"Missing {counter_col!r} in segments_gdf")
@@ -69,7 +72,10 @@ def cluster_nodes_snap_grid(
     tol_m: float = 2.0,
     counter_col: str = "counter_name",
 ) -> NodeClustering:
-    """Cluster endpoint points by snapping to a grid of size tol_m."""
+    """Cluster and snap endpoint points to grid of size tol_m.
+    
+    Returns NodeClustering with clustered node geometries, point centroids, and segment-node mapping.
+    """
 
     if "geometry" not in nodes_raw.columns:
         raise KeyError("Missing 'geometry' in nodes_raw")
@@ -104,7 +110,10 @@ def select_crossings_by_degree(
     min_degree: int = 3,
     counter_col: str = "counter_name",
 ) -> pd.Series:
-    """Return node_ids that have at least min_degree unique segments touching them."""
+    """Filter nodes by degree (unique segments connected) to identify crossings.
+    
+    Returns Series of node_ids where degree >= min_degree (default: 3+ segments = intersection).
+    """
 
     if "node_id" not in nodes_raw.columns:
         raise KeyError("Missing 'node_id' in nodes_raw")
@@ -124,7 +133,10 @@ def assign_accidents_to_nearest_crossing(
     max_distance_m: float = 20.0,
     geometry_col: str = "geometry",
 ) -> tuple[GeoDataFrame, pd.DataFrame]:
-    """Assign accidents to nearest crossing node and aggregate to node×year×month."""
+    """Spatially join accidents to nearest crossing nodes and aggregate to node×year×month.
+    
+    Returns tuple: (accident-level data with node_id assignment, aggregated panel by node×year×month).
+    """
 
     for col in ["year", "month"]:
         if col not in accidents.columns:
@@ -169,14 +181,10 @@ def assign_accidents_to_nearest_crossing(
 def _aggregate_accidents_node_year_month_rich(
     assigned: pd.DataFrame,
 ) -> pd.DataFrame:
-    """Aggregate node accidents to node×year×month with rich distributions (counts+shares).
-    
-    Similar to aggregate_accidents_segment_year_month_rich but for node level.
-    """
+    """Aggregate to node×year×month with total counts and categorical distributions (_rich version) - counts+shares."""
     
     acc = assigned.copy()
     
-    # Ensure accident_id exists for counting
     if "_accident_row_id" not in acc.columns:
         id_candidates = ["accident_id", "accident_id_extended", "acc_id"]
         id_col = next(
@@ -204,13 +212,11 @@ def _aggregate_accidents_node_year_month_rich(
         "accident_kind",
         "accident_type",
         "light_condition",
-        "road_condition",
-        "weekday_type",
-        "time_of_day",
+        "road_condition"
     ]
     cat_cols = [c for c in cat_cols if c in acc.columns]
     
-    # Base: total accidents count
+    # Total accidents count
     acc_base = (
         acc.groupby(keys, observed=True)
         .agg(total_accidents=("_accident_row_id", "size"))
@@ -296,19 +302,8 @@ def print_node_exposure_quality_summary(
     *,
     trip_col: str = "monthly_strava_trips",
 ) -> None:
-    """Print quality summary for node-level exposure panel.
+    """Print quality summary for node exposure panel: coverage, temporal range, trip volume stats, and missing/zero checks."""
     
-    Displays quality checks in the same format as plot_merged_panel_quality_overview.
-    
-    Parameters
-    ----------
-    node_exposure_ym : DataFrame
-        Node exposure panel (crossing × year × month)
-    crossings_gdf : GeoDataFrame
-        Reference crossing nodes
-    trip_col : str, optional
-        Name of trip count column, by default "monthly_strava_trips"
-    """
     quality_results = {}
     
     # 1. Dataset structure check
