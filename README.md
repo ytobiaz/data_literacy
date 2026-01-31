@@ -40,7 +40,7 @@ project_root_dir/                                   <--- root directory of the p
 │   └── ...                                     
 │
 ├── data/                                           <--- input datasets
-│   ├── accidents/                                  <--- Unfallatlas crash CSVs
+│   ├── accidents/                                  <--- Accident Atlas crash CSVs
 │   ├── counting_stations/                          <--- official counters
 │   ├── csv/                                        <--- auxiliary CSVs
 │   ├── panel/                                      <--- panel-format exports
