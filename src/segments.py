@@ -29,8 +29,7 @@ def load_segment_geometry(
     canonical_crs: str = "EPSG:32633",
     source_crs: str = "EPSG:4326",
 ) -> SegmentGeometry:
-    """Load canonical Strava segment geometries and reproject to a metric CRS."""
-
+    """Load segment geometries from parquet (Zenodo if needed), parse WKT strings, reproject to metric CRS."""
     parquet_path = (
         Path(parquet_path) if parquet_path is not None else data_path("strava", "berlin_graph_geometry.parquet")
     )
@@ -86,20 +85,8 @@ def plot_segment_quality_overview(
     use_tueplots=True,
     save_path=None,
 ):
-    """
-    Create comprehensive quality check and overview visualization for road network segment data.
+    """Plot 1×2 grid of segment quality: length distribution histogram and street network map. Prints validation checks."""
     
-    Parameters
-    ----------
-    segments_gdf : GeoDataFrame
-        Road network segments with geometry, counter_name, latitude, longitude
-    figsize : tuple, optional
-        Figure size (width, height), by default (6, 6)
-    use_tueplots : bool, optional
-        Whether to use tueplots ICML2024 stylesheet, by default True
-    save_path : str | Path | None, optional
-        Path to save the figure, by default None
-    """
     # Apply tueplots styling if requested
     if use_tueplots:
         from tueplots import bundles
@@ -122,7 +109,7 @@ def plot_segment_quality_overview(
         if _ax is not None:
             _ax.set_box_aspect(1)
     
-    # 1. Segment length distribution
+    # Segment length distribution
     if 'geometry' in segments_gdf.columns:
         segment_lengths = segments_gdf.geometry.length
         ax1.hist(segment_lengths, bins=50, color=main_color, edgecolor='black', linewidth=0.5)
@@ -140,7 +127,7 @@ def plot_segment_quality_overview(
         ax1.text(0.5, 0.5, 'geometry not available', ha='center', va='center', fontsize=11)
         ax1.set_title('Segment Length Distribution', fontweight='bold', fontsize=13)
     
-    # 2. Detailed street network map
+    # Detailed street network map
     if 'geometry' in segments_gdf.columns and len(segments_gdf) > 0:
         try:
             # Convert to WGS84 for proper lat/lon display if in projected CRS
@@ -159,8 +146,7 @@ def plot_segment_quality_overview(
             from matplotlib.ticker import FormatStrFormatter
             ax2.xaxis.set_major_formatter(FormatStrFormatter('%.2f'))
             ax2.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
-            # Use adjustable aspect ratio for geographic coordinates (lat/lon have different scales)
-            ax2.set_aspect('auto')
+            ax2.set_aspect('equal')
             ax2.grid(True, alpha=0.2, linestyle='--')
             # Add segment count annotation
             ax2.text(0.05, 0.95, f'n={len(segments_gdf):,}', transform=ax2.transAxes,
@@ -172,22 +158,21 @@ def plot_segment_quality_overview(
         ax2.text(0.5, 0.5, 'geometry not available', ha='center', va='center', fontsize=11)
         ax2.set_title('Street Network Detail', fontweight='bold', fontsize=13)
     
-    # Removed long segments map per request
     
     # Store validation results for summary (not plotted)
     validation_results = {}
     
-    # Validation Test 1: All geometries valid
+    # All geometries valid
     if 'geometry' in segments_gdf.columns:
         invalid_geom = (~segments_gdf.geometry.is_valid).sum()
         validation_results['Valid Geometry'] = (invalid_geom == 0, f'All geometries are valid (invalid: {invalid_geom})')
     
-    # Validation Test 2: No empty geometries
+    # No empty geometries
     if 'geometry' in segments_gdf.columns:
         empty_geom = segments_gdf.geometry.is_empty.sum()
         validation_results['No Empty Geometry'] = (empty_geom == 0, f'No empty geometries (empty: {empty_geom})')
     
-    # Validation Test 3: Coordinate range check (Berlin area)
+    # Coordinate range check (Berlin area)
     if 'latitude' in segments_gdf.columns and 'longitude' in segments_gdf.columns:
         lat_valid = segments_gdf['latitude'].notna()
         lon_valid = segments_gdf['longitude'].notna()
@@ -198,14 +183,14 @@ def plot_segment_quality_overview(
         validation_results['Coordinate Range (Berlin)'] = (lat_range_ok and lon_range_ok, 
                                                            f'Coordinates within Berlin bounds (lat: 52.3-52.7, lon: 13.0-13.8)')
     
-    # Validation Test 4: No duplicate segment names
+    # No duplicate segment names
     if 'counter_name' in segments_gdf.columns:
         n_segments = len(segments_gdf)
         n_unique = segments_gdf['counter_name'].nunique()
         validation_results['Unique Segment IDs'] = (n_segments == n_unique, 
                                                     f'All segment IDs are unique (total: {n_segments}, unique: {n_unique})')
     
-    # Validation Test 5: Reasonable segment lengths (not too short/long)
+    # Reasonable segment lengths (not too short/long)
     if 'geometry' in segments_gdf.columns:
         lengths = segments_gdf.geometry.length
         too_short = (lengths < 1).sum()

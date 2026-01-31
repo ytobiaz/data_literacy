@@ -71,9 +71,7 @@ def aggregate_accidents_segment_year_month_rich(
         "accident_kind",
         "accident_type",
         "light_condition",
-        "road_condition",
-        "weekday_type",
-        "time_of_day",
+        "road_condition"
     ]
     cat_cols = [c for c in cat_cols if c in acc.columns]
 

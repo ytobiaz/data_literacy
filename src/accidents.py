@@ -22,7 +22,7 @@ ACCIDENT_COLUMNS_EN: dict[str, str] = {
     "OID_": "oid",
     "source_file": "source_file",
 
-    # Unique accident identifiers
+    # Unique accident identifier
     "UIDENTSTLAE": "accident_id_extended",
 
     # Administrative divisions
@@ -60,6 +60,7 @@ ACCIDENT_COLUMNS_EN: dict[str, str] = {
 
 
 def _coerce_numeric_with_decimal_comma(df: pd.DataFrame, cols: Sequence[str]) -> pd.DataFrame:
+    """Convert specified columns to numeric, handling European comma decimal format (e.g., '3,14' -> 3.14)."""
     for col in cols:
         if col not in df.columns:
             continue
@@ -82,9 +83,10 @@ def load_accidents_raw(
     decimal: str = ",",
     low_memory: bool = False,
 ) -> pd.DataFrame:
-    """Load all Unfallatlas CSVs from `data/accidents` (or a provided directory).
-
-    Keeps original column names (German), and adds a `source_file` column.
+    """Load and concatenate all Unfallatlas CSVs from `data/accidents` directory.
+    
+    Returns combined dataframe with original German columns plus `source_file`.
+    Normalizes column name inconsistencies across years.
     """
 
     csv_dir_path = Path(csv_dir) if csv_dir is not None else data_path("accidents")
@@ -150,7 +152,11 @@ def assign_accidents_to_nearest_segment(
     x_col: str = "XGCSWGS84",
     y_col: str = "YGCSWGS84",
 ) -> GeoDataFrame:
-    """Assign each accident to exactly one nearest segment (within max_distance_m)."""
+    """Spatially join accidents to nearest road segment within max_distance_m.
+    
+    Converts accident points from WGS84 to canonical_crs, performs nearest-join,
+    and returns one row per accident with matched segment info.
+    """
 
     accidents = accidents_bike_berlin.reset_index(drop=True).copy()
 
@@ -182,55 +188,6 @@ def assign_accidents_to_nearest_segment(
 
     return joined_nearest_unique
 
-# TODO: delete this function if not needed
-def add_temporal_features(accidents_bike_berlin: pd.DataFrame) -> pd.DataFrame:
-    """Add temporal features (weekday_type and time_of_day) to accident dataframe.
-    
-    weekday_type: 'weekday' (Mon-Fri) vs 'weekend' (Sat-Sun)
-        Note: weekday column encoding: 1=Sunday, 2=Monday, ..., 7=Saturday
-    
-    time_of_day: 'work_hours (7h-18h)', 'evening (18h-22h)', 'night (22h-7h)'
-    
-    Parameters
-    ----------
-    accidents_bike_berlin : pd.DataFrame
-        Accident dataframe with 'weekday' and 'hour' columns
-        
-    Returns
-    -------
-    pd.DataFrame
-        Input dataframe with added 'weekday_type' and 'time_of_day' columns
-    """
-    accidents = accidents_bike_berlin.copy()
-    
-    # weekday_type: weekday (Mon-Fri) vs weekend (Sat-Sun)
-    # Day of the week: 1=Sunday, 2=Monday, ..., 7=Saturday
-    if "weekday" in accidents.columns:
-        accidents["weekday_type"] = accidents["weekday"].map(
-            lambda x: "weekday" if x in [2, 3, 4, 5, 6] else "weekend"
-        )
-    else:
-        print("Warning: 'weekday' column not found, skipping weekday_type")
-
-    # time_of_day: work_hours (7-18), evening (18-22), night (22-7)
-    if "hour" in accidents.columns:
-        def _classify_time_of_day(hour):
-            if pd.isna(hour):
-                return None
-            h = int(hour)
-            if 7 <= h < 18:
-                return "work_hours (7h-18h)"
-            elif 18 <= h < 22:
-                return "evening (18h-22h)"
-            else:
-                return "night (22h-7h)"
-        
-        accidents["time_of_day"] = accidents["hour"].map(_classify_time_of_day)
-    else:
-        print("Warning: 'hour' column not found, skipping time_of_day")
-    
-    return accidents
-
 
 def plot_accident_quality_overview(
     accidents_df: pd.DataFrame, 
@@ -238,25 +195,9 @@ def plot_accident_quality_overview(
     use_tueplots: bool = True,
     save_path: str | Path | None = None,
 ) -> None:
-    """Generate comprehensive quality check and distribution overview for accident data.
+    """Plot 3x3 grid of accident distributions by temporal, spatial, and severity dimensions.
     
-    Creates a 3x3 grid of plots showing:
-    - Temporal trends and patterns
-    - Distribution across time dimensions (hour, weekday, month)
-    - Missing values analysis
-    - Severity distribution
-    - Data quality validation checks
-    
-    Parameters
-    ----------
-    accidents_df : pd.DataFrame
-        Accident dataframe with temporal columns (year, month, hour, weekday, etc.)
-    figsize : tuple, optional
-        Figure size (width, height), by default (16, 12)
-    use_tueplots : bool, optional
-        Whether to use tueplots ICML2024 stylesheet, by default True
-    save_path : str | Path | None, optional
-        Path to save the figure (e.g., "figname_icml.pdf"), by default None
+    Prints summary statistics and validation checks.
     """
     # Apply tueplots styling if requested
     if use_tueplots:
@@ -275,7 +216,7 @@ def plot_accident_quality_overview(
     fig.suptitle('', 
                  fontsize=20, fontweight='bold', y=0.985)
 
-    # 1. Temporal trend: Accidents over time (year-month)
+    # Temporal trend: Accidents over time (year-month)
     ax1 = axes[0, 0]
     temporal_counts = accidents_df.groupby(['year', 'month']).size().reset_index(name='count')
     temporal_counts['date'] = pd.to_datetime(temporal_counts[['year', 'month']].assign(day=1))
@@ -287,7 +228,7 @@ def plot_accident_quality_overview(
     ax1.tick_params(axis='x', rotation=45, labelsize=11)
     ax1.tick_params(axis='y', labelsize=11)
 
-    # 2. Distribution by year
+    # Distribution by year
     ax2 = axes[0, 1]
     year_counts = accidents_df['year'].value_counts().sort_index()
     ax2.bar(year_counts.index, year_counts.values, color=main_color, edgecolor='black', linewidth=0.5)
@@ -299,7 +240,7 @@ def plot_accident_quality_overview(
     for i, v in enumerate(year_counts.values):
         ax2.text(year_counts.index[i], v + 50, str(v), ha='center', fontsize=10, fontweight='bold')
 
-    # 3. Light conditions distribution
+    # Light conditions distribution
     ax3 = axes[0, 2]
     if 'light_condition' in accidents_df.columns:
         light_map = {0: 'Daylight', 1: 'Twilight', 2: 'Darkness'}
@@ -316,7 +257,7 @@ def plot_accident_quality_overview(
         ax3.text(0.5, 0.5, 'light_condition not available', ha='center', va='center', fontsize=11)
         ax3.set_title('Light Condition', fontweight='bold', fontsize=12)
 
-    # 4. Road condition flag distribution
+    # Road condition flag distribution
     ax4 = axes[1, 0]
     if 'road_condition_flag' in accidents_df.columns:
         surface_map = {0: 'Dry', 1: 'Wet/Damp', 2: 'Slippery\n(Winter)'}
@@ -333,7 +274,7 @@ def plot_accident_quality_overview(
         ax4.text(0.5, 0.5, 'road_condition_flag not available', ha='center', va='center', fontsize=11)
         ax4.set_title('Road Condition', fontweight='bold', fontsize=12)
 
-    # 5. Hourly distribution
+    # Hourly distribution
     ax5 = axes[1, 1]
     if 'hour' in accidents_df.columns:
         hour_counts = accidents_df['hour'].value_counts().sort_index()
@@ -348,10 +289,10 @@ def plot_accident_quality_overview(
         ax5.text(0.5, 0.5, 'hour not available', ha='center', va='center', fontsize=11)
         ax5.set_title('Accidents by Hour of Day', fontweight='bold', fontsize=12)
 
-    # 6. Day of week distribution (starting from Monday)
+    # Day of week distribution (starting from Monday)
     ax6 = axes[1, 2]
     if 'weekday' in accidents_df.columns:
-        # Remap: 2=Mon, 3=Tue, 4=Wed, 5=Thu, 6=Fri, 7=Sat, 1=Sun
+        # Remap: 2=Mon, 3=Tue, 4=Wed, 5=Thu, 6=Fri, 7=Sat, 1=Sun - from DSB_Unfallatlas_EN.pdf
         weekday_map = {2: 'Mon', 3: 'Tue', 4: 'Wed', 5: 'Thu', 6: 'Fri', 7: 'Sat', 1: 'Sun'}
         weekday_order = [2, 3, 4, 5, 6, 7, 1]  # Monday to Sunday
         weekday_counts = accidents_df['weekday'].value_counts()
@@ -369,10 +310,9 @@ def plot_accident_quality_overview(
         ax6.text(0.5, 0.5, 'weekday not available', ha='center', va='center', fontsize=11)
         ax6.set_title('Accidents by Day of Week', fontweight='bold', fontsize=12)
 
-    # 7. Spatial Distribution Heatmap (sample of Berlin)
+    # Spatial Distribution Heatmap (Berlin)
     ax7 = axes[2, 0]
     
-    # Try to get coordinates from geometry or raw coordinate columns
     x_coords = None
     y_coords = None
     
@@ -449,7 +389,7 @@ def plot_accident_quality_overview(
                 ha='center', va='center', fontsize=11)
         ax7.set_title('Spatial Distribution', fontweight='bold', fontsize=12)
 
-    # 8. Injury severity distribution
+    # Injury severity distribution
     ax8 = axes[2, 1]
     if 'injury_severity' in accidents_df.columns:
         severity_counts = accidents_df['injury_severity'].value_counts().sort_index()
@@ -471,7 +411,7 @@ def plot_accident_quality_overview(
         ax8.text(0.5, 0.5, 'injury_severity not available', ha='center', va='center', fontsize=11)
         ax8.set_title('Accident Severity Distribution', fontweight='bold', fontsize=12)
 
-    # 9. Month distribution (seasonality check) - All same color
+    # Month distribution
     ax9 = axes[2, 2]
     if 'month' in accidents_df.columns:
         month_counts = accidents_df['month'].value_counts().sort_index()
@@ -556,11 +496,10 @@ def plot_accident_quality_overview(
     
     # Define accident and geo columns
     accident_feature_cols = [
-        'year', 'month', 'hour', 'weekday', 'weekday_type', 'time_of_day',
-        'injury_severity', 'accident_kind', 'accident_type', 'light_condition',
-        'involved_bicycle', 'involved_passenger_car', 'involved_pedestrian',
-        'involved_motorcycle', 'involved_goods_vehicle', 'involved_other_vehicle',
-        'road_condition_flag'
+        'year', 'month', 'hour', 'weekday', 'injury_severity', 'accident_kind', 
+        'accident_type', 'light_condition', 'involved_bicycle', 'involved_passenger_car', 
+        'involved_pedestrian', 'involved_motorcycle', 'involved_goods_vehicle', 
+        'involved_other_vehicle', 'road_condition_flag'
     ]
     
     geo_cols = ['LINREFX', 'LINREFY', 'XGCSWGS84', 'YGCSWGS84']

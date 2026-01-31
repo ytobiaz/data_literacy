@@ -7,7 +7,7 @@ import pandas as pd
 
 
 def ensure_active_geometry(gdf: gpd.GeoDataFrame, geometry_col: str = "geometry") -> gpd.GeoDataFrame:
-    """Return a GeoDataFrame with a valid active geometry column.
+    """Restore active geometry metadata after groupby/agg operations.
 
     Groupby/agg operations in pandas can drop the active geometry metadata
     (e.g., leaving the active geometry name as "0"). This helper restores a
@@ -26,7 +26,7 @@ def ensure_active_geometry(gdf: gpd.GeoDataFrame, geometry_col: str = "geometry"
 
 
 def aggregate_junction_points(junction_df: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
-    """Aggregate to one point per junction while preserving geometry/CRS."""
+    """Group junctions by node_id, summing trips and accidents. Preserves first geometry and CRS."""
     j_plot = junction_df[junction_df.geometry.notna()].copy()
 
     j_points = (
@@ -37,12 +37,11 @@ def aggregate_junction_points(junction_df: gpd.GeoDataFrame) -> gpd.GeoDataFrame
             accidents=("total_accidents", "sum"),
         )
     )
-
     return gpd.GeoDataFrame(j_points, geometry="geometry", crs=j_plot.crs)
 
 
-
 def estimate_alpha_simple_moments(df, y_col, yhat_col, *, alpha_min=1e-6, alpha_max=1e6):
+    """Estimate overdispersion parameter alpha using method of moments. Filters to positive expected counts, returns clipped value."""
     # Use only rows with positive expected counts
     valid = df[df[yhat_col] > 0].copy()
     if valid.empty:
@@ -78,6 +77,7 @@ def plot_rr_map(
     junction_radius=4,
     clip_percentile=99,
 ):
+    """Create interactive Folium map of segments (lines) and junctions (circles) colored by metric. Supports flexible show/metric options."""
     import geopandas as gpd
     import numpy as np
     import folium
@@ -246,7 +246,28 @@ def plot_rr_map(
     folium.LayerControl(collapsed=False).add_to(m)
     return m
 
+def add_rr_eb_ci(df, y_col, yhat_col, alpha, *, ci=0.95, prefix="rr_eb"):
+    """Add empirical Bayes credible intervals to relative risk estimates.
+    Computes (1-ci) credible intervals using the Gamma posterior distribution.
+    """
+    valid = df[yhat_col] > 0
+    a = alpha + df.loc[valid, y_col]
+    rate = alpha + df.loc[valid, yhat_col]
+    q_lo = (1.0 - ci) / 2.0
+    q_hi = 1.0 - q_lo
+
+    df.loc[valid, f"{prefix}_lo"] = gamma.ppf(q_lo, a=a, scale=1.0 / rate)
+    df.loc[valid, f"{prefix}_hi"] = gamma.ppf(q_hi, a=a, scale=1.0 / rate)
+    df.loc[~valid, f"{prefix}_lo"] = np.nan
+    df.loc[~valid, f"{prefix}_hi"] = np.nan
+
+    return df
+
+
 def add_secure_rr(df, rr="rr_eb", lo="rr_eb_lo", hi="rr_eb_hi", out="rr_secure"):
+    """Create conservative relative risk metric using confidence interval bounds. 
+    Uses upper bound if significantly below 1.0, lower bound if significantly above 1.0, otherwise 1.0 (neutral).
+    """
     sig_below = df[hi] < 1.0
     sig_above = df[lo] > 1.0
     df[out] = np.select(
@@ -273,6 +294,9 @@ def plot_top_rr_map(
     junction_radius=4,
     clip_percentile=99,
 ):
+    """Create interactive Folium map showing high-risk segments, junctions, and accident locations. 
+    Colors by risk metric with optional accident layers by year and severity.
+    """
     def _ensure_geo(gdf, geometry_col="geometry"):
         if not isinstance(gdf, gpd.GeoDataFrame):
             gdf = gpd.GeoDataFrame(gdf, geometry=geometry_col)
