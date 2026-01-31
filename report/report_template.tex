@@ -176,14 +176,14 @@ safety analysis and routing.\todo{rewrite/edit, when we have final results}
 Cycling safety analyses often rely on raw crash counts, which conflate danger with demand: streets with high cyclist volumes tend to accumulate more incidents even when per-rider risk is low~\citep{luecken2018}. 
 This obscures intrinsically risky locations and limits both targeted interventions and everyday route choice, particularly in dense urban networks such as Berlin~\citep{Uijtdewilligen01092024}.
 We address this by estimating exposure-adjusted crash risk on the street network via a relative-risk formulation that separates cyclist demand from intrinsic danger and remains stable under sparse
-or unevenly distributed observations (\cref{sec:methods}). Using police-recorded crashes from the German \emph{Unfallatlas} (Berlin subset)~\citep{Unfallatlas2025} together with a city-wide dataset of 
+or unevenly distributed observations (\cref{sec:methods}). Using police-recorded crashes from the German \emph{Accident Atlas} (Berlin subset)~\citep{Unfallatlas2025} together with a city-wide dataset of 
 measured bicycle volumes at the street-segment level~\citep{kaiser_2025_15332147}, we estimate relative risk for individual street segments and, motivated by crash concentrations at intersections, 
 derive junction-level risk by aggregating volumes from adjoining segments. These risk estimates are transformed into expected crash costs and propagated to route-level scores, enabling comparisons 
 between shortest paths and safer alternatives that reduce estimated risk under comparable distance constraints (\cref{sec:results}; see \cref{fig:visual_app}). Taken together, this yields a reproducible
 pipeline for estimating exposure-adjusted crash risk at street and junction levels from measured cyclist volumes, and a safety-aware routing approach under a bounded detour constraint.
 
 \section{Data}\label{sec:data}\todo{cite source of official bike counting stations}
-We combine police-recorded bicycle crashes with measured cyclist exposure for the city of Berlin. Crash data are drawn from the Berlin subset of the German \emph{Unfallatlas}~\citep{Unfallatlas2025} 
+We combine police-recorded bicycle crashes with measured cyclist exposure for the city of Berlin. Crash data are drawn from the Berlin subset of the German \emph{Accident Atlas}~\citep{Unfallatlas2025} 
 and filtered for bicycle-related incidents. Exposure is obtained from a city-wide dataset of Strava-derived bicycle volumes aggregated at the street-segment level~\citep{kaiser2025spatiotemporalgraphneuralnetwork}. 
 We further perform a consistency check between Strava-derived cyclist volumes and official bicycle counting stations (see \cref{fig:segment_share}). The street network is represented as polyline segments with 
 associated monthly cyclist counts. The dataset spans 2019--2023 and covers 4{,}335 street segments, 2{,}862 junctions, and 15{,}396 recorded bicycle crashes. At monthly resolution the data are sparse: 
@@ -321,22 +321,7 @@ without explicit exposure modeling~\citep{kaiser2025spatiotemporalgraphneuralnet
 snapping, assignment of incidents to intersections, and integration of safety metrics into routing under convenience constraints~\citep{isprs-archives-XLIII-B4-2022-427-2022}. Intersection safety is 
 repeatedly emphasized, with strong crash concentrations at junctions and the need to control for exposure when comparing locations or infrastructure types~\citep{futuretransp1030037}.
 
-In contrast, we combine measured segment-level exposure with joint segment–junction risk estimation and propagate these risks into safety-aware routing.
-
-% How to make a figure
-% \begin{figure}[ht]
-% \vskip 0.2in
-% \begin{center}
-% \centerline{\includegraphics[width=\columnwidth]{figures/teacher-student.pdf}}
-% \caption{Historical locations and number of accepted papers for International
-% Machine Learning Conferences (ICML 1993 -- ICML 2008) and International
-% Workshops on Machine Learning (ML 1988 -- ML 1992). At the time this figure was
-% produced, the number of accepted papers for ICML 2008 was unknown and instead
-% estimated.}
-% \label{icml-historical}
-% \end{center}
-% \vskip -0.2in
-% \end{figure}
+In contrast, we combine measured segment-level exposure with joint segment–junction risk estimation and propagate these risks into safety-aware routing.\todo{this sentence can be dropped if space is an issue}
 
 \section{Results}\label{sec:results}
 One of the major outcomes of this work ist the estimation of the risk to have get injured in a bike accidents while driving on a streetsegment.
@@ -388,7 +373,7 @@ budgets, increasing $\eta$ is associated with lower median risk reductions.
 \section{Discussion and Conclusion}\label{sec:conclusion}
 % Use this section to briefly summarize the entire text. Highlight limitations and problems, but also make clear statements where they are possible and supported by the analysis. 
 Our results indicate that substantial reductions in exposure-adjusted crash risk can be achieved with relatively small increases in route length. While higher junction-risk weights reduce the magnitude
- of the estimated risk reduction, the distance--risk trade-off persists across all configurations, with absolute gains depending on the chosen weighting.
+of the estimated risk reduction, the distance--risk trade-off persists across all configurations, with absolute gains depending on the chosen weighting.
 
 Overall, allowing a 10\% increase in route length yields median exposure-adjusted risk reductions of 31--38\% for the majority of routes, demonstrating that safety-aware routing can effectively trade 
 modest detours for meaningful safety improvements.

@@ -5,7 +5,7 @@ This is the repository for the 2025 Data Literacy course project of
 ## Setup
 1) Clone the repository.
 2) Download the input datasets and store them in `data/input/counting_stations`:
-    * from the [German Accident Atlas](https://unfallatlas.statistikportal.de/?BL=BB%20=%20Brandenburg) select _Accident Atlas and Open Data_, then download the csv-files for years 2019-2023 and unzip;
+    * from the [German Accident Atlas](https://unfallatlas.statistikportal.de/) select _Accident Atlas and Open Data_, then download the csv-files for years 2019-2023 and unzip;
     * download [Strava data for Berlin](https://zenodo.org/records/15332147/files/berlin_data.parquet?download=1) and [graph geometry data for Berlin](https://zenodo.org/records/15332147/files/berlin_graph_geometry.parquet?download=1);
     * download the [Berlin bike counting stations data](https://www.berlin.de/sen/uvk/_assets/verkehr/verkehrsplanung/radverkehr/weitere-radinfrastruktur/zaehlstellen-und-fahrradbarometer/gesamtdatei-stundenwerte.xlsx?ts=1752674590).
 4) You can set up a virtual environment and install the requirements as follows:
@@ -22,7 +22,7 @@ project_root_dir/                                   <--- root directory of the p
 ├── README.md                                       <--- project overview and quickstart
 ├── src/                                            <--- all Python source code (importable package)
 │   ├── __init__.py                                 <--- package marker
-│   ├── accidents.py                                <--- crash data loading + matching to segments
+│   ├── accidents.py                                <--- accident data loading + matching to segments
 │   ├── nodes.py                                    <--- junction/node utilities
 │   ├── panels.py                                   <--- panel data helpers
 │   ├── risk_estimates.py                           <--- Empirical Bayes risk estimation
@@ -40,9 +40,8 @@ project_root_dir/                                   <--- root directory of the p
 │   └── ...                                     
 │
 ├── data/                                           <--- input datasets
-│   ├── accidents/                                  <--- Accident Atlas crash CSVs
+│   ├── accidents/                                  <--- Accident Atlas CSVs
 │   ├── counting_stations/                          <--- official counters
-│   ├── csv/                                        <--- auxiliary CSVs
 │   ├── panel/                                      <--- panel-format exports
 │   └── strava/                                     <--- Strava features + metadata
 │
