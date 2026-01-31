@@ -1,49 +1,57 @@
-# data_literacy repository 
+# Exposure-Adjusted Bicycle Crash Risk Estimation and Safer Routing in Berlin
+This is the repository for the 2025 Data Literacy course project of
+[Eric Berger](), [Edward Eichhorn](), [Liaisan Faidrakhmanova](), [Luise Grasl](), [Tobias Schnarr]().
 
 ## Setup
-1) clone repository
-2) download input datasets:
-    * from the [destatis unfallatlas](https://unfallatlas.statistikportal.de/?BL=BB%20=%20Brandenburg) select _Accident Atlas and Open Data_, then download accident data csv-files for years 2019-2023 and unzip them. Store them in `data/input/accidents`.
-    * download [strava data for berlin](https://zenodo.org/records/15332147/files/berlin_data.parquet?download=1) and [graph geometry data for berlin](https://zenodo.org/records/15332147/files/berlin_graph_geometry.parquet?download=1). Store them in `data/input/strava`.
-    * download the [Berlin Bike Counting Stations Data](https://www.berlin.de/sen/uvk/_assets/verkehr/verkehrsplanung/radverkehr/weitere-radinfrastruktur/zaehlstellen-und-fahrradbarometer/gesamtdatei-stundenwerte.xlsx?ts=1752674590) and store them in `data/input/counting_stations`
-3) create virtual environment
-4) install required packages:
-    * run ```pip install uv```
-    * run ```uv sync``` to install requirements
-5) now you should be able to execute the jupyter notebooks
+1) Clone the repository
+2) Download the input datasets and store them in `data/input/counting_stations`:
+    * from the [German Accident Atlas](https://unfallatlas.statistikportal.de/?BL=BB%20=%20Brandenburg) select _Accident Atlas and Open Data_, then download the csv-files for years 2019-2023 and unzip;
+    * download [Strava data for Berlin](https://zenodo.org/records/15332147/files/berlin_data.parquet?download=1) and [graph geometry data for Berlin](https://zenodo.org/records/15332147/files/berlin_graph_geometry.parquet?download=1);
+    * download the [Berlin bike counting stations data](https://www.berlin.de/sen/uvk/_assets/verkehr/verkehrsplanung/radverkehr/weitere-radinfrastruktur/zaehlstellen-und-fahrradbarometer/gesamtdatei-stundenwerte.xlsx?ts=1752674590).
+4) You can set up a virtual environment and install the requirements as follows:
+   ```bash
+   pip install uv
+   uv sync
+   ```
+5) To reproduce all results, run notebooks `01` through `04` in the `notebooks/` directory sequentially.
 
+## Project Structure
+```
+project_root_dir/                                   <--- root directory of the project
+├── pyproject.toml                                  <--- Python project + dependencies
+├── README.md                                       <--- project overview and quickstart
+├── src/                                            <--- all Python source code (importable package)
+│   ├── __init__.py                                 <--- package marker
+│   ├── accidents.py                                <--- crash data loading + matching to segments
+│   ├── nodes.py                                    <--- junction/node utilities
+│   ├── panels.py                                   <--- panel data helpers
+│   ├── risk_estimates.py                           <--- Empirical Bayes risk estimation
+│   ├── routing_graph.py                            <--- build risk-annotated graph from segments
+│   ├── routing_algorithm.py                        <--- safety-aware routing under detour constraints
+│   ├── segments.py                                 <--- segment utilities and transformations
+│   ├── strava_exposure.py                          <--- Strava-derived exposure ingestion + checks
+│   └── utils.py                                    <--- path helpers and project root
+│
+├── notebooks/                                      <--- exploratory work and analysis notebooks
+│   ├── 01_data_preparation.ipynb                   <--- data loading, inspection, aggregation, and merging
+│   ├── 02_risk_estimation.ipynb                    <--- segment/junction risk estimation
+│   ├── 03_graph_and_routing.ipynb                  <--- graph construction + routing
+│   ├── 04_paper.ipynb                              <--- figures for the report
+│   └── ...                                     
+│
+├── data/                                           <--- input datasets
+│   ├── accidents/                                  <--- Unfallatlas crash CSVs
+│   ├── counting_stations/                          <--- official counters
+│   ├── csv/                                        <--- auxiliary CSVs
+│   ├── panel/                                      <--- panel-format exports
+│   └── strava/                                     <--- Strava features + metadata
+│
+├── report/                                         <--- report and related files
+│   ├── report_template.tex                         <--- main manuscript
+│   ├── bibliography.bib                            <--- references
+│   ├── figs/                                       <--- figures used in the report
+│   └── ...                                     
+│
+└── .gitignore                                      <--- git ignore rules
+```
 
-## Project Structure & Conventions
-This project follows a clear separation between **notebooks** and **core code** to ensure stability, readability, and scalability.
-### Directory Structure
-- `data/input`  
-  Raw input data from external sources
-- `data/input` 
-  Processed data and intermediate results should be persisted (e.g. Parquet).
-
-- `notebooks/`  
-  Used for exploration, analysis, and result presentation.  
-  Notebooks should be lightweight, task-focused, and executable top-to-bottom.
-
-- `output/`  
-  files generated by notebooks such as maps
-
-- `report/`  
-  everything about the final report  
-
-- `src/`  
-  Contains all reusable project logic:
-  - data loading and preprocessing  
-  - feature engineering  
-  - shared utilities  
-
-### Conventions
-
-- Notebooks must not contain core business logic; all reusable code lives in `src/`.
-- Avoid large or monolithic notebooks; split work into small, task-oriented notebooks.
-- Parameterize experiments via config files instead of hardcoding values.
-- Every notebook must run via **Restart & Run All** without manual steps.
-- Persist intermediate results to reduce memory usage and kernel instability.
-- Use consistent naming 
-
-Notebooks are used to **tell the story** — the actual implementation lives in Python modules.
