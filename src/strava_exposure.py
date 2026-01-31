@@ -11,6 +11,7 @@ from .utils import data_path
 
 
 def load_strava_berlin_data(parquet_path: str | Path | None = None) -> pd.DataFrame:
+    """Load Strava Berlin exposure data, downloading from Zenodo (record 15332147) if not cached locally."""
     parquet_path = (
         Path(parquet_path) if parquet_path is not None else data_path("strava", "berlin_data.parquet")
     )
@@ -29,17 +30,11 @@ def load_strava_berlin_data(parquet_path: str | Path | None = None) -> pd.DataFr
 
 
 def column_stability_summary(df: pd.DataFrame, *, group_col: str = "counter_name") -> pd.DataFrame:
-    """For each column, compute whether it varies within a segment over time.
-    
-    Optimized version using vectorized operations instead of iterating over columns.
-
-    Returns a dataframe with columns: column, segments_total, segments_varying, max_unique_within_any_segment.
+    """For each column, compute stability (variability within groups). 
     """
-
     if group_col not in df.columns:
         raise KeyError(f"Missing group column: {group_col}")
 
-    # Get all columns except group_col
     cols_to_check = [col for col in df.columns if col != group_col]
     
     # Vectorized computation: compute nunique for all columns at once
@@ -62,8 +57,9 @@ def build_exposure_panel_segment_year_month(
     segment_static: pd.DataFrame,
     summary_df: pd.DataFrame | None = None,
 ) -> pd.DataFrame:
-    """Aggregate Strava data to segment–year–month and attach canonical geometry."""
-
+    """Aggregate Strava raw data to segment×year×month panel, applying sum/mean/mode to metrics. 
+    Merges with static segment data and geometry.
+    """
     # Avoid copying the full (very large) dataframe; only materialize the columns we need.
     df = strava_berlin_data
 
@@ -192,19 +188,8 @@ def plot_strava_quality_overview(
     use_tueplots=True,
     save_path=None,
 ):
-    """
-    Create comprehensive quality check visualization for Strava exposure data.
-    
-    Parameters
-    ----------
-    strava_df : DataFrame
-        Strava Berlin data with counter_name, date, strava_total_trip_count, etc.
-    figsize : tuple, optional
-        Figure size (width, height), by default (16, 8.4)
-    use_tueplots : bool, optional
-        Whether to use tueplots ICML2024 stylesheet, by default True
-    save_path : str | Path | None, optional
-        Path to save the figure, by default None
+    """Plot 2×2 grid of Strava data quality checks: monthly records, monthly trips, segment traffic distribution, daily outliers. 
+    Prints validation summary.
     """
     # Apply tueplots styling if requested
     if use_tueplots:
@@ -220,7 +205,7 @@ def plot_strava_quality_overview(
     
     fig, axes = plt.subplots(2, 2, figsize=figsize)
     
-    # 1. Temporal coverage - Records per month (with outlier labels)
+    # Temporal coverage - Records per month (with outlier labels)
     ax1 = axes[0, 0]
     if 'date' in strava_df.columns:
         dates = pd.to_datetime(strava_df['date'], errors='coerce')
@@ -264,7 +249,7 @@ def plot_strava_quality_overview(
         ax1.text(0.5, 0.5, 'date column not available', ha='center', va='center', fontsize=11)
         ax1.set_title('Records per Month', fontweight='bold', fontsize=13)
     
-    # 2. Total trips per month
+    # Total trips per month
     ax2 = axes[0, 1]
     if 'date' in strava_df.columns and 'strava_total_trip_count' in strava_df.columns:
         dates = pd.to_datetime(strava_df['date'], errors='coerce')
@@ -294,7 +279,7 @@ def plot_strava_quality_overview(
         ax2.text(0.5, 0.5, 'date or strava_total_trip_count not available', ha='center', va='center', fontsize=11)
         ax2.set_title('Total Trips per Month', fontweight='bold', fontsize=13)
     
-    # 3. Traffic distribution across segments (histogram including zeros)
+    # Traffic distribution across segments (histogram including zeros)
     ax3 = axes[1, 0]
     if 'counter_name' in strava_df.columns and 'strava_total_trip_count' in strava_df.columns:
         df_temp = strava_df[['counter_name', 'strava_total_trip_count']].copy()
@@ -336,7 +321,7 @@ def plot_strava_quality_overview(
         ax3.text(0.5, 0.5, 'counter_name or trip_count not available', ha='center', va='center', fontsize=11)
         ax3.set_title('Segment Traffic Distribution', fontweight='bold', fontsize=13)
     
-    # 4. Trip count temporal outliers
+    # Trip count temporal outliers
     ax4 = axes[1, 1]
     if 'date' in strava_df.columns and 'strava_total_trip_count' in strava_df.columns:
         dates = pd.to_datetime(strava_df['date'], errors='coerce')
@@ -391,7 +376,7 @@ def plot_strava_quality_overview(
     # Store validation results for summary (not plotted)
     validation_results = {}
     
-    # Test 1: Date range check (2019-2023)
+    # Date range check (2019-2023)
     if 'date' in strava_df.columns:
         dates = pd.to_datetime(strava_df['date'], errors='coerce')
         valid_dates = dates.dropna()
@@ -410,7 +395,7 @@ def plot_strava_quality_overview(
             )
     
     
-    # Test 2: No duplicate records (counter_name + date)
+    # No duplicate records (counter_name + date)
     if 'counter_name' in strava_df.columns and 'date' in strava_df.columns:
         duplicates = strava_df.duplicated(subset=['counter_name', 'date'], keep=False).sum()
         validation_results['No Duplicate Records (segment+date)'] = (
@@ -418,7 +403,7 @@ def plot_strava_quality_overview(
             f'Unique records by segment+date' if duplicates == 0 else f'Duplicate records: {duplicates:,}'
         )
     
-    # Test 4: Non-negative trip counts
+    # Non-negative trip counts
     if 'strava_total_trip_count' in strava_df.columns:
         trip_counts = strava_df['strava_total_trip_count'].dropna()
         if len(trip_counts) > 0:
@@ -431,7 +416,7 @@ def plot_strava_quality_overview(
                 f'All trip counts non-negative' if negative_counts == 0 else f'Negative trip counts: {negative_counts:,} in columns: {", ".join(neg_cols_with_negs)}'
             )
     
-    # Test 4b: Segments with zero total traffic (should have no zero-traffic segments)
+    # Segments with zero total traffic (should have no zero-traffic segments)
     if 'counter_name' in strava_df.columns and 'strava_total_trip_count' in strava_df.columns:
         df_temp = strava_df[['counter_name', 'strava_total_trip_count']].copy()
         df_temp['strava_total_trip_count'] = df_temp['strava_total_trip_count'].fillna(0)
@@ -445,7 +430,7 @@ def plot_strava_quality_overview(
             f'Zero traffic found in {zero_segments} segments ({zero_segment_pct:.1f}%)' if zero_segments > 0 else 'No segments with zero traffic'
         )
     
-    # Test 5: Segment coverage consistency
+    # Segment coverage consistency
     if 'counter_name' in strava_df.columns:
         n_unique_segments = strava_df['counter_name'].nunique()
         total_records = len(strava_df)
@@ -457,7 +442,7 @@ def plot_strava_quality_overview(
             f'{n_unique_segments:,} unique segments, avg {avg_records_per_segment:.0f} records/segment'
         )
     
-    # Test 7: Temporal coverage and gaps check
+    # Temporal coverage and gaps check
     if 'date' in strava_df.columns:
         dates = pd.to_datetime(strava_df['date'], errors='coerce')
         valid_dates = dates.dropna()
@@ -476,7 +461,7 @@ def plot_strava_quality_overview(
                 f'{min_date.date()} to {max_date.date()}, {len(gaps)} missing days ({gap_pct:.1f}% of {len(date_range)})'
             )
     
-    # Test 8: Missing values check in coordinates
+    # Missing values check in coordinates
     if 'latitude' in strava_df.columns and 'longitude' in strava_df.columns:
         lat_missing = strava_df['latitude'].isna().sum()
         lon_missing = strava_df['longitude'].isna().sum()
@@ -544,19 +529,7 @@ def plot_strava_quality_overview(
 
 
 def get_daily_outlier_days(strava_df):
-    """
-    Extract and display days with suspicious (outlier) trip counts.
-    
-    Parameters
-    ----------
-    strava_df : DataFrame
-        Strava data with 'date' and 'strava_total_trip_count' columns
-        
-    Returns
-    -------
-    DataFrame
-        Days with outlier trip counts sorted by trip count descending
-    """
+    """Identify days with outlier trip counts using IQR method."""
     if 'date' not in strava_df.columns or 'strava_total_trip_count' not in strava_df.columns:
         print("Required columns 'date' and 'strava_total_trip_count' not found")
         return pd.DataFrame()
@@ -603,19 +576,7 @@ def get_daily_outlier_days(strava_df):
 
 
 def filter_zero_traffic_years(exposure_panel: pd.DataFrame, trip_col: str = 'sum_strava_total_trip_count') -> pd.DataFrame:
-    """Remove segments with zero traffic in any year.
-    
-    Ensures temporal consistency: each segment must have at least some traffic in every year
-    it appears in the dataset. This avoids confounding exposure variation with years where
-    a segment was not monitored or had no activity.
-    
-    Args:
-        exposure_panel: Segment × year × month aggregated panel
-        trip_col: Name of the trip count column (default: sum_strava_total_trip_count)
-    
-    Returns:
-        Filtered panel with segments having zero traffic in any year removed
-    """
+    """Remove segments with any year having zero traffic. Ensures temporal consistency across segment-year observations."""
     # Identify segments with zero traffic in ANY year
     seg_year_trips = exposure_panel.groupby(['counter_name', 'year'])[trip_col].sum()
     zero_year_segs = seg_year_trips[seg_year_trips == 0].index.get_level_values('counter_name').unique()
@@ -631,16 +592,7 @@ def filter_zero_traffic_years(exposure_panel: pd.DataFrame, trip_col: str = 'sum
 
 
 def compute_segment_filter_impact(exposure_panel: pd.DataFrame, trip_col: str = 'sum_strava_total_trip_count') -> pd.DataFrame:
-    """Compute impact of different filtering criteria on segment loss.
-    
-    Args:
-        exposure_panel: Segment × year × month aggregated panel
-        trip_col: Name of the trip count column (default: sum_strava_total_trip_count)
-    
-    Returns:
-        DataFrame with filter criteria and resulting segment counts
-    """
-    
+    """Quantify segment loss from 3 filtering criteria: zero-traffic all-time, any-year, or any-month."""
     if 'counter_name' not in exposure_panel.columns:
         print("ERROR: 'counter_name' column not found in exposure panel")
         return pd.DataFrame()

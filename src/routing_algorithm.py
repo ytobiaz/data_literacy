@@ -38,10 +38,7 @@ def nearest_graph_node(
     *,
     metric_epsg: int = 32633,
 ) -> NodeKey:
-    """
-    Snap an (lon, lat) point to the closest graph node.
-    Brute force over nodes (OK for moderate graphs). Replace with KDTree if needed.
-    """
+    """Find the nearest graph node to a geographic point (lon, lat) using brute-force distance calculation."""
     p = gpd.GeoSeries([Point(lon, lat)], crs="EPSG:4326").to_crs(epsg=metric_epsg).iloc[0]
     x, y = float(p.x), float(p.y)
 
@@ -173,12 +170,7 @@ def path_to_multiline_latlon(
     metric_epsg: int = 32633,
     choose_by: str = "length_m",
 ):
-    """
-    Convert node path to MultiLineString in EPSG:4326.
-    
-    For MultiGraph, choose the parallel edge that minimizes choose_by so
-    plotted geometry matches the intended weight.
-    """
+    """Convert a node path to a MultiLineString geometry in lat/lon coordinates (EPSG:4326) for visualization."""
     if path_nodes is None or len(path_nodes) < 2:
         return None
 
@@ -219,12 +211,9 @@ def run_one_od_routing(
     metric_epsg: int = 32633,
 ) -> Dict:
     """
-    Builds the graph, snaps OD to graph nodes, and returns:
-      - shortest-by-length route (P_dist)
-      - constrained min-risk route within (1+eps) distance (P_safe), minimizing risk_total
-      - optional shortest-by-cost route (mixed objective) for comparison
-
-    origin_lonlat/dest_lonlat are (lon, lat) in EPSG:4326.
+    Compute origin-destination routing: shortest path by distance and constrained minimum-risk route.
+    
+    Returns paths, statistics, and comparison metrics (delta_L, delta_R) between distance-optimal and risk-minimizing routes.
     """
     artifacts = build_graph_with_risk(
         segments_panel_gdf,
