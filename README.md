@@ -3,7 +3,7 @@ This is the repository for the 2025 Data Literacy course project of
 [Eric Berger](), [Edward Eichhorn](), [Liaisan Faidrakhmanova](), [Luise Grasl](), [Tobias Schnarr]().
 
 ## Setup
-1) Clone the repository
+1) Clone the repository.
 2) Download the input datasets and store them in `data/input/counting_stations`:
     * from the [German Accident Atlas](https://unfallatlas.statistikportal.de/?BL=BB%20=%20Brandenburg) select _Accident Atlas and Open Data_, then download the csv-files for years 2019-2023 and unzip;
     * download [Strava data for Berlin](https://zenodo.org/records/15332147/files/berlin_data.parquet?download=1) and [graph geometry data for Berlin](https://zenodo.org/records/15332147/files/berlin_graph_geometry.parquet?download=1);
