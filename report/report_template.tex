@@ -327,6 +327,17 @@ In contrast, we combine measured segment-level exposure with joint segment–jun
 One of the major outcomes of this work ist the estimation of the risk to have get injured in a bike accidents while driving on a streetsegment.
 This distribution of those calculated risks is displayed in \cref{fig:risk_segments}.
 
+\begin{figure*}[ht]
+  \centering
+  \includegraphics{figs/paneljunction.pdf}
+  \caption{\textbf{Closer investigation on Junction 2482}
+  As one example the junction on Hermann Hesse and Heinrich Mann Straße was observed further.
+  There were 22 Accidents as displayed in the map. The recorded accidents involved a second vehicle, predominantly cars (20 cases), with only two involving other vehicle types. Most accidents were caused by vehicles turning into or crossing a road (20), while only a few resulted from turning off the road (2).
+  Looking at Google Street view \ref{} this seems to make sense since the car lane is crossing the bicyle lane in this place.
+  }
+  \label{fig:junc}
+\end{figure*}
+
 \begin{figure}[ht]
   \centering
   \includegraphics{figs/risk_segments.pdf}
@@ -335,6 +346,7 @@ This distribution of those calculated risks is displayed in \cref{fig:risk_segme
 \end{figure}
 
 To evaluate the routing algorithm, we sample $n=1000$ origin--destination pairs uniformly at random and compare shortest-distance routes with safety-aware alternatives~\citep{NateraOrozco2020}.
+
 
 \begin{table}[ht]
 \centering
