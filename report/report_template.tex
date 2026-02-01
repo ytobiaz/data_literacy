@@ -204,8 +204,7 @@ over the full study period and an Empirical Bayes approach is applied (\cref{sec
 
 \section{Methods}\label{sec:methods}
 \paragraph{Empirical Bayes relative risk and uncertainty.}
-For each month $t$, let $A_{s,t}$ and $E_{s,t}$ denote the number of police-recorded bicycle crashes and measured cyclist exposure on street segment $s$. Junction crashes $A_{v,t}$ are defined as 
-crashes within a fixed radius of junction $v$. Because a traversal typically contributes exposure to two incident segments, we approximate junction exposure by the half-sum of incident segment exposures,
+For each month $t$, let $A_{s,t}$ and $E_{s,t}$ denote the number of police-recorded bicycle crashes and measured cyclist exposure on street segment $s$. Junction crashes $A_{v,t}$ are defined as crashes within a fixed radius of junction $v$. Because a traversal typically contributes exposure to two incident segments, we approximate junction exposure by the half-sum of incident segment exposures,
 \[
 E_{v,t}=\tfrac{1}{2}\sum_{s\in\mathcal I(v)} E_{s,t},
 \]
@@ -220,7 +219,7 @@ Under a no-special-risk baseline, monthly crash incidence is assumed proportiona
 A_{\cdot t}=\sum_i A_{i,t},\ \ E_{\cdot t}=\sum_i E_{i,t},
 \]
 where sums are taken jointly over all segments and junctions, defining a shared baseline.
-Because routing requires a stable long-run risk surface, crashes and baseline expectations are aggregated over the full study period,
+Because routing requires a pooled baseline risk estimate, crashes and baseline expectations are aggregated over the full study period,
 \[
 A_i=\sum_t A_{i,t},
 \qquad
@@ -234,33 +233,42 @@ A_i \mid \theta_i \sim \text{Poisson}(\widehat{A}_i\,\theta_i),
 \qquad
 \theta_i \sim \text{Gamma}(\alpha,\alpha),
 \]
-where the Gamma prior (shape--rate) enforces $\mathbb{E}[\theta_i]=1$~\citep{Lord2010}. The shrinkage parameter $\alpha$ is estimated by method of moments~\citep{Morris1983}. Under the Poisson--Gamma model,
+where the Gamma prior (shape--rate) enforces $\mathbb{E}[\theta_i]=1$~\citep{Lord2010}. 
+The hyperparameter $\alpha$ is estimated from the data, such that inference on $\theta_i$ is performed using Empirical Bayes smoothing.
+
+Under the Poisson--Gamma model,
 \[
 \mathbb{E}[A_i] = \widehat{A}_i
 \qquad\text{and}\qquad
 \mathrm{Var}(A_i) = \widehat{A}_i + \frac{\widehat{A}_i^{\,2}}{\alpha}.
 \]
-Equating empirical and theoretical second moments across entities yields
+The shrinkage parameter $\alpha$ is estimated via the method of moments~\citep{Morris1983} by equating empirical and theoretical second moments across entities,
 \[
 \widehat{\alpha}
 =
 \frac{\sum_i \widehat{A}_i^{\,2}}
 {\sum_i (A_i-\widehat{A}_i)^2 - \sum_i \widehat{A}_i}.
 \]
-By conjugacy,
+
+Inference for entity-specific risk follows directly from Bayes' theorem,
+\[
+p(\theta_i \mid A_i,\widehat{A}_i)
+\;\propto\;
+p(A_i \mid \theta_i,\widehat{A}_i)\,p(\theta_i),
+\]
+which, by conjugacy of the Poisson likelihood and Gamma prior, yields the posterior distribution
 \begin{equation}
 \label{eq:gamma_dist}
 \theta_i \mid A_i,\widehat{A}_i
-\sim \text{Gamma}(A_i+\alpha,\;\widehat{A}_i+\alpha),
+\sim \text{Gamma}(A_i+\alpha,\;\widehat{A}_i+\alpha).
 \end{equation}
-and the posterior mean
+The posterior mean
 \[
 r_i
 = \mathbb{E}[\theta_i \mid A_i,\widehat{A}_i]
 = \frac{A_i+\alpha}{\widehat{A}_i+\alpha}
 \]
-serves as the Empirical Bayes relative risk, with stronger shrinkage for entities with low expected counts~\citep{Hauer2002}. Uncertainty is quantified using $(1-\delta)$ credible intervals obtained 
-from Gamma posterior quantiles.
+serves as the Empirical Bayes relative risk, with stronger shrinkage toward the baseline for entities with low expected counts~\citep{Hauer2002}. Uncertainty is quantified using $(1-\delta)$ credible intervals obtained from quantiles of the Gamma posterior.
 
 \paragraph{Risk-weighted routing graph.}
 Relative risk estimates are dimensionless and conditional on exposure. To obtain additive weights for routing, we rescale relative risk by the pooled baseline crash rate
@@ -297,9 +305,14 @@ P_{\text{safe}}=\arg\min_{P}\ & R(P)=\sum_{e\in P}\rho_e \\
 \end{equation}
 where $\varepsilon$ is the allowable relative detour~\citep{ehrgott2005multicriteria}. We approximate this constraint via a weighted-sum sweep: for $\lambda\in\Lambda$,
 \[
-P(\lambda)=\arg\min_{P}\sum_{e\in P}\bigl(\rho_e+\lambda\,\ell_e\bigr),
+P(\lambda)
+=\arg\min_{P}
+\left(
+\sum_{e\in P}\rho_e
++\lambda\sum_{e\in P}\ell_e
+\right),
 \]
-and select among feasible candidates the route minimizing $R(P)$. Shortest paths are computed with Dijkstra’s algorithm.
+and select among feasible candidates the route minimizing $R(P)$. Shortest paths are computed with Dijkstra’s algorithm~\citep{Dijkstra1959}.
 
 \paragraph{Evaluation metrics.}
 For each origin--destination pair, we report the relative length increase
@@ -345,7 +358,7 @@ To evaluate the routing algorithm, we sample $n=1000$ origin--destination pairs 
 \caption{Distance--risk trade-off under bounded detours for different junction-risk weights $\eta$.
 Values are aggregated over all origin--destination pairs.
 Medians are reported with interquartile ranges in parentheses.
-$P(\Delta_R > 0)$ is reported in percent.}
+$\Delta_L$ and $\Delta_R$ are reported on a relative scale, whereas $P(\Delta_R>0)$ is reported in percent.}
 \label{tab:routing_tradeoff}
 \begin{tabular}{@{}c c c c c@{}}
 \toprule
