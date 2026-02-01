@@ -203,7 +203,7 @@ All datasets were combined into one dataframe and matched to the same street net
 At monthly resolution, events are sparse: in a typical month, fewer than 5\% of segments and 3\% of junctions record at least one crash. We drop segments with zero recorded trips over at least one year and pool counts over the full period 2019--2023 for risk estimation. The dataset comprises 4{,}335 segments, 2{,}862 junctions, and 15{,}396 recorded bicycle crashes. The resulting segment- and junction-level relative risk estimates are used throughout the analysis and serve as inputs to the routing algorithm.
 
 \section{Methods}\label{sec:methods}
-\paragraph{Empirical Bayes relative risk and uncertainty.}
+\paragraph{Crash, Exposure and Risk Measures.}
 For each month $t$, let $A_{s,t}$ and $E_{s,t}$ denote the number of police-recorded bicycle crashes and measured cyclist exposure on street segment $s$. Junction crashes $A_{v,t}$ are defined as crashes within a fixed radius of junction $v$. Because a traversal typically contributes exposure to two incident segments, we approximate junction exposure by the half-sum of incident segment exposures,
 \[
 E_{v,t}=\tfrac{1}{2}\sum_{s\in\mathcal I(v)} E_{s,t},
@@ -219,30 +219,34 @@ Under a no-special-risk baseline, monthly crash incidence is assumed proportiona
 A_{\cdot t}=\sum_i A_{i,t},\ \ E_{\cdot t}=\sum_i E_{i,t},
 \]
 where sums are taken jointly over all segments and junctions, defining a shared baseline.
-Because routing requires a pooled baseline risk estimate, crashes and baseline expectations are aggregated over the full study period,
+Because routing requires a pooled baseline risk estimate, crashes and baseline expectations are aggregated over the full period,
 \[
 A_i=\sum_t A_{i,t},
 \qquad
 \widehat{A}_i=\sum_t \widehat{A}_{i,t},
 \]
-and the raw relative risk is $A_i/\widehat{A}_i$.
+and the raw relative risk $r^{\text{raw}}_i$ is $A_i/\widehat{A}_i$.
 
-To stabilize estimation under sparsity, we introduce a latent relative-risk multiplier $\theta_i$ and model
+\paragraph{Empirical Bayes Smoothing.}
+Because many segments have low exposure and thus very small expected counts, the raw relative risk is highly variable. That is why we use Empirical Bayes smoothing to improve the risk estimates.
+This methods shrinks low-exposure estimates toward a baseline, while high-exposure estimates change little.
+Concretely, we assume a true relative risk  $r^{\text{true}}_i$ such that the observed count $A_i$ follows a Poisson model with 
 \[
-A_i \mid \theta_i \sim \text{Poisson}(\widehat{A}_i\,\theta_i),
-\qquad
-\theta_i \sim \text{Gamma}(\alpha,\alpha),
+A_i \mid r^{\text{true}}_i \sim \text{Poisson}(\widehat{A}_i\,r^{\text{true}}_i).
 \]
-where the Gamma prior (shape--rate) enforces $\mathbb{E}[\theta_i]=1$~\citep{Lord2010}. 
-The hyperparameter $\alpha$ is estimated from the data, such that inference on $\theta_i$ is performed using Empirical Bayes smoothing.
+The Poisson distribution is natural for nonnegative event counts over a fixed time period under a baseline rate, and it yields $\mathbb{E}[A_i]=\widehat A_i$ when $r^{\text{true}}_i=1$. To allow heterogeneity in 
+relative risk beyond this baseline, we place a Gamma prior on $r^{\text{true}}_i$ in the shape–rate parameterization,
 
-Under the Poisson--Gamma model,
 \[
-\mathbb{E}[A_i] = \widehat{A}_i
-\qquad\text{and}\qquad
-\mathrm{Var}(A_i) = \widehat{A}_i + \frac{\widehat{A}_i^{\,2}}{\alpha}.
+r^{\text{true}}_i \sim \text{Gamma}(\alpha,\alpha),
 \]
-The shrinkage parameter $\alpha$ is estimated via the method of moments~\citep{Morris1983} by equating empirical and theoretical second moments across entities,
+which enforces $\mathbb{E}[r^{\text{true}}_i]=1$ and has variance $\mathrm{Var}(r^{\text{true}}_i)=1/\alpha$ controlling the amount of shrinkage. The Gamma prior is also conjugate 
+to the Poisson likelihood, giving a closed-form posterior
+\[
+r^{\text{true}}_i \mid A_i,\widehat{A}_i \sim \text{Gamma}(A_i+\alpha,\;\widehat{A}_i+\alpha),
+\]
+so posterior inference is simple and numerically stable. We estimate $\alpha$ from the data using method of moments~\citep{Morris1983}, as
+
 \[
 \widehat{\alpha}
 =
@@ -250,25 +254,12 @@ The shrinkage parameter $\alpha$ is estimated via the method of moments~\citep{M
 {\sum_i (A_i-\widehat{A}_i)^2 - \sum_i \widehat{A}_i}.
 \]
 
-Inference for entity-specific risk follows directly from Bayes' theorem,
+and use the posterior mean
 \[
-p(\theta_i \mid A_i,\widehat{A}_i)
-\;\propto\;
-p(A_i \mid \theta_i,\widehat{A}_i)\,p(\theta_i),
+\widehat{r}_i=\mathbb{E}[r^{\text{true}}_i\mid A_i,\widehat A_i]=\frac{A_i+\alpha}{\widehat A_i+\alpha}
 \]
-which, by conjugacy of the Poisson likelihood and Gamma prior, yields the posterior distribution
-\begin{equation}
-\label{eq:gamma_dist}
-\theta_i \mid A_i,\widehat{A}_i
-\sim \text{Gamma}(A_i+\alpha,\;\widehat{A}_i+\alpha).
-\end{equation}
-The posterior mean
-\[
-r_i
-= \mathbb{E}[\theta_i \mid A_i,\widehat{A}_i]
-= \frac{A_i+\alpha}{\widehat{A}_i+\alpha}
-\]
-serves as the Empirical Bayes relative risk, with stronger shrinkage toward the baseline for entities with low expected counts~\citep{Hauer2002}. Uncertainty is quantified using $(1-\delta)$ credible intervals obtained from quantiles of the Gamma posterior.
+as the smoothed relative risk. For small $\widehat A_i$, $r_i$ is pulled toward 1, while for large $\widehat A_i$ it approaches the raw ratio $A_i/\widehat A_i$. Uncertainty is summarized by $(1-\delta=0.95)$ 
+equal-tailed credible intervals from quantiles of the Gamma posterior.
 
 \paragraph{Risk-weighted routing graph.}
 Relative risk estimates are dimensionless and conditional on exposure. To obtain additive weights for routing, we rescale relative risk by the pooled baseline crash rate
