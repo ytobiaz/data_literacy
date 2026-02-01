@@ -329,14 +329,13 @@ Pairs with $R(P_{\text{dist}})=0$ are excluded from $\Delta_R$ due to the undefi
 \end{figure*}
 
 
-\section{Related work.}\label{sec:relatedw}
-Prior work seeks to avoid conflating danger with demand by normalizing bicycle crashes by cyclist exposure~\citep{luecken2018}. City-scale studies show that exposure-normalized risk yields more
-informative spatial patterns than raw crash counts and that finer temporal resolution improves inference, though persistent under-reporting in police records remains a challenge~\citep{Uijtdewilligen01092024}.
-A central obstacle is obtaining reliable exposure: earlier work extrapolates city-wide volumes from sparse counters using learning-based models and multi-source features, while short-term measurement
-campaigns improve predictions at unseen locations~\citep{Kaiser_Klein_Kaack_2025}. More recent efforts instead rely on street-segment datasets of measured bicycle volumes, enabling safety analyses 
-without explicit exposure modeling~\citep{kaiser2025spatiotemporalgraphneuralnetwork}. At the network level, risk is typically defined as crashes per unit exposure on links, with attention to spatial
-snapping, assignment of incidents to intersections, and integration of safety metrics into routing under convenience constraints~\citep{isprs-archives-XLIII-B4-2022-427-2022}. Intersection safety is 
-repeatedly emphasized, with strong crash concentrations at junctions and the need to control for exposure when comparing locations or infrastructure types~\citep{futuretransp1030037}.
+\section{Related Work}\label{sec:relatedw}
+
+In accident risk estimation, a Hannover study combined police crash records with exposure estimates calibrated to official counters \citep{isprs-archives-XLIII-B4-2022-427-2022}. However bicycle traffic was extrapolated from motorized transport data, poorly capturing actual cycling patterns. Other work calibrated crowdsourced GPS cycling data with count stations and showed that cyclist volumes strongly predict crash risk, though uncertainty of risk estimates on low-volume segments remained unexamined \citep{Uijtdewilligen01092024}.
+
+A separate research line addresses cyclist exposure where direct counts are unavailable. Supervised learning models estimate city-wide volumes by combining sparse counters with crowdsourced data and contextual features \citep{Kaiser_Klein_Kaack_2025}. Graph neural networks estimate street-segment exposure under sparse sensor coverage \citep{kaiser2025spatiotemporalgraphneuralnetwork}. These models achieved good predictive accuracy but required manual validation counts for calibration, which is not available in our case. However, these studies showed that crowdsourced Strava data correlates with official counting stations at segment level, supporting its direct use as exposure proxy.
+
+To account for accident sparsity, some studies employed Poisson and Gamma count models \citep{luecken2018, futuretransp1030037}. These approaches handle zero-inflated crash data but exposure remained limited to city-level aggregation and weather-based reconstruction, lacking segment-level estimates required for routing applications.
 
 \section{Results}\label{sec:results}
 \paragraph{Relative risk map.}
@@ -388,14 +387,11 @@ budgets, increasing $\eta$ is associated with lower median risk reductions.
 
 \section{Discussion and Conclusion}\label{sec:conclusion}
 % Use this section to briefly summarize the entire text. Highlight limitations and problems, but also make clear statements where they are possible and supported by the analysis. 
-Our results indicate that substantial reductions in exposure-adjusted crash risk can be achieved with relatively small increases in route length. While higher junction-risk weights reduce the magnitude
-of the estimated risk reduction, the distance--risk trade-off persists across all configurations, with absolute gains depending on the chosen weighting.
+This study combines street segment-level risk modeling with separate junction treatment, addressing sparse crash data and low-exposure segments through uncertainty quantification. Within a 10\% route length increase, our method achieves a crash risk reduction of about one third—a modest detour for safer cycling.
 
-Overall, allowing a 10\% increase in route length yields median exposure-adjusted risk reductions of 31--38\% for the majority of routes, demonstrating that safety-aware routing can effectively trade 
-modest detours for meaningful safety improvements.
+However, limitations remain. Official data capture only personal injury crashes and suffer from under-reporting; during our study period, one researcher, Edward Eichhorn, experienced two bicycle accidents absent from official records. Additionally, cyclist exposure is approximated using Strava data, which represents a subset of specific cyclist types and likely overemphasizes routes popular within this community. Results therefore support relative risk comparisons and routing decisions rather than absolute crash probability estimates.
 
-
-We provide implementation details, hyperparameters, and supplementary material, available at \url{https://github.com/ytobiaz/data_literacy}.
+The approach transfers to cities with crash data, a routable street network, and an exposure proxy. All code and supplementary materials are available at \url{https://github.com/ytobiaz/data_literacy}.
 
 \clearpage
 
