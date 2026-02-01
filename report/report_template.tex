@@ -322,7 +322,7 @@ Pairs with $R(P_{\text{dist}})=0$ are excluded from $\Delta_R$ due to the undefi
   \caption{\textbf{Risk heatmap and detailed inspection of junction 2482.}
   The colors \coolwarmbox \space in panels (a) and (b)  indicate their log-scaled risk values, ranging from low risk {\color{TUblue}(blue)} to high risk {\color{TUred}(red)}.
   Panel (a) shows a section of the Strava bike network in Berlin with all computed road segments and junctions displayed. 
-  Panel (b) provides a closer view of junction 2482, displaying the 22 crashes assigned to this junction. 
+  Panel (b) provides a closer view of junction 2482 and the crashes assigned to this it. 
   (c) shows a street-level view of junction 2482 \citep{streetview2024}, providing visual context for the observed risk.
   }  
   \label{fig:junction_details}
@@ -339,14 +339,12 @@ To account for accident sparsity, some studies employed Poisson and Gamma count 
 
 \section{Results}\label{sec:results}
 \paragraph{Relative risk map.}
-As outlined in the visual abstract (see \cref{fig:visual_app}), the relative risk of Strava bicycle segments and junctions in Berlin was estimated.
-A section of the resulting risk map is shown in \cref{fig:junction_details} (a).
-Relative risk values range from 0.03 to 50.79 for road segments and from 0.03 to 6.42 for junctions.
-To further investigate an exemplary location with elevated risk, we focus on junction 2482, which shows a comparatively high relative risk of 6.40.
-The detailed view in \cref{fig:junction_details} (b) shows all crashes assigned to this junction, the majority of which are located along the lane of Hermann-Hesse-Straße turning into Heinrich-Mann-Straße.
-Analysis of the 22 crashes assigned to this junction reveals that all involved at least one additional vehicle besides a bicycle, predominantly cars (20 cases). 
-Most crashes occurred during turning or crossing maneuvers (20 cases), while only a small number resulted from vehicles turning off the road (2 cases). 
-To contextualize these findings, a street-level image of the junction from Google Street View \cite{streetview2024} in \cref{fig:junction_details} (c) shows the car lanes crossing the bicycle lane at this location.
+As described in \cref{sec:methods}, the relative risk of Strava bicycle segments and junctions in Berlin was estimated and visuaized in \cref{fig:junction_details} (a).
+Relative risk values range from 0.03 to 50.79 for road segments and from 0.03 to 6.42 for junctions. As an exemplary location with an elevated risk of 6.40, we focus on junction 2482. 
+\cref{fig:junction_details} (b) shows how the 22 crashes assigned to this junction mostly are located along the lane of Hermann-Hesse-Street turning into Heinrich-Mann-Street.
+Analysis of the assigned crashes reveals that all involved at least one additional vehicle besides a bicycle, predominantly cars (20 cases). 
+From the original dataset we obtain that all of them occurred during turning or crossing maneuvers (20 cases) or turning off the road (2 cases). 
+The street-level image in \cref{fig:junction_details} (c) shows the lanes crossing the bicycle lane at this location.
 
 \paragraph{Safety-aware routing.}
 To evaluate the routing algorithm, we sample $n=1000$ origin--destination pairs uniformly at random and compare shortest-distance routes with safety-aware alternatives~\citep{NateraOrozco2020}.
