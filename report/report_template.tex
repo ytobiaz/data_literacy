@@ -204,7 +204,7 @@ At monthly resolution, events are sparse: in a typical month, fewer than 5\% of 
 
 \section{Methods}\label{sec:methods}
 \paragraph{Crash, Exposure and Risk Measures.}
-For each month $t$, let $A_{s,t}$ and $E_{s,t}$ denote the number of police-recorded bicycle crashes and measured cyclist exposure on street segment $s$. Junction crashes $A_{v,t}$ are defined as crashes within a fixed radius of junction $v$. Because a traversal typically contributes exposure to two incident segments, we approximate junction exposure by the half-sum of incident segment exposures,
+For each month $t$, let $C_{s,t}$ and $E_{s,t}$ denote the number of police-recorded bicycle crashes and measured cyclist exposure on street segment $s$. Junction crashes $C_{v,t}$ are defined as crashes within a fixed radius of junction $v$. Because a traversal typically contributes exposure to two incident segments, we approximate junction exposure by the half-sum of incident segment exposures,
 \[
 E_{v,t}=\tfrac{1}{2}\sum_{s\in\mathcal I(v)} E_{s,t},
 \]
@@ -213,28 +213,28 @@ For notational convenience, both street segments and junctions are indexed by a 
 
 Under a no-special-risk baseline, monthly crash incidence is assumed proportional to exposure, yielding the expected number of crashes
 \[
-\widehat{A}_{i,t}
-= A_{\cdot t}\,\frac{E_{i,t}}{E_{\cdot t}},
+\widehat{C}_{i,t}
+= C_{\cdot t}\,\frac{E_{i,t}}{E_{\cdot t}},
 \qquad
-A_{\cdot t}=\sum_i A_{i,t},\ \ E_{\cdot t}=\sum_i E_{i,t},
+C_{\cdot t}=\sum_i C_{i,t},\ \ E_{\cdot t}=\sum_i E_{i,t},
 \]
 where sums are taken jointly over all segments and junctions, defining a shared baseline.
 Because routing requires a pooled baseline risk estimate, crashes and baseline expectations are aggregated over the full period,
 \[
-A_i=\sum_t A_{i,t},
+C_i=\sum_t C_{i,t},
 \qquad
-\widehat{A}_i=\sum_t \widehat{A}_{i,t},
+\widehat{C}_i=\sum_t \widehat{C}_{i,t},
 \]
-and the raw relative risk $r^{\text{raw}}_i$ is $A_i/\widehat{A}_i$.
+and the raw relative risk $r^{\text{raw}}_i$ is $C_i/\widehat{C}_i$.
 
 \paragraph{Empirical Bayes Smoothing.}
 Because many segments have low exposure and thus very small expected counts, the raw relative risk is highly variable. That is why we use Empirical Bayes smoothing to improve the risk estimates.
 This methods shrinks low-exposure estimates toward a baseline, while high-exposure estimates change little.
-Concretely, we assume a true relative risk  $r^{\text{true}}_i$ such that the observed count $A_i$ follows a Poisson model with 
+Concretely, we assume a true relative risk  $r^{\text{true}}_i$ such that the observed count $C_i$ follows a Poisson model with 
 \[
-A_i \mid r^{\text{true}}_i \sim \text{Poisson}(\widehat{A}_i\,r^{\text{true}}_i).
+C_i \mid r^{\text{true}}_i \sim \text{Poisson}(\widehat{C}_i\,r^{\text{true}}_i).
 \]
-The Poisson distribution is natural for nonnegative event counts over a fixed time period under a baseline rate, and it yields $\mathbb{E}[A_i]=\widehat A_i$ when $r^{\text{true}}_i=1$. To allow heterogeneity in 
+The Poisson distribution is natural for nonnegative event counts over a fixed time period under a baseline rate, and it yields $\mathbb{E}[C_i]=\widehat C_i$ when $r^{\text{true}}_i=1$. To allow heterogeneity in 
 relative risk beyond this baseline, we place a Gamma prior on $r^{\text{true}}_i$ in the shape–rate parameterization,
 
 \[
@@ -243,30 +243,30 @@ r^{\text{true}}_i \sim \text{Gamma}(\alpha,\alpha),
 which enforces $\mathbb{E}[r^{\text{true}}_i]=1$ and has variance $\mathrm{Var}(r^{\text{true}}_i)=1/\alpha$ controlling the amount of shrinkage. The Gamma prior is also conjugate 
 to the Poisson likelihood, giving a closed-form posterior
 \[
-r^{\text{true}}_i \mid A_i,\widehat{A}_i \sim \text{Gamma}(A_i+\alpha,\;\widehat{A}_i+\alpha),
+r^{\text{true}}_i \mid C_i,\widehat{C}_i \sim \text{Gamma}(C_i+\alpha,\;\widehat{C}_i+\alpha),
 \]
 so posterior inference is simple and numerically stable. We estimate $\alpha$ from the data using method of moments~\citep{Morris1983}, as
 
 \[
 \widehat{\alpha}
 =
-\frac{\sum_i \widehat{A}_i^{\,2}}
-{\sum_i (A_i-\widehat{A}_i)^2 - \sum_i \widehat{A}_i}.
+\frac{\sum_i \widehat{C}_i^{\,2}}
+{\sum_i (C_i-\widehat{C}_i)^2 - \sum_i \widehat{C}_i}.
 \]
 
 and use the posterior mean
 \[
-\widehat{r}_i=\mathbb{E}[r^{\text{true}}_i\mid A_i,\widehat A_i]=\frac{A_i+\alpha}{\widehat A_i+\alpha}
+\widehat{r}_i=\mathbb{E}[r^{\text{true}}_i\mid C_i,\widehat C_i]=\frac{C_i+\alpha}{\widehat C_i+\alpha}
 \]
-as the smoothed relative risk. For small $\widehat A_i$, $r_i$ is pulled toward 1, while for large $\widehat A_i$ it approaches the raw ratio $A_i/\widehat A_i$. Uncertainty is summarized by $(1-\delta=0.95)$ 
+as the smoothed relative risk. For small $\widehat C_i$, $r_i$ is pulled toward 1, while for large $\widehat C_i$ it approaches the raw ratio $C_i/\widehat C_i$. Uncertainty is summarized by $(1-\delta=0.95)$ 
 equal-tailed credible intervals from quantiles of the Gamma posterior.
 
 \paragraph{Risk-weighted routing graph.}
 Relative risk estimates are dimensionless and conditional on exposure. To obtain additive weights for routing, we rescale relative risk by the pooled baseline crash rate
 \[
-\bar{\lambda}=\frac{A_\cdot}{E_\cdot},
+\bar{\lambda}=\frac{C_\cdot}{E_\cdot},
 \qquad
-A_\cdot=\sum_i A_i,\ \ E_\cdot=\sum_i E_i.
+C_\cdot=\sum_i C_i,\ \ E_\cdot=\sum_i E_i.
 \]
 The resulting routing weight is
 \[
