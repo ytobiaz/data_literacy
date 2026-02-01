@@ -343,12 +343,21 @@ repeatedly emphasized, with strong crash concentrations at junctions and the nee
   A total of 22 accidents occurred at this junction, predominantly involving a second vehicle, mostly cars (20 cases), with two involving other vehicle types.
   Most accidents were associated with vehicles turning into or crossing the road (20), while only two resulted from turning off the road.
   (c) Street-level view of the junction~\citep{streetview2024}, illustrating that the car lane crosses the bicycle lane.}
+  \label{fig:risk_panel}
 \end{figure*}
 
 \section{Results}\label{sec:results}
-One of the major outcomes of this work ist the estimation of the risk to have get injured in a bike accidents while driving on a streetsegment.
-This distribution of those calculated risks is displayed in \href{fig:visual_app}.
+\paragraph{Relative risk map.}
+As outlined in the visual abstract (see \cref{fig:visual_app}), the relative risk of Strava bicycle segments and junctions in Berlin was estimated.
+A section of the resulting risk map is shown in \cref{fig:risk_panel} (a).
+Relative risk values range from 0.03 to 50.79 for road segments and from 0.03 to 6.42 for junctions.
+To further investigate an exemplary location with elevated risk, we focus on junction 2482, which shows a comparatively high relative risk of 6.40.
+The detailed view in \cref{fig:risk_panel} (b) shows all crashes assigned to this junction, the majority of which are located along the lane of Hermann-Hesse-Straße turning into Heinrich-Mann-Straße.
+Analysis of the 22 crashes assigned to this junction reveals that all involved at least one additional vehicle besides a bicycle, predominantly cars (20 cases). 
+Most crashes occurred during turning or crossing maneuvers (20 cases), while only a small number resulted from vehicles turning off the road (2 cases). 
+To contextualize these findings, a street-level image of the junction from Google Street View \cite{streetview2024} in \cref{fig:risk_panel} (c) shows the car lanes crossing the bicycle lane at this location.
 
+\paragraph{Safety-aware routing.}
 To evaluate the routing algorithm, we sample $n=1000$ origin--destination pairs uniformly at random and compare shortest-distance routes with safety-aware alternatives~\citep{NateraOrozco2020}.
 
 \begin{table}[ht]
