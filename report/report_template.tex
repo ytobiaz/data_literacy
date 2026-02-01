@@ -163,7 +163,7 @@ trip data to estimate the relative crash risk across street segments and junctio
 \begin{figure*}[t]
   \centering
   \includegraphics{figs/map_3_panels.pdf}
-  \caption{\textbf{Safety-aware routing pipeline for the Berlin cycling network.}
+  \caption{\textbf{Safety-aware routing pipeline for the Berlin network.}
   Panels (a–c) are zoomed in for readability; see \cref{sec:methods} for definitions and notation.
   (a) Police-recorded bicycle crashes in June 2021 ({\color{TUorange}points}) and street segments with measured cyclist exposure ({\color{TUgray}lines}).
   (b) Pooled segment-level relative crash risk estimated from all available data; high-risk segments in {\color{TUred}red} correspond to values above the 90th percentile of relative risk; {\color{TUdark}circles} mark junctions (degree $\ge 3$).
@@ -334,24 +334,22 @@ without explicit exposure modeling~\citep{kaiser2025spatiotemporalgraphneuralnet
 snapping, assignment of incidents to intersections, and integration of safety metrics into routing under convenience constraints~\citep{isprs-archives-XLIII-B4-2022-427-2022}. Intersection safety is 
 repeatedly emphasized, with strong crash concentrations at junctions and the need to control for exposure when comparing locations or infrastructure types~\citep{futuretransp1030037}.
 
-In contrast, we combine measured segment-level exposure with joint segment–junction risk estimation and propagate these risks into safety-aware routing.\todo{this sentence can be dropped if space is an issue}
+\begin{figure*}[!ht]
+  \centering
+  \includegraphics{figs/risk_3_panel.pdf}
+  \caption{\textbf{Risk patterns and detailed inspection of a high-risk junction in Berlin.}
+  (a) Network-wide cyclist risk map, where colors (\coolwarmbox) indicate log-scaled relative risk from low ({\color{TUblue}blue}) to high ({\color{TUred}red}).
+  (b) Detail view of junction 2482 (Hermann-Hesse-Straße / Heinrich-Mann-Straße) with recorded accident locations.
+  A total of 22 accidents occurred at this junction, predominantly involving a second vehicle, mostly cars (20 cases), with two involving other vehicle types.
+  Most accidents were associated with vehicles turning into or crossing the road (20), while only two resulted from turning off the road.
+  (c) Street-level view of the junction~\citep{streetview2024}, illustrating that the car lane crosses the bicycle lane.}
+\end{figure*}
 
 \section{Results}\label{sec:results}
 One of the major outcomes of this work ist the estimation of the risk to have get injured in a bike accidents while driving on a streetsegment.
 This distribution of those calculated risks is displayed in \href{fig:visual_app}.
 
-\begin{figure*}[ht]
-  \centering
-  \include{figs/visual_app.tex}
-  \caption{\textbf{Closer investigation on Junction 2482}
-  Colors in (a) and (b) (\coolwarmbox) represent the log-scaled risk, ranging from blue (low risk) to red (high risk). As one example the junction on Hermann-Hesse-Straße and Heinrich-Mann-Straße was observed further.
-  There were 22 Accidents as displayed in the map. The recorded accidents involved a second vehicle, predominantly cars (20 cases), with only two involving other vehicle types. Most accidents were caused by vehicles turning into or crossing a road (20), while only a few resulted from turning off the road (2). 
-  Looking at Google Street view \citep{streetview2024} this seems to make sense since the car lane is crossing the bicyle lane in this place.}
-\end{figure*}
-
-
 To evaluate the routing algorithm, we sample $n=1000$ origin--destination pairs uniformly at random and compare shortest-distance routes with safety-aware alternatives~\citep{NateraOrozco2020}.
-
 
 \begin{table}[ht]
 \centering
