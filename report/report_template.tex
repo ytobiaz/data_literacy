@@ -325,6 +325,17 @@ and the relative risk reduction
 \]
 Pairs with $R(P_{\text{dist}})=0$ are excluded from $\Delta_R$ due to the undefined denominator. These metrics quantify the trade-off between distance and exposure-adjusted crash risk under bounded detours.
 
+\begin{figure*}[!t]
+  \centering
+  \include{figs/visual_app.tex}
+  \caption{\textbf{Detailed investigation of junction 2482.}
+  Panel (a) shows a section of the Strava bike network in Berlin with all computed road segments and junctions displayed. 
+  Panel (b) provides a closer view of junction 2482, displaying the 22 crashes assigned to this junction. 
+  (c) shows a street-level view of junction 2482 \citep{streetview2024}, providing visual context for the observed risk.
+  The colors \coolwarmbox \space in panels (a) and (b)  indicate their log-scaled risk values, ranging from low risk {\color{TUblue}(blue)} to high risk {\color{TUred}(red)}.}  
+  \label{fig:junction_details}
+\end{figure*}
+
 \section{Related work.}\label{sec:relatedw}
 Prior work seeks to avoid conflating danger with demand by normalizing bicycle crashes by cyclist exposure~\citep{luecken2018}. City-scale studies show that exposure-normalized risk yields more
 informative spatial patterns than raw crash counts and that finer temporal resolution improves inference, though persistent under-reporting in police records remains a challenge~\citep{Uijtdewilligen01092024}.
@@ -337,21 +348,18 @@ repeatedly emphasized, with strong crash concentrations at junctions and the nee
 In contrast, we combine measured segment-level exposure with joint segment–junction risk estimation and propagate these risks into safety-aware routing.\todo{this sentence can be dropped if space is an issue}
 
 \section{Results}\label{sec:results}
-One of the major outcomes of this work ist the estimation of the risk to have get injured in a bike accidents while driving on a streetsegment.
-This distribution of those calculated risks is displayed in \href{fig:visual_app}.
+\paragraph{Relative Risk Map.}
+As outlined in the visual abstract (see \cref{fig:visual_app}), the relative risk of Strava bicycle segments and junctions in Berlin was estimated.
+A section of the resulting risk map is shown in \cref{fig:junction_details} (a).
+Relative risk values range from 0.03 to 50.79 for road segments and from 0.03 to 6.42 for junctions.
+To further investigate an exemplary location with elevated risk, we focus on junction 2482, which shows a comparatively high relative risk of 6.40.
+The detailed view in \cref{fig:junction_details} (b) shows all crashes assigned to this junction, the majority of which are located along the lane of Hermann-Hesse-Straße turning into Heinrich-Mann-Straße.
+Analysis of the 22 crashes assigned to this junction reveals that all involved at least one additional vehicle besides a bicycle, predominantly cars (20 cases). 
+Most crashes occurred during turning or crossing maneuvers (20 cases), while only a small number resulted from vehicles turning off the road (2 cases). 
+To contextualize these findings, a street-level image of the junction from Google Street View \cite{streetview2024} in \cref{fig:junction_details} (c) shows the car lanes crossing the bicycle lane at this location.
 
-\begin{figure*}[ht]
-  \centering
-  \include{figs/visual_app.tex}
-  \caption{\textbf{Closer investigation on Junction 2482}
-  Colors in (a) and (b) (\coolwarmbox) represent the log-scaled risk, ranging from blue (low risk) to red (high risk). As one example the junction on Hermann-Hesse-Straße and Heinrich-Mann-Straße was observed further.
-  There were 22 Accidents as displayed in the map. The recorded accidents involved a second vehicle, predominantly cars (20 cases), with only two involving other vehicle types. Most accidents were caused by vehicles turning into or crossing a road (20), while only a few resulted from turning off the road (2). 
-  Looking at Google Street view \citep{streetview2024} this seems to make sense since the car lane is crossing the bicyle lane in this place.}
-\end{figure*}
-
-
+\paragraph{Safety Routing}
 To evaluate the routing algorithm, we sample $n=1000$ origin--destination pairs uniformly at random and compare shortest-distance routes with safety-aware alternatives~\citep{NateraOrozco2020}.
-
 
 \begin{table}[ht]
 \centering
