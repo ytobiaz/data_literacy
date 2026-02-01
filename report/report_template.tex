@@ -325,6 +325,18 @@ and the relative risk reduction
 \]
 Pairs with $R(P_{\text{dist}})=0$ are excluded from $\Delta_R$ due to the undefined denominator. These metrics quantify the trade-off between distance and exposure-adjusted crash risk under bounded detours.
 
+\begin{figure*}[ht]
+  \centering
+  \include{figs/visual_app.tex}
+  \caption{\textbf{Detailed investigation of junction 2482.}
+  Panel (a) shows a section of the Strava bike network in Berlin with all computed road segments and junctions displayed. 
+  Panel (b) provides a closer view of junction 2482, displaying the 22 crashes assigned to this junction. 
+  (c) shows a street-level view of junction 2482 \citep{streetview2024}, providing visual context for the observed risk.
+  The colors \coolwarmbox \space in panels (a) and (b)  indicate their log-scaled risk values, ranging from low risk {\color{TUblue}(blue)} to high risk {\color{TUred}(red)}.}  
+  \label{fig:junction_details}
+\end{figure*}
+
+
 \section{Related work.}\label{sec:relatedw}
 Prior work seeks to avoid conflating danger with demand by normalizing bicycle crashes by cyclist exposure~\citep{luecken2018}. City-scale studies show that exposure-normalized risk yields more
 informative spatial patterns than raw crash counts and that finer temporal resolution improves inference, though persistent under-reporting in police records remains a challenge~\citep{Uijtdewilligen01092024}.
@@ -334,28 +346,16 @@ without explicit exposure modeling~\citep{kaiser2025spatiotemporalgraphneuralnet
 snapping, assignment of incidents to intersections, and integration of safety metrics into routing under convenience constraints~\citep{isprs-archives-XLIII-B4-2022-427-2022}. Intersection safety is 
 repeatedly emphasized, with strong crash concentrations at junctions and the need to control for exposure when comparing locations or infrastructure types~\citep{futuretransp1030037}.
 
-\begin{figure*}[!ht]
-  \centering
-  \includegraphics{figs/risk_3_panel.pdf}
-  \caption{\textbf{Risk patterns and detailed inspection of a high-risk junction in Berlin.}
-  (a) Network-wide cyclist risk map, where colors (\coolwarmbox) indicate log-scaled relative risk from low ({\color{TUblue}blue}) to high ({\color{TUred}red}).
-  (b) Detail view of junction 2482 (Hermann-Hesse-Straße / Heinrich-Mann-Straße) with recorded accident locations.
-  A total of 22 accidents occurred at this junction, predominantly involving a second vehicle, mostly cars (20 cases), with two involving other vehicle types.
-  Most accidents were associated with vehicles turning into or crossing the road (20), while only two resulted from turning off the road.
-  (c) Street-level view of the junction~\citep{streetview2024}, illustrating that the car lane crosses the bicycle lane.}
-  \label{fig:risk_panel}
-\end{figure*}
-
 \section{Results}\label{sec:results}
 \paragraph{Relative risk map.}
 As outlined in the visual abstract (see \cref{fig:visual_app}), the relative risk of Strava bicycle segments and junctions in Berlin was estimated.
-A section of the resulting risk map is shown in \cref{fig:risk_panel} (a).
+A section of the resulting risk map is shown in \cref{fig:junction_details} (a).
 Relative risk values range from 0.03 to 50.79 for road segments and from 0.03 to 6.42 for junctions.
 To further investigate an exemplary location with elevated risk, we focus on junction 2482, which shows a comparatively high relative risk of 6.40.
-The detailed view in \cref{fig:risk_panel} (b) shows all crashes assigned to this junction, the majority of which are located along the lane of Hermann-Hesse-Straße turning into Heinrich-Mann-Straße.
+The detailed view in \cref{fig:junction_details} (b) shows all crashes assigned to this junction, the majority of which are located along the lane of Hermann-Hesse-Straße turning into Heinrich-Mann-Straße.
 Analysis of the 22 crashes assigned to this junction reveals that all involved at least one additional vehicle besides a bicycle, predominantly cars (20 cases). 
 Most crashes occurred during turning or crossing maneuvers (20 cases), while only a small number resulted from vehicles turning off the road (2 cases). 
-To contextualize these findings, a street-level image of the junction from Google Street View \cite{streetview2024} in \cref{fig:risk_panel} (c) shows the car lanes crossing the bicycle lane at this location.
+To contextualize these findings, a street-level image of the junction from Google Street View \cite{streetview2024} in \cref{fig:junction_details} (c) shows the car lanes crossing the bicycle lane at this location.
 
 \paragraph{Safety-aware routing.}
 To evaluate the routing algorithm, we sample $n=1000$ origin--destination pairs uniformly at random and compare shortest-distance routes with safety-aware alternatives~\citep{NateraOrozco2020}.
