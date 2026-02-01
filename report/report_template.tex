@@ -347,14 +347,14 @@ From the original dataset we obtain that all of them occurred during turning or 
 The street-level image in \cref{fig:junction_details} (c) shows the lanes crossing the bicycle lane at this location.
 
 \paragraph{Safety-aware routing.}
-To evaluate the routing algorithm, we sample $n=1000$ origin--destination pairs uniformly at random and compare shortest-distance routes with safety-aware alternatives~\citep{NateraOrozco2020}.
+
+We evaluated the algorithm using 1,000 random origin–destination pairs, comparing the shortest-path baseline against safest alternatives across a range of allowable detour and junction-risk constraints ~\citep{NateraOrozco2020}.
 
 \begin{table}[ht]
 \centering
-\caption{Distance--risk trade-off under bounded detours for different junction-risk weights $\eta$.
-Values are aggregated over all origin--destination pairs.
-Medians are reported with interquartile ranges in parentheses.
-$\Delta_L$ and $\Delta_R$ are reported on a relative scale, whereas $P(\Delta_R>0)$ is reported in percent.}
+\caption{\textbf{Comparative analysis of path length increase ($\Delta_L$) and risk reduction ($\Delta_R$) across varying detour budgets ($\varepsilon$) and junction weights ($\eta$).}
+Results aggregated over all origin-destination pairs; medians (interquartile ranges) shown. $\Delta_L$ and $\Delta_R$ are relative scales; $P(\Delta_R > 0)$ is a percentage.}
+
 \label{tab:routing_tradeoff}
 \begin{tabular}{@{}c c c c c@{}}
 \toprule
@@ -375,12 +375,12 @@ $\eta$ & $\varepsilon$ & Med.\ $\Delta_L$ & Med.\ $\Delta_R$ & $P(\Delta_R>0)$ \
 \end{tabular}
 \end{table}
 
-\cref{tab:routing_tradeoff} summarizes the trade-off between route length and exposure-adjusted crash risk under bounded detours. Safety-aware routing identifies feasible alternatives for all 
-origin--destination pairs across detour budgets and junction-risk weights.
-
-Allowing a 10\% detour reduces exposure-adjusted crash risk by 31--38\% in median, with over 86\% of routes achieving a risk reduction for all values of the junction-risk weight. Larger detours 
-further increase these gains, reaching median reductions of 38--43\% at $\varepsilon=0.20$, while even small detours ($\varepsilon=0.05$) yield measurable reductions of 18--25\%. Across all detour
-budgets, increasing $\eta$ is associated with lower median risk reductions.
+\cref{tab:routing_tradeoff} summarizes the trade-off between route length and exposure-adjusted crash risk under bounded detours.
+With a strictly bounded detour of only 5\%, the median risk reduction ranges between 18.5\% and 24.6\%, depending on the junction penalty.
+Larger detours further increase these gains, reaching median risk reductions of 38\%-43\% at $\varepsilon=0.2$.
+Safer route alternatives are available for the vast majority of trips (76\%–92\%) within the given detour budget.
+As the budget increases to 20\%, over 90\% of routes have a feasible, lower-risk alternative.
+Across all detour budgets, increasing $\eta$ is associated with lower median risk reductions.
 
 
 \section{Discussion and Conclusion}\label{sec:conclusion}
