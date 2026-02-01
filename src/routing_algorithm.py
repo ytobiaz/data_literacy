@@ -258,7 +258,7 @@ def run_one_od_routing(
         risk_attr="risk_total",
     )
     # If graph is connected, p_safe will at least fall back to p_len (see routing util)
-    st_safe = route_stats(G, p_safe, choose_by="risk_total") if p_safe is not None else None
+    st_safe = route_stats(G, p_safe, choose_by="_comb") if p_safe is not None else None
 
     
     # Compute deltas 
@@ -267,6 +267,11 @@ def run_one_od_routing(
         delta_R = (st_len["risk_total_sum"] - st_safe["risk_total_sum"]) / st_len["risk_total_sum"]
     else:
         delta_R = None
+
+    crashes_avoided = (st_len["risk_total_sum"] - st_safe["risk_total_sum"]) if st_safe is not None else None
+    crashes_expected_dist = st_len["risk_total_sum"]
+    crashes_expected_safe = st_safe["risk_total_sum"] if st_safe is not None else None
+
 
     return {
         "status": "ok",
@@ -279,6 +284,9 @@ def run_one_od_routing(
         "constrained_min_risk_stats": st_safe,
         "delta_L": delta_L,
         "delta_R": delta_R,
+        "crashes_expected_dist": crashes_expected_dist,
+        "crashes_expected_safe": crashes_expected_safe,
+        "crashes_avoided": crashes_avoided,
         "notes": artifacts.notes,
         "params": {
             "eps": eps,
