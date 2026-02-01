@@ -2,32 +2,36 @@
 font=\small,
 >=stealth,
 imgnode/.style={inner sep=0, outer sep=0},
-label/.style={font=\normalsize\bfseries, anchor=north},
-]
+label/.style={anchor=north}]
+\newlength{\imgw}
+\newlength{\imgh}
 
-% Define widths
-\pgfmathsetmacro{\w}{0.305*\textwidth}
-\pgfmathsetmacro{\gap}{0.0425*\textwidth}
+\setlength{\imgw}{0.25\textwidth}   % 3 Panels → 0.75\textwidth + gaps
+\setlength{\imgh}{\dimexpr\imgw*510/825\relax}
+\pgfmathsetmacro{\gap}{0.0833*\textwidth} 
 
-% === Panel 1: Data ===
+  
+% === Panel 1: ===
 \node[imgnode] (img1) at (0,0) {
-    \includegraphics[width=\w pt, trim=0 0 0 0, clip]{figs/map_segments_accidents.pdf}
+    \centering
+    \includegraphics[width=\imgw,height=\imgh , trim=25pt 25pt 25pt 25pt, clip]{figs/risk_segments.pdf}
 };
-\node[label, below=3pt of img1] (label1) {\textbf{(a) Data}};
+\node[label, below=3pt of img1] (label1) {\small(a) Risk levels Berlin area};
 
-% === Panel 2: Risk ===
-\pgfmathsetmacro{\xtwo}{\w + \gap}
+% === Panel 2: ===
+
+\pgfmathsetmacro{\xtwo}{\imgw + \gap}
 \node[imgnode] (img2) at (\xtwo pt, 0) {
-    \includegraphics[width=\w pt, trim=0 0 0 0, clip]{figs/map_high_risk_segments.pdf}
+    \centering
+    \includegraphics[width=\imgw,height=\imgh , trim=29pt 52.2pt 29pt 32.2pt, clip]{figs/risk_map_final.pdf}
 };
-\node[label, below=3pt of img2] (label2) {\textbf{(b) Risk estimation}};
+\node[label, below=3pt of img2] (label2) {(b) Junction 2482 with Accidents};
 
-% === Panel 3: Routing ===
-\pgfmathsetmacro{\xthree}{2*\w + 2*\gap}
+% === Panel 3:  ===
+\pgfmathsetmacro{\xthree}{2*\imgw + 2*\gap}
 \node[imgnode] (img3) at (\xthree pt, 0) {
-    \includegraphics[width=\w pt, trim=0 0 0 0, clip]{figs/map_routing.pdf}
+    \centering
+    \includegraphics[width=\imgw,height=\imgh , trim=20pt 0 20pt 0, clip]{figs/Streetview.jpeg}
 };
-\node[label, below=3pt of img3] (label3) {\textbf{(c) Safety routing}};
-
-
+\node[label, below=3pt of img3] (label3) {(c) Street View of Junction 2482};
 \end{tikzpicture}
