@@ -30,6 +30,7 @@
 \definecolor{TUbeige}{RGB}{215,180,105}
 \definecolor{TUorange}{RGB}{210,150,0}
 \definecolor{TUbrown}{RGB}{145,105,70}
+\definecolor{PNorange}{RGB}{255,153,51}
 
 % hyperref makes hyperlinks in the resulting PDF.
 % If your build breaks (sometimes temporarily if a hyperlink spans a page)
@@ -51,21 +52,38 @@
         shading=axis,
         shading angle=0,
         left color=TUblue,
-        middle color= TUgray,
+        middle color= TUlightblue,
+        right color=TUlightblue
+      ]
+      (0,0) rectangle (1em,1ex);
+      \shade[
+        shading=axis,
+        shading angle=0,
+        left color=TUlightblue,
+        middle color=TUgray,
         right color=TUgray
       ]
-      (0,0) rectangle (2em,1ex);
+      (0.9em,0) rectangle (2em,1ex);
       \shade[
         shading=axis,
         shading angle=0,
         left color=TUgray,
-        middle color=TUgray,
+        middle color=PNorange,
+        right color=PNorange
+      ]
+      (1.9em,0) rectangle (3em,1ex);
+      \shade[
+        shading=axis,
+        shading angle=0,
+        left color=PNorange,
+        middle color=TUred,
         right color=TUred
       ]
-      (1.9em,0) rectangle (4em,1ex);
+      (2.9em,0) rectangle (4em,1ex);
     \end{scope}
   }%
 }
+
 
 
 \usepackage[accepted]{icml2025}
@@ -325,10 +343,9 @@ Pairs with $R(P_{\text{dist}})=0$ are excluded from $\Delta_R$. We additionally 
   \centering
   \includegraphics{figs/risk_3_panel.pdf}
   \caption{\textbf{Risk heatmap and detailed inspection of junction 2482.}
-  The colors \coolwarmbox \space in panels (a) and (b)  indicate their log-scaled risk values, ranging from low risk {\color{TUblue}(blue)} to high risk {\color{TUred}(red)}.
-  Panel (a) shows a section of the Strava bike network in Berlin with all computed road segments and junctions displayed. 
-  Panel (b) provides a closer view of junction 2482 and the crashes assigned to this it. 
-  (c) shows a street-level view of junction 2482 \citep{streetview2024}, providing visual context for the observed risk.
+  The colors \coolwarmbox\space in panels (a) and (b) indicate $\log_{10}$-scaled risk values, ranging from low risk {\color{TUblue}(-2)} to high risk {\color{TUred}(2)}. 
+  Panel (a) shows a section of the Strava bike network in Berlin with all computed road segments and junctions displayed. Panel (b) provides a closer view of junction 2482 and the crashes (black dots) assigned to it. 
+  Panel (c) shows a street-level view of junction 2482 \citep{streetview2024}, providing visual context for the observed risk.
   }  
   \label{fig:junction_details}
 \end{figure*}
@@ -344,12 +361,20 @@ To account for accident sparsity, some studies employed Poisson and Gamma count 
 
 \section{Results}\label{sec:results}
 \paragraph{Relative risk map.}
-As described in \cref{sec:methods}, the relative risk of Strava bicycle segments and junctions in Berlin was estimated and visuaized in \cref{fig:junction_details} (a).
-Relative risk values range from 0.03 to 50.79 for road segments and from 0.03 to 6.42 for junctions. As an exemplary location with an elevated risk of 6.40, we focus on junction 2482. 
-\cref{fig:junction_details} (b) shows how the 22 crashes assigned to this junction mostly are located along the lane of Hermann-Hesse-Street turning into Heinrich-Mann-Street.
-Analysis of the assigned crashes reveals that all involved at least one additional vehicle besides a bicycle, predominantly cars (20 cases). 
-From the original dataset we obtain that all of them occurred during turning or crossing maneuvers (20 cases) or turning off the road (2 cases). 
-The street-level image in \cref{fig:junction_details} (c) shows the lanes crossing the bicycle lane at this location.
+The estimated shrinkage parameter was small ($\widehat{\alpha} = 0.129$), resulting in limited regularization and a wide spread of 
+relative risk estimates across segments and junctions.
+The segment and junctions are mapped with their estimated relative risks $r$ as partly visualized in \cref{fig:junction_details} (a). 
+Most elements show average or below-average risk: for 64.4\% of the segments and 69.1\% of the junctions $r=1$ and for 
+17.6\% of the segments and 25.8\% of the junctions $r<1$. Only 17.9\% of the segments and 
+4.9\% of the junctions show an elevated risk $r>1$.
+Risk values range from 0.03 to 50.79 for segments and from 0.03 to 6.43 for junctions.
+
+Since the visualization highlights the segments and junctions with elevates risks, we pick one of them for further 
+investigation and verification.
+For an exemplary high-risk location (junction 2482, $r = 6.43$), 
+22 crashes are assigned despite moderate traffic. 
+Analyzing the crash data, we find all of them involved least one additional vehicle, predominantly (20) cars, 
+and mainly occurred during turning or crossing maneuvers. \cref{fig:junction_details} (c) shows how car lanes cross the bicycle lane at this location.
 
 \paragraph{Safety-aware routing.}
 
