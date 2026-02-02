@@ -346,9 +346,7 @@ Pairs with $R(P_{\text{dist}})=0$ are excluded from $\Delta_R$. We additionally 
 \section{Related Work}\label{sec:relatedw}
 
 Prior studies combined police crash records with exposure estimates, but early work extrapolated bicycle traffic from motorized transport data, poorly capturing actual cycling patterns \citep{isprs-archives-XLIII-B4-2022-427-2022}. Other work calibrated crowdsourced GPS cycling data with count stations and showed that cyclist volumes predict crash risk, though uncertainty of risk estimates on low-volume segments remained unexamined \citep{Uijtdewilligen01092024, futuretransp1030037}.
-
 Where direct counts are unavailable, supervised learning and graph neural network approaches estimate city-wide volumes by combining sparse counters with crowdsourced data \citep{Kaiser_Klein_Kaack_2025, kaiser2025spatiotemporalgraphneuralnetwork}. While these models required manual validation counts for calibration, they demonstrated that Strava data correlates with official counting stations at segment level, supporting its use as an exposure proxy.
-
 To account for accident sparsity, studies employed Poisson-Gamma count models \citep{luecken2018}, but these remained limited to city-level aggregation, lacking segment-level estimates needed for routing applications. 
 
 \section{Results}\label{sec:results}
@@ -363,7 +361,6 @@ To verify that the method identifies high-risk locations, one such site was exam
 At junction 2482 ($r_i = 6.43$), 22 crashes occurred despite moderate traffic.  
 All involved at least one additional vehicle - mostly cars (20) - and mainly resulted from turning or crossing maneuvers.  
 As shown in \cref{fig:junction_details}(c), car lanes intersect the bicycle lane at this junction.
-
 We evaluated the algorithm using 1,000 random origin–destination pairs, comparing the shortest-path baseline against safest alternatives across a range of allowable detour and junction-risk constraints ~\citep{NateraOrozco2020}.
 
 \begin{table}[ht]
@@ -407,11 +404,8 @@ Across all detour budgets, increasing $\eta$ is associated with lower median ris
 \section{Discussion and Conclusion}\label{sec:conclusion}
 % Use this section to briefly summarize the entire text. Highlight limitations and problems, but also make clear statements where they are possible and supported by the analysis. 
 We developed a city-wide method for estimating bicycle crash risk using Strava exposure data. The approach enables safety-aware routing that balances crash risk reduction against route length constraints.
-
 Our approach faces two main limitations. First, official crash data capture only personal injury incidents and suffer from under-reporting, systematically underestimating absolute risk. Second, Strava data skew toward recreational rides on main roads, underrepresenting casual trips on residential streets. Where Strava overcounts exposure, calculated risk is too low; where it undercounts, sparse data yield inflated estimates. Empirical Bayes smoothing partially mitigates this by shrinking unstable low-exposure estimates toward the citywide baseline.
-
 Our junction exposure model assumes uniform flow and ignores turning movements. This misallocates exposure where one main road dominates side streets. Systematic biases in crowdsourced exposure data limit risk estimates' accuracy. While graph neural network methods can interpolate traffic volumes from sparse data \citep{kaiser2025spatiotemporalgraphneuralnetwork}, they require manual validation counts. Cities with sparse counting networks like Berlin could address this by expanding automated counting infrastructure.
-
 Despite these limitations, the approach scales to any city with crash records and crowdsourced trip data, requiring only modest detours for substantially safer routes.
 
 Code and supplementary materials are available at \url{https://github.com/ytobiaz/data_literacy}.
