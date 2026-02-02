@@ -348,11 +348,11 @@ Pairs with $R(P_{\text{dist}})=0$ are excluded from $\Delta_R$. We additionally 
 
 \section{Related Work}\label{sec:relatedw}
 
-In accident risk estimation, a Hannover study combined police crash records with exposure estimates calibrated to official counters \citep{isprs-archives-XLIII-B4-2022-427-2022}. However bicycle traffic was extrapolated from motorized transport data, poorly capturing actual cycling patterns. Other work calibrated crowdsourced GPS cycling data with count stations and showed that cyclist volumes strongly predict crash risk, though uncertainty of risk estimates on low-volume segments remained unexamined \citep{Uijtdewilligen01092024}.
+Prior studies combined police crash records with exposure estimates, but early work extrapolated bicycle traffic from motorized transport data, poorly capturing actual cycling patterns \citep{isprs-archives-XLIII-B4-2022-427-2022}. Other work calibrated crowdsourced GPS cycling data with count stations and showed that cyclist volumes predict crash risk, though uncertainty of risk estimates on low-volume segments remained unexamined \citep{Uijtdewilligen01092024, futuretransp1030037}.
 
-A separate research line addresses cyclist exposure where direct counts are unavailable. Supervised learning models estimate city-wide volumes by combining sparse counters with crowdsourced data and contextual features \citep{Kaiser_Klein_Kaack_2025}. Graph neural networks estimate street-segment exposure under sparse sensor coverage \citep{kaiser2025spatiotemporalgraphneuralnetwork}. These models achieved good predictive accuracy but required manual validation counts for calibration, which is not available in our case. However, these studies showed that crowdsourced Strava data correlates with official counting stations at segment level, supporting its direct use as exposure proxy.
+Where direct counts are unavailable, supervised learning and graph neural network approaches estimate city-wide volumes by combining sparse counters with crowdsourced data \citep{Kaiser_Klein_Kaack_2025, kaiser2025spatiotemporalgraphneuralnetwork}. While these models required manual validation counts for calibration, they demonstrated that Strava data correlates with official counting stations at segment level, supporting its use as an exposure proxy.
 
-To account for accident sparsity, some studies employed Poisson and Gamma count models \citep{luecken2018, futuretransp1030037}. These approaches handle zero-inflated crash data but exposure remained limited to city-level aggregation and weather-based reconstruction, lacking segment-level estimates required for routing applications.
+To account for accident sparsity, studies employed Poisson-Gamma count models \citep{luecken2018}, but these remained limited to city-level aggregation, lacking segment-level estimates needed for routing applications. 
 
 \section{Results}\label{sec:results}
 As described in \cref{sec:methods}, relative risk $r_i$ was computed for each segment and junction.  
@@ -409,40 +409,13 @@ Across all detour budgets, increasing $\eta$ is associated with lower median ris
 
 \section{Discussion and Conclusion}\label{sec:conclusion}
 % Use this section to briefly summarize the entire text. Highlight limitations and problems, but also make clear statements where they are possible and supported by the analysis. 
-We developed a city-wide method for estimating bicycle crash risk that accounts for cyclist exposure using Strava data. Empirical Bayes smoothing stabilized estimates across Berlin’s network, achieving 18–24\% risk reductions through routing with modest detours.
+We developed a city-wide method for estimating bicycle crash risk using Strava exposure data. The approach enables safety-aware routing that balances crash risk reduction against route length constraints.
 
-Official data capture only personal injury crashes and suffer
-from under-reporting. This systematically underestimates
-absolute risk but preserves relative comparisons, which re-
-main valid for identifying high-risk infrastructure and rout-
-ing. Beyond missing crashes, Strava data skew toward fast
-recreational rides on main roads while underrepresenting
-casual trips on residential streets. Where Strava overcounts
-exposure (wide roads like Karl-Marx-Allee), calculated risk
-is too low; where it undercounts (quieter streets like Schwal-
-bacher), sparse data yield inflated estimates. Empirical
-Bayes smoothing shrinks these unstable low-exposure esti-
-mates toward the citywide baseline, stabilizing risk calcula-
-tions.
+Our approach faces two main limitations. First, official crash data capture only personal injury incidents and suffer from under-reporting, systematically underestimating absolute risk. Second, Strava data skew toward recreational rides on main roads, underrepresenting casual trips on residential streets. Where Strava overcounts exposure, calculated risk is too low; where it undercounts, sparse data yield inflated estimates. Empirical Bayes smoothing partially mitigates this by shrinking unstable low-exposure estimates toward the citywide baseline.
 
-Our junction exposure model assumes uniform flow and
-ignores turning movements. This misallocates exposure
-where one main road dominates side streets. Systematic
-biases in crowdsourced exposure data limit our risk esti-
-mates’ accuracy. While graph neural network methods can
-interpolate traffic volumes from sparse data, they still re-
-quire manual validation counts for calibration \citep{kaiser2025spatiotemporalgraphneuralnetwork}. Considering that even in such city as Berlin’s 20
-counting stations provide sparse coverage, cities can ad-
-dress this through expansion of counting networks or by
-augmenting automated sensors with periodic manual counts
-to ground-truth crowdsourced data \citep{kaiser2025spatiotemporalgraphneuralnetwork}.
+Our junction exposure model assumes uniform flow and ignores turning movements. This misallocates exposure where one main road dominates side streets. Systematic biases in crowdsourced exposure data limit risk estimates' accuracy. While graph neural network methods can interpolate traffic volumes from sparse data \citep{kaiser2025spatiotemporalgraphneuralnetwork}, they require manual validation counts. Cities with sparse counting networks like Berlin could address this by expanding automated counting infrastructure.
 
-Despite these limitations, the approach scales to any city
-with crash records and crowdsourced trip data. Risk es-
-timates identify where infrastructure should be improved
-(e.g. junction 2482 needs protected turns), while routing
-alternatives require only 5–20\% longer paths, practical for
-daily cycling
+Despite these limitations, the approach scales to any city with crash records and crowdsourced trip data, requiring only modest detours for substantially safer routes.
 \clearpage
 
 \section*{Contribution Statement}
