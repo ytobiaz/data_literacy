@@ -214,6 +214,8 @@ At monthly resolution, events are sparse: in a typical month, fewer than 5\% of 
   \label{fig:segment_share}
 \end{figure}
 
+
+
 \section{Methods}\label{sec:methods}
 \paragraph{Crash, exposure, and risk measures.}
 For each month $t$, let $C_{s,t}$ and $E_{s,t}$ denote the number of police-recorded bicycle crashes and measured cyclist exposure on street segment $s$. Junction crashes $C_{v,t}$ are defined as crashes within a fixed radius of junction $v$. Because a traversal typically contributes exposure to two incident segments, we approximate junction exposure by the half-sum of incident segment exposures,
@@ -223,21 +225,15 @@ E_{v,t}=\tfrac{1}{2}\sum_{s\in\mathcal I(v)} E_{s,t},
 a common approach when turning movements are unavailable~\citep{hakkert2002uses,WANG2020105838}.
 For notational convenience, both street segments and junctions are indexed by a generic entity index $i$, with $A_{i,t}$ and $E_{i,t}$ denoting the corresponding crash and exposure quantities.
 
-Under a no-special-risk baseline, monthly crash incidence is assumed proportional to exposure, yielding the expected number of crashes
+Under a no-special-risk baseline, crash incidence is assumed proportional to exposure, yielding the expected number of crashes and crashes for a given street-segment $i$ aggregated over time.
 \[
-\widehat{C}_{i,t}
-= C_{\cdot t}\,\frac{E_{i,t}}{E_{\cdot t}},
-\qquad
-C_{\cdot t}=\sum_i C_{i,t},\ \ E_{\cdot t}=\sum_i E_{i,t},
+\widehat{C}_{i}
+= \frac{\sum_{i, t} C_{i, t}}{\sum_{i, t} E_{i, t}} \sum_{t} E_{i, t},
+\quad
+C_{i}=\sum_t C_{i, t}.
 \]
-where sums are taken jointly over all segments and junctions, defining a shared baseline.
-Because routing requires a pooled baseline risk estimate, crashes and baseline expectations are aggregated over the full period,
-\[
-C_i=\sum_t C_{i,t},
-\qquad
-\widehat{C}_i=\sum_t \widehat{C}_{i,t},
-\]
-and the raw relative risk $r^{\text{raw}}_i$ is $C_i/\widehat{C}_i$.
+
+The raw relative risk $r^{\text{raw}}_i$ is then given by $C_i/\widehat{C}_i$.
 
 \paragraph{Empirical Bayes smoothing.}
 Because many segments have low exposure and thus very small expected counts, the raw relative risk is highly variable. That is why we use Empirical Bayes smoothing to improve the risk estimates.
@@ -247,7 +243,8 @@ Concretely, we assume a true relative risk  $r^{\text{true}}_i$ such that the ob
 C_i \mid r^{\text{true}}_i \sim \text{Poisson}(\widehat{C}_i\,r^{\text{true}}_i).
 \]
 The Poisson distribution is natural for nonnegative event counts over a fixed time period under a baseline rate, and it yields $\mathbb{E}[C_i]=\widehat C_i$ when $r^{\text{true}}_i=1$. To allow heterogeneity in 
-relative risk beyond this baseline, we place a Gamma prior on $r^{\text{true}}_i$ in the shape--rate parameterization,
+relative risk beyond this baseline, we place a Gamma prior on $r^{\text{true}}_i$ in the shape–rate parameterization,
+
 \[
 r^{\text{true}}_i \sim \text{Gamma}(\alpha,\alpha),
 \]
@@ -257,12 +254,14 @@ to the Poisson likelihood, giving a closed-form posterior
 r^{\text{true}}_i \mid C_i,\widehat{C}_i \sim \text{Gamma}(C_i+\alpha,\;\widehat{C}_i+\alpha),
 \]
 so posterior inference is simple and numerically stable. We estimate $\alpha$ from the data using method of moments~\citep{Morris1983}, as
+
 \[
 \widehat{\alpha}
 =
 \frac{\sum_i \widehat{C}_i^{\,2}}
 {\sum_i (C_i-\widehat{C}_i)^2 - \sum_i \widehat{C}_i}.
 \]
+
 and use the posterior mean
 \[
 \widehat{r}_i=\mathbb{E}[r^{\text{true}}_i\mid C_i,\widehat C_i]=\frac{C_i+\alpha}{\widehat C_i+\alpha}
@@ -293,7 +292,7 @@ L(P)=\sum_{e\in P}\ell_e.
 \]
 To incorporate segment- and junction-level risk, the risk contribution of edge $e=(u,v)$ is defined as
 \[
-\rho_e = w_e + \eta\,\frac{w_u+w_v}{2},
+\rho_e = w_e + \frac{w_u+w_v}{2},
 \]
 where $w_u$ and $w_v$ denote junction routing weights (zero for non-junction nodes), yielding an additive surrogate for cumulative route risk.
 
@@ -301,8 +300,8 @@ For an origin--destination pair, the baseline route $P_{\text{dist}}$ minimizes 
 \begin{equation}
 \label{eq:safe-routing}
 \begin{aligned}
-P_{\text{safe}}=\arg\min_{P}\ & R(P)=\sum_{e\in P}\rho_e \\
-\text{s.t.}\ & L(P)\le (1+\varepsilon)\,L(P_{\text{dist}}),
+P_{\text{safe}}=&\arg\min_{P}\ R(P)=\arg\min_{P}\sum_{e\in P}\rho_e \\
+&\text{s.t.}\ L(P)\le (1+\varepsilon)\,L(P_{\text{dist}}),
 \end{aligned}
 \end{equation}
 where $\varepsilon$ is the allowable relative detour~\citep{ehrgott2005multicriteria}. We approximate this constraint using a weighted-sum sweep: for $\lambda\in\Lambda$,
@@ -334,13 +333,14 @@ Pairs with $R(P_{\text{dist}})=0$ are excluded from $\Delta_R$. We additionally 
   \centering
   \includegraphics{figs/risk_3_panel.pdf}
   \caption{\textbf{Risk heatmap and detailed inspection of junction 2482.}
-  Colors \coolwarmbox\space in panels (a) and (b) indicate $\log_{10}$-scaled relative risk values, ranging from low {\color{TUblue}($-2$)} to high {\color{TUred}($2$)}.
-  (a) Zoomed-in view of the network showing estimated segment and junction risks.
-  (b) Detailed view of junction 2482 with assigned crashes (black dots).
-  (c) Street-level image of junction 2482~\citep{streetview2024}, providing visual context for the observed risk.
+  The colors \coolwarmbox\space in panels (a)--(b) indicate $\log_{10}$-scaled risk values, ranging from low risk {\color{TUblue}(-2)} to high risk {\color{TUred}(2)}.
+  (a) Section of the Strava bike network in Berlin with all computed road segments and junctions displayed.
+  (b) Closer view of junction 2482 and the crashes (black dots) assigned to it, with risk values shown using the same color scale.
+  (c) Street-level view of junction 2482 \citep{streetview2024}, providing visual context for the observed risk.
   }
   \label{fig:junction_details}
 \end{figure*}
+
 
 
 \section{Related Work}\label{sec:relatedw}
@@ -355,8 +355,7 @@ Due to high variance in the crash data, the shrinkage parameter was small ($\wid
 regularization and a wide spread of $r_i$ estimates. These were mapped as partly shown in \cref{fig:junction_details}(a).  
 Most elements exhibit low risk: 64.4\% of segments and 69.1\% of junctions lie within the confidence bounds ($r_i = 1$).  
 Values of $r_i<1$ occur for 17.6\% of segments and 25.8\% of junctions, while 17.9\% of segments and 4.9\% of junctions show elevated risk ($r_i>1$).  
-Risk values range from 0.03-50.79 for segments and 0.03-6.43 for junctions.  
-No overlap exists between the ten segments with the highest relative risk and those with the highest number of crashes.  
+Risk values range from 0.03-50.79 for segments and 0.03-6.43 for junctions.   
 To verify that the method identifies high-risk locations, one such site was examined in detail.  
 At junction 2482 ($r_i = 6.43$), 22 crashes occurred despite moderate traffic.  
 All involved at least one additional vehicle - mostly cars (20) - and mainly resulted from turning or crossing maneuvers.  
@@ -366,12 +365,11 @@ We evaluated the algorithm using 1,000 random origin–destination pairs, compar
 \begin{table}[ht]
 \centering
 \small
-\caption{Trade-off between path length increase and safety improvement under varying detour budgets ($\varepsilon$).
-Values are aggregated over all origin--destination pairs and reported as medians.
-The junction penalty weight is fixed to $\eta = 1$.
+\caption{Evaluation of the safety-aware routing algorithm with varying relative detour budgets ($\varepsilon$).
+Values are aggregated over all origin--destination pairs and reported as medians with interquartile ranges.
 $\Delta_L$ denotes the relative path length increase,
-$\Delta_R$ the relative reduction in expected crashes with respect to the shortest-path baseline,
-and $\Delta_C$ the absolute number of avoided expected crashes per 100{,}000 trips, reported as rounded integer counts.}
+$\Delta_R$ the relative risk reduction,
+and $\Delta_C$ the number of avoided expected crashes per 100{,}000 trips, reported as rounded integer counts.}
 \label{tab:routing_tradeoff}
 \begin{tabular}{@{}ccccc@{}}
 \toprule
@@ -381,7 +379,6 @@ $\varepsilon$
 & $\Delta_R>0$
 & $\Delta_C\,(\mathrm{IQR})$ \\
 \midrule
-0.00 & 0.000\,(0.000) & 0.000\,(0.000) & 0.037 & 0\,(0) \\
 0.05 & 0.007\,(0.022) & 0.101\,(0.210) & 0.767 & 39\,(123) \\
 0.10 & 0.015\,(0.037) & 0.147\,(0.240) & 0.841 & 61\,(132) \\
 0.15 & 0.024\,(0.063) & 0.169\,(0.239) & 0.873 & 71\,(141) \\
@@ -393,12 +390,11 @@ $\varepsilon$
 \end{tabular}
 \end{table}
 
-\cref{tab:routing_tradeoff} summarizes the trade-off between route length and exposure-adjusted crash risk under bounded detours.
-With a strictly bounded detour of only 5\%, the median risk reduction ranges between 18.5\% and 24.6\%, depending on the junction penalty.
-Larger detours further increase these gains, reaching median risk reductions of 38\%-43\% at $\varepsilon=0.2$.
-Safer route alternatives are available for the vast majority of trips (76\%–92\%) within the given detour budget.
-As the budget increases to 20\%, over 90\% of routes have a feasible, lower-risk alternative.
-Across all detour budgets, increasing $\eta$ is associated with lower median risk reductions.
+Table \ref{tab:routing_tradeoff} illustrates a clear trade-off between path length and safety, where increasing the detour budget $\varepsilon$ yields consistent safety improvements.
+At the smallest budget of $\varepsilon = 0.05$, the algorithm achieves a median relative crash reduction ($\Delta_R$) of $10.1\%$—avoiding $39$ expected crashes per 100,000 trips ($\Delta_C$)—while incurring a median distance increase ($\Delta_L$) of only $0.7\%$.
+As the budget relaxes to $\varepsilon = 0.50$, the median safety gains scale to $\Delta_R = 28.1\%$ ($121$ expected avoided crashes), and the actual median path increase reaches $16.5\%$.
+%This indicates that the most effective safety interventions are found within the first $15\%$ of detour distance.
+Furthermore, the likelihood of finding a safer route ($\Delta_R > 0$) remains high across all budgets, increasing from $76.7\%$ to $94.8\%$ as the search space expands.
 
 
 \section{Discussion and Conclusion}\label{sec:conclusion}
