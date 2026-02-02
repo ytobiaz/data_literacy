@@ -355,16 +355,17 @@ A separate research line addresses cyclist exposure where direct counts are unav
 To account for accident sparsity, some studies employed Poisson and Gamma count models \citep{luecken2018, futuretransp1030037}. These approaches handle zero-inflated crash data but exposure remained limited to city-level aggregation and weather-based reconstruction, lacking segment-level estimates required for routing applications.
 
 \section{Results}\label{sec:results}
-As described in \cref{sec:methods}, the relative risk $r_i$ was computed for each segment and junction.  
-Due to the high variance in the crash data, the shrinkage parameter was small ($\widehat{\alpha} = 0.129$), resulting in limited regularization and a wide spread of $r_i$ estimates. These were mapped as partly shown in \cref{fig:junction_details} (a).  
+As described in \cref{sec:methods}, relative risk $r_i$ was computed for each segment and junction.  
+Due to high variance in the crash data, the shrinkage parameter was small ($\widehat{\alpha} = 0.129$), resulting in limited 
+regularization and a wide spread of $r_i$ estimates. These were mapped as partly shown in \cref{fig:junction_details}(a).  
 Most elements exhibit low risk: 64.4\% of segments and 69.1\% of junctions lie within the confidence bounds ($r_i = 1$).  
 Values of $r_i<1$ occur for 17.6\% of segments and 25.8\% of junctions, while 17.9\% of segments and 4.9\% of junctions show elevated risk ($r_i>1$).  
-Risk values range from 0.03--50.79 for segments and 0.03--6.43 for junctions.  
+Risk values range from 0.03-50.79 for segments and 0.03-6.43 for junctions.  
 No overlap exists between the ten segments with the highest relative risk and those with the highest number of crashes.  
 To verify that the method identifies high-risk locations, one such site was examined in detail.  
 At junction 2482 ($r_i = 6.43$), 22 crashes occurred despite moderate traffic.  
-All involved at least one additional vehicle—mostly cars (20)—and mainly resulted from turning or crossing maneuvers.  
-As shown in \cref{fig:junction_details} (c), car lanes intersect the bicycle lane at this junction.
+All involved at least one additional vehicle - mostly cars (20) - and mainly resulted from turning or crossing maneuvers.  
+As shown in \cref{fig:junction_details}(c), car lanes intersect the bicycle lane at this junction.
 
 We evaluated the algorithm using 1,000 random origin–destination pairs, comparing the shortest-path baseline against safest alternatives across a range of allowable detour and junction-risk constraints ~\citep{NateraOrozco2020}.
 
