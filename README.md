@@ -19,6 +19,7 @@ This is the repository for the 2025 Data Literacy course project of
 ```
 project_root_dir/                                   <--- root directory of the project
 ├── pyproject.toml                                  <--- Python project + dependencies
+├── uv.lock                                         <--- locked dependencies
 ├── README.md                                       <--- project overview and quickstart
 ├── src/                                            <--- all Python source code (importable package)
 │   ├── __init__.py                                 <--- package marker
@@ -36,8 +37,7 @@ project_root_dir/                                   <--- root directory of the p
 │   ├── 01_data_preparation.ipynb                   <--- data loading, inspection, aggregation, and merging
 │   ├── 02_risk_estimation.ipynb                    <--- segment/junction risk estimation
 │   ├── 03_graph_and_routing.ipynb                  <--- graph construction + routing
-│   ├── 04_paper.ipynb                              <--- figures for the report
-│   └── ...                                     
+│   └── 04_paper.ipynb                              <--- figures for the report                                 
 │
 ├── data/                                           <--- input datasets
 │   ├── accidents/                                  <--- Accident Atlas CSVs
