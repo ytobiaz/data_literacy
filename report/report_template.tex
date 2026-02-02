@@ -172,8 +172,8 @@
 \printAffiliationsAndNotice{\icmlEqualContribution} % otherwise use the standard text.
 
 \begin{abstract}
-Accurately estimating the risk of bicycle crashes at street level requires consideration of both crash counts and cyclist exposure. However, exposure data from official counting stations is unavailable for most sections of the street network. This makes it difficult to identify the streets that are dangerous and should be avoided and prioritised for safety improvements. We therefore use Strava's bike 
-trip data to estimate the relative crash risk across street segments and junctions in Berlin. These risk estimates identify those with a higher or lower than expected occurrence of crashes, and enable a routing algorithm to suggest lower-risk routes.
+Accurately estimating the risk of bicycle crashes at street level requires consideration of both crash counts and cyclist exposure. However, exposure data from official counting stations is unavailable for most streets. This makes it difficult to identify streets that are dangerous. We therefore use Strava's bike 
+trip data to estimate the relative crash risk across street segments and junctions in Berlin. We identify those with a higher or lower than expected occurrence of crashes, and enable a routing algorithm to suggest lower-risk routes.
 
 \end{abstract}
 
@@ -185,40 +185,34 @@ trip data to estimate the relative crash risk across street segments and junctio
   Panels (a–c) are zoomed in for readability; see \cref{sec:methods} for definitions and notation.
   (a) Police-recorded bicycle crashes in June 2021 ({\color{TUorange}points}) and street segments with measured cyclist exposure ({\color{TUgray}lines}).
   (b) Pooled segment-level relative crash risk estimated from all available data; high-risk segments in {\color{TUred}red} correspond to values above the 90th percentile of relative risk; {\color{TUdark}circles} mark junctions (degree $\ge 3$).
-  (c) Shortest path ({\color{TUblue}blue}) versus a safer alternative ({\color{TUgreen}green}) selected to reduce cumulative relative route risk under a distance-detour constraint. {\color{TUocre}Filled circle} and {\color{TUocre}cross} denote origin and destination, respectively.
+  (c) Shortest path ({\color{TUblue}blue}) versus a safer alternative ({\color{TUgreen}green}) selected to reduce cumulative relative route risk under a route-length constraint. {\color{TUocre}Filled circle} and {\color{TUocre}cross} denote origin and destination, respectively.
   }
   \label{fig:visual_app}
 \end{figure*}
 
 Cycling is far from a safe endeavour. 92,882 bicycle crashes were recorded in 2024, including 441 fatalities - 16\% of all traffic deaths that year ~\citep{Unfallatlas2025}. 
-Yet it is rarely clear which streets are most dangerous and thus should be avoided by cyclists or prioritised for safety improvements. 
-
+Yet it is rarely clear which streets are most dangerous and thus should be avoided by cyclists or made safer. 
 Quantifying street-level danger is non-trivial because simple crash counts confound risk with exposure. 
-Streets with high exposure, i.e. high numbers of cyclists, tend to accumulate more crashes even when per-cyclist risk is low~\citep{luecken2018}. To reveal high-risk locations, crashes must be normalised by cyclist counts; otherwise, dangerous streets can remain hidden in dense urban networks~\citep{Uijtdewilligen01092024}. 
-Unfortunately, comprehensive street-level cyclist counts are rarely available. Berlin, for example, provides hourly counts at selected locations via official counting stations, but their limited spatial coverage (20 stations for thousands of streets) makes them impractical for city-wide risk estimation~\citep{BerlinZaehlen_Fahrradbarometer}.
-
-We address this problem by using bike trip counts from the fitness-tracking app Strava. These have been used to predict official counting-station data~\citep{dadashova2020estimation} and we show that they can serve as a proxy for cyclist exposure. For all segments and junctions in Berlin’s official cycling network, we estimate exposure-normalised relative risk, defined as the ratio of observed to expected crashes.
-Because Strava coverage can be sparse, we use empirical Bayes smoothing for estimation~\citep{clayton1987empirical}, which stabilises estimates in low-exposure segments and junctions, and quantifies uncertainty. Additionally, 
-building on these estimates, we introduce a routing algorithm that finds substantially lower-risk alternatives under a route-length constraint.
+Streets with high exposure, i.e. high numbers of cyclists, tend to accumulate more crashes even when per-cyclist risk is low~\citep{luecken2018}. Crashes must be normalised by cyclist counts; otherwise, dangerous streets can remain hidden in dense urban networks~\citep{Uijtdewilligen01092024}. 
+Unfortunately, street-level cyclist counts are rare. Berlin, for example, provides hourly counts via official counting stations, but their limited coverage (20 stations for thousands of streets) makes them impractical for city-wide risk estimation~\citep{BerlinZaehlen_Fahrradbarometer}.
+We address this problem by using bike trip counts from the fitness-tracking app Strava. These have been used to predict official bike counts~\citep{dadashova2020estimation}. We show that they can serve as a proxy for cyclist exposure and estimate for all segments and junctions in Berlin’s official cycling network relative risks (the ratio of observed to expected crashes).
+Because Strava coverage can be sparse, we use empirical Bayes smoothing for estimation~\citep{clayton1987empirical}. This stabilises estimates for low-exposure segments and junctions, and quantifies uncertainty. We also introduce a routing algorithm that finds substantially lower-risk routes under a route-length constraint.
 
 
 \section{Data}\label{sec:data}
-Multiple datasets were used for risk estimation. Crash counts were taken from the \emph{German Accident Atlas}~\citep{Unfallatlas2025}, which provides georeferenced locations of police-reported crashes where people were injured. We filtered the data to bicycle-related crashes within the city limits of Berlin. Cyclist exposure was approximated using the dataset by \citet{kaiser2025spatiotemporalgraphneuralnetwork}, 
+Multiple datasets were used for risk estimation. Crash counts were taken from the \emph{German Accident Atlas}~\citep{Unfallatlas2025}, which provides geodata of police-reported crashes where people were injured. We filtered the data to bicycle-related crashes within the city limits of Berlin. Cyclist exposure was approximated using the dataset by \citet{kaiser2025spatiotemporalgraphneuralnetwork}, 
 which reports daily street-segment-level counts of bicycle trips recorded via the Strava app in Berlin from 2019 to 2023. Strava users are not representative of the general cycling population (they skew younger, male, and sport-oriented; \citealp{kaiser2025spatiotemporalgraphneuralnetwork}). Therefore, we assess potential bias by comparing segment-level count shares in 2023 with official bicycle 
-counter data from the city of Berlin ~\citep{BerlinRadverkehrzaehlstellen2023} for the subset of segments where both Strava data and official counts are available (Figure~\ref{fig:segment_share}). Count shares correlate strongly ($r = .61$) and are overall well preserved in the Strava data. Segments on wide main streets (e.g., Karl-Marx-Allee) are overrepresented in the Strava data, likely reflecting faster rides that are more often tracked, whereas residential streets (e.g., Kollwitzstraße) are underrepresented, 
-consistent with slower, local cycling that is less often tracked.
+counter data from the city of Berlin ~\citep{BerlinRadverkehrzaehlstellen2023} for the subset of segments where both Strava and official counts are available (Figure~\ref{fig:segment_share}). Count shares correlate strongly ($r = .61$) and are preserved in the Strava data. Segments on main streets where you can ride fast (e.g., Karl-Marx-Allee) are overrepresented in the Strava data, since those are more often tracked. Residential streets (e.g., Kollwitzstraße) are underrepresented, 
+since slower, everyday cycling is less often tracked.
+All datasets were combined into one dataframe and matched to the same street network. The network is represented as segments with associated monthly exposure counts. We map crashes to the network using nearest-segment assignment. Junctions are defined as nodes where at least three segments meet and crashes within a fixed radius are assigned to the nearest junction. Junction exposure is derived from the segment exposure (see \cref{sec:methods}). 
+At monthly resolution, events are sparse: in a typical month, fewer than 5\% of segments and 3\% of junctions record at least one crash. We drop segments with zero recorded trips over at least one year and pool counts over the full period 2019--2023 for risk estimation. The dataset comprises 4{,}335 segments, 2{,}862 junctions, and 15{,}396 recorded bicycle crashes. 
 
 \begin{figure}[ht]
   \centering
   \includegraphics{figs/segment_share.pdf}
-  \caption{Consistency check between official bicycle counts and Strava-derived cyclist volumes at the street-segment level (2023). Points show segment-wise shares of total annual counts; the dashed 
-  line denotes equality between the two measures.}
+  \caption{Consistency check between official bicycle counts and Strava bike trips at the street-segment level (2023). Points show segment-wise shares of total annual counts.}
   \label{fig:segment_share}
 \end{figure}
-
-All datasets were combined into one dataframe and matched to the same street network and map projection. The network is represented as polyline segments with associated monthly exposure counts. We map crashes to the network using nearest-segment assignment. Junctions are defined as nodes where at least three segments meet and crashes within a fixed radius are assigned to the nearest junction. Junction exposure is derived from the segment exposure (see \cref{sec:methods} for details). 
-
-At monthly resolution, events are sparse: in a typical month, fewer than 5\% of segments and 3\% of junctions record at least one crash. We drop segments with zero recorded trips over at least one year and pool counts over the full period 2019--2023 for risk estimation. The dataset comprises 4{,}335 segments, 2{,}862 junctions, and 15{,}396 recorded bicycle crashes. The resulting segment- and junction-level relative risk estimates are used throughout the analysis and serve as inputs to the routing algorithm.
 
 \section{Methods}\label{sec:methods}
 \paragraph{Crash, exposure, and risk measures.}
