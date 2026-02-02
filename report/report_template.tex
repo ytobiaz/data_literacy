@@ -334,7 +334,7 @@ and the relative risk reduction
 \[
 \Delta_R=\frac{R(P_{\text{dist}})-R(P_{\text{safe}})}{R(P_{\text{dist}})}.
 \]
-Pairs with $R(P_{\text{dist}})=0$ are excluded from $\Delta_R$. We additionally report the avoided crashes,
+Pairs with $R(P_{\text{dist}})=0$ are excluded from $\Delta_R$. We additionally report the expected number of avoided crashes,
 \[
 \Delta_C = R(P_{\text{dist}})-R(P_{\text{safe}}).
 \]
@@ -343,10 +343,11 @@ Pairs with $R(P_{\text{dist}})=0$ are excluded from $\Delta_R$. We additionally 
   \centering
   \includegraphics{figs/risk_3_panel.pdf}
   \caption{\textbf{Risk heatmap and detailed inspection of junction 2482.}
-  The colors \coolwarmbox\space in panels (a) and (b) indicate $\log_{10}$-scaled risk values, ranging from low risk {\color{TUblue}(-2)} to high risk {\color{TUred}(2)}. 
-  Panel (a) shows a section of the Strava bike network in Berlin with all computed road segments and junctions displayed. Panel (b) provides a closer view of junction 2482 and the crashes (black dots) assigned to it. 
-  Panel (c) shows a street-level view of junction 2482 \citep{streetview2024}, providing visual context for the observed risk.
-  }  
+  The colors \coolwarmbox\space in panels (a)--(b) indicate $\log_{10}$-scaled risk values, ranging from low risk {\color{TUblue}(-2)} to high risk {\color{TUred}(2)}.
+  (a) Section of the Strava bike network in Berlin with all computed road segments and junctions displayed.
+  (b) Closer view of junction 2482 and the crashes (black dots) assigned to it, with risk values shown using the same color scale.
+  (c) Street-level view of junction 2482 \citep{streetview2024}, providing visual context for the observed risk.
+  }
   \label{fig:junction_details}
 \end{figure*}
 
@@ -360,7 +361,6 @@ A separate research line addresses cyclist exposure where direct counts are unav
 To account for accident sparsity, some studies employed Poisson and Gamma count models \citep{luecken2018, futuretransp1030037}. These approaches handle zero-inflated crash data but exposure remained limited to city-level aggregation and weather-based reconstruction, lacking segment-level estimates required for routing applications.
 
 \section{Results}\label{sec:results}
-\paragraph{Relative risk map.}
 The estimated shrinkage parameter was small ($\widehat{\alpha} = 0.129$), resulting in limited regularization and a wide spread of 
 relative risk estimates across segments and junctions.
 The segment and junctions are mapped with their estimated relative risks $r$ as partly visualized in \cref{fig:junction_details} (a). 
@@ -368,7 +368,6 @@ Most elements show average or below-average risk: for 64.4\% of the segments and
 17.6\% of the segments and 25.8\% of the junctions $r<1$. Only 17.9\% of the segments and 
 4.9\% of the junctions show an elevated risk $r>1$.
 Risk values range from 0.03 to 50.79 for segments and from 0.03 to 6.43 for junctions.
-
 Since the visualization highlights the segments and junctions with elevates risks, we pick one of them for further 
 investigation and verification.
 For an exemplary high-risk location (junction 2482, $r = 6.43$), 
@@ -376,34 +375,34 @@ For an exemplary high-risk location (junction 2482, $r = 6.43$),
 Analyzing the crash data, we find all of them involved least one additional vehicle, predominantly (20) cars, 
 and mainly occurred during turning or crossing maneuvers. \cref{fig:junction_details} (c) shows how car lanes cross the bicycle lane at this location.
 
-\paragraph{Safety-aware routing.}
-
 We evaluated the algorithm using 1,000 random origin–destination pairs, comparing the shortest-path baseline against safest alternatives across a range of allowable detour and junction-risk constraints ~\citep{NateraOrozco2020}.
 
 \begin{table}[ht]
 \centering
+\small
 \caption{Trade-off between path length increase and safety improvement under varying detour budgets ($\varepsilon$).
 Values are aggregated over all origin--destination pairs and reported as medians.
 The junction penalty weight is fixed to $\eta = 1$.
 $\Delta_L$ denotes the relative path length increase,
 $\Delta_R$ the relative reduction in expected crashes with respect to the shortest-path baseline,
-and $\Delta_C$ the absolute number of avoided expected crashes per 100\,000 trips.}
+and $\Delta_C$ the absolute number of avoided expected crashes per 100{,}000 trips, reported as rounded integer counts.}
 \label{tab:routing_tradeoff}
-\begin{tabular}{ccccc}
+\begin{tabular}{@{}ccccc@{}}
 \toprule
-$\varepsilon$ & $\Delta_L$ & $\Delta_R$ & $\Delta_C$ & $\Delta_R>0$\\
+$\varepsilon$
+& $\Delta_L\,(\mathrm{IQR})$
+& $\Delta_R\,(\mathrm{IQR})$
+& $\Delta_R>0$
+& $\Delta_C\,(\mathrm{IQR})$ \\
 \midrule
-0.05 & 0.007 & 0.187 & 32.0 & 0 \\
-0.10 & 0.013 & 0.239 & 43.8 & 0 \\
-0.20 & 0.034 & 0.296 & 61.9 & 0 \\
-\addlinespace
-0.05 & 0.007 & 0.155 & 35.8 & 0 \\
-0.10 & 0.013 & 0.182 & 50.5 & 0 \\
-0.20 & 0.036 & 0.254 & 70.6 & 0 \\
-\addlinespace
-0.05 & 0.007 & 0.136 & 38.7 & 0 \\
-0.10 & 0.015 & 0.174 & 60.6 & 0 \\
-0.20 & 0.041 & 0.235 & 82.7 & 0 \\
+0.00 & 0.000\,(0.000) & 0.000\,(0.000) & 0.037 & 0\,(0) \\
+0.05 & 0.007\,(0.022) & 0.101\,(0.210) & 0.767 & 39\,(123) \\
+0.10 & 0.015\,(0.037) & 0.147\,(0.240) & 0.841 & 61\,(132) \\
+0.15 & 0.024\,(0.063) & 0.169\,(0.239) & 0.873 & 71\,(141) \\
+0.20 & 0.041\,(0.109) & 0.192\,(0.238) & 0.901 & 83\,(150) \\
+0.30 & 0.091\,(0.156) & 0.237\,(0.228) & 0.928 & 104\,(157) \\
+0.40 & 0.137\,(0.188) & 0.262\,(0.230) & 0.944 & 112\,(170) \\
+0.50 & 0.165\,(0.200) & 0.281\,(0.222) & 0.948 & 121\,(178) \\
 \bottomrule
 \end{tabular}
 \end{table}
