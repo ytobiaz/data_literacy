@@ -172,7 +172,7 @@
 \printAffiliationsAndNotice{\icmlEqualContribution} % otherwise use the standard text.
 
 \begin{abstract}
-Accurately estimating the risk of bicycle crashes at street level requires consideration of both crash counts and cyclist exposure. However, exposure data from official counting stations is unavailable for most streets. This makes it difficult to identify streets that are dangerous. We therefore use Strava's bike 
+Accurately estimating the risk of bicycle crashes at street level requires consideration of both crash counts and cyclist exposure. However, exposure data from official counting stations is unavailable for most streets. This makes it difficult to identify streets that are dangerous. We solve this by using Strava's bike 
 trip data to estimate the relative crash risk across street segments and junctions in Berlin. We identify those with a higher or lower than expected occurrence of crashes, and enable a routing algorithm to suggest lower-risk routes.
 
 \end{abstract}
@@ -184,8 +184,8 @@ trip data to estimate the relative crash risk across street segments and junctio
   \caption{\textbf{Safety-aware routing pipeline for the Berlin network.}
   Panels (a--c) are zoomed in for readability; see \cref{sec:methods} for definitions and notation.
   (a) Police-recorded bicycle crashes in June 2021 ({\color{TUorange}points}) and street segments with measured cyclist exposure ({\color{TUgray}lines}).
-  (b) Pooled segment-level relative crash risk estimated from all available data; high-risk segments in {\color{TUred}red} correspond to values above the 90th percentile of relative risk; {\color{TUdark}circles} mark junctions (degree $\ge 3$).
-  (c) Shortest path ({\color{TUblue}blue}) versus a safer alternative ({\color{TUgreen}green}) selected to reduce cumulative relative route risk under a route-length constraint. {\color{TUocre}Filled circle} and {\color{TUocre}cross} denote origin and destination, respectively.
+  (b) Pooled segment-level relative risk estimated from all available data; high-risk segments in {\color{TUred}red} correspond to values above the 90th percentile of relative risk; {\color{TUdark}circles} mark junctions (degree $\ge 3$).
+  (c) Shortest path ({\color{TUblue}blue}) versus a safer alternative ({\color{TUgreen}green}) selected to reduce cumulative relative risk under a route-length constraint. {\color{TUocre}Filled circle} and {\color{TUocre}cross} denote origin and destination, respectively.
   }
   \label{fig:visual_app}
 \end{figure*}
@@ -196,16 +196,16 @@ Quantifying street-level danger is non-trivial because simple crash counts confo
 Streets with high exposure, i.e. high numbers of cyclists, tend to accumulate more crashes even when per-cyclist risk is low~\citep{luecken2018}. Crashes must be normalised by cyclist counts; otherwise, dangerous streets can remain hidden in dense urban networks~\citep{Uijtdewilligen01092024}. 
 Unfortunately, street-level cyclist counts are rare. Berlin, for example, provides hourly counts via official counting stations, but their limited coverage (20 stations for thousands of streets) makes them impractical for city-wide risk estimation~\citep{BerlinZaehlen_Fahrradbarometer}.
 We address this problem by using bike trip counts from the fitness-tracking app Strava. These have been used to predict official bike counts~\citep{dadashova2020estimation}. We show that they can serve as a proxy for cyclist exposure and estimate for all segments and junctions in Berlin’s official cycling network relative risks (the ratio of observed to expected crashes).
-Because Strava coverage can be sparse, we use empirical Bayes smoothing for estimation~\citep{clayton1987empirical}. This stabilises estimates for low-exposure segments and junctions, and quantifies uncertainty. We also introduce a routing algorithm that finds substantially lower-risk routes under a route-length constraint.
+Because Strava coverage can be sparse, we use Empirical Bayes smoothing for estimation~\citep{clayton1987empirical}. This stabilises estimates for low-exposure segments and junctions, and quantifies uncertainty. We also introduce a routing algorithm that finds substantially lower-risk routes under a route-length constraint.
 
 
 \section{Data}\label{sec:data}
 Multiple datasets were used for risk estimation. Crash counts were taken from the \emph{German Accident Atlas}~\citep{Unfallatlas2025}, which provides geodata of police-reported crashes where people were injured. We filtered the data to bicycle-related crashes within the city limits of Berlin. Cyclist exposure was approximated using the dataset by \citet{kaiser2025spatiotemporalgraphneuralnetwork}, 
 which reports daily street-segment-level counts of bicycle trips recorded via the Strava app in Berlin from 2019 to 2023. Strava users are not representative of the general cycling population (they skew younger, male, and sport-oriented; \citealp{kaiser2025spatiotemporalgraphneuralnetwork}). Therefore, we assess potential bias by comparing segment-level count shares in 2023 with official bicycle 
-counter data from the city of Berlin ~\citep{BerlinRadverkehrzaehlstellen2023} for the subset of segments where both Strava and official counts are available (Figure~\ref{fig:segment_share}). Count shares correlate strongly ($r = .61$) and are preserved in the Strava data. Segments on main streets where you can ride fast (e.g., Karl-Marx-Allee) are overrepresented in the Strava data, since those are more often tracked. Residential streets (e.g., Kollwitzstraße) are underrepresented, 
+counter data from the city of Berlin ~\citep{BerlinRadverkehrzaehlstellen2023} for the subset of segments where both Strava and official counts are available (Figure~\ref{fig:segment_share}). Count shares correlate strongly ($r = .61$) and are preserved in the Strava data. Segments on main streets where one can ride fast (e.g., Karl-Marx-Allee) are overrepresented in the Strava data, since those are more often tracked. Residential streets (e.g., Kollwitzstraße) are underrepresented, 
 since slower, everyday cycling is less often tracked.
-All datasets were combined into one dataframe and matched to the same street network. The network is represented as segments with associated monthly exposure counts. We map crashes to the network using nearest-segment assignment. Junctions are defined as nodes where at least three segments meet and crashes within a fixed radius are assigned to the nearest junction. Junction exposure is derived from the segment exposure (see \cref{sec:methods}). 
-At monthly resolution, events are sparse: in a typical month, fewer than 5\% of segments and 3\% of junctions record at least one crash. We drop segments with zero recorded trips over at least one year and pool counts over the full period 2019--2023 for risk estimation. The dataset comprises 4{,}335 segments, 2{,}862 junctions, and 15{,}396 recorded bicycle crashes. 
+All datasets were combined into one dataframe and matched to the same street network. The network is represented as segments with associated monthly exposure counts. We map crashes to the network using nearest-segment assignment. Junctions are defined as nodes where at least three segments meet and crashes within a fixed radius are assigned to the nearest junction. Their exposure is derived from segment exposure (see \cref{sec:methods}). 
+At monthly resolution, events are sparse: in a typical month, fewer than 4\% of segments and 3\% of junctions record at least one crash. We drop segments with zero recorded trips over at least one year and pool counts over the full period 2019--2023 for risk estimation. The final dataset comprises 4{,}335 segments, 2{,}862 junctions, and 15{,}396 recorded bicycle crashes. 
 
 \begin{figure}[ht]
   \centering
@@ -225,7 +225,7 @@ E_{v,t}=\tfrac{1}{2}\sum_{s\in\mathcal I(v)} E_{s,t},
 a common approach when turning movements are unavailable~\citep{hakkert2002uses,WANG2020105838}.
 For notational convenience, both street segments and junctions are indexed by a generic entity index $i$, with $A_{i,t}$ and $E_{i,t}$ denoting the corresponding crash and exposure quantities.
 
-Under a no-special-risk baseline, crash incidence is assumed proportional to exposure, yielding the expected number of crashes and crashes for a given street-segment $i$ aggregated over time.
+Under a no-special-risk baseline, crash incidence is assumed proportional to exposure, yielding the expected number of crashes and total sum of crashes for a given street-segment $i$ aggregated over time.
 \[
 \widehat{C}_{i}
 = \frac{\sum_{i, t} C_{i, t}}{\sum_{i, t} E_{i, t}} \sum_{t} E_{i, t},
@@ -244,7 +244,6 @@ C_i \mid r^{\text{true}}_i \sim \text{Poisson}(\widehat{C}_i\,r^{\text{true}}_i)
 \]
 The Poisson distribution is natural for nonnegative event counts over a fixed time period under a baseline rate, and it yields $\mathbb{E}[C_i]=\widehat C_i$ when $r^{\text{true}}_i=1$. To allow heterogeneity in 
 relative risk beyond this baseline, we place a Gamma prior on $r^{\text{true}}_i$ in the shape–rate parameterization,
-
 \[
 r^{\text{true}}_i \sim \text{Gamma}(\alpha,\alpha),
 \]
@@ -254,20 +253,20 @@ to the Poisson likelihood, giving a closed-form posterior
 r^{\text{true}}_i \mid C_i,\widehat{C}_i \sim \text{Gamma}(C_i+\alpha,\;\widehat{C}_i+\alpha),
 \]
 so posterior inference is simple and numerically stable. We estimate $\alpha$ from the data using method of moments~\citep{Morris1983}, as
-
 \[
 \widehat{\alpha}
 =
 \frac{\sum_i \widehat{C}_i^{\,2}}
 {\sum_i (C_i-\widehat{C}_i)^2 - \sum_i \widehat{C}_i}.
 \]
-
 and use the posterior mean
 \[
 \widehat{r}_i=\mathbb{E}[r^{\text{true}}_i\mid C_i,\widehat C_i]=\frac{C_i+\alpha}{\widehat C_i+\alpha}
 \]
 as the smoothed relative risk. For small $\widehat C_i$, $r_i$ is pulled toward 1, while for large $\widehat C_i$ it approaches the raw ratio $C_i/\widehat C_i$. Uncertainty is summarized by $(1-\delta=0.95)$ 
-equal-tailed credible intervals from quantiles of the Gamma posterior.
+equal-tailed credible intervals from quantiles of the Gamma posterior. Since our goal is to identify segments or junctions whose risk deviates from the baseline, we first set the relative risk to 1 whenever its 
+credible interval includes 1. For all remaining cases, we use a conservative deviation estimate: the upper credible limit if the interval lies entirely below 1, and the lower credible limit if it lies entirely above 1. 
+We use these adjusted risks in all subsequent analyses.
 
 \paragraph{Risk-weighted routing graph.}
 Relative risk estimates are dimensionless and conditional on exposure. To obtain additive routing weights, we rescale relative risk by the pooled baseline crash rate,
@@ -297,13 +296,12 @@ To incorporate segment- and junction-level risk, the risk contribution of edge $
 where $w_u$ and $w_v$ denote junction routing weights (zero for non-junction nodes), yielding an additive surrogate for cumulative route risk.
 
 For an origin--destination pair, the baseline route $P_{\text{dist}}$ minimizes $L(P)$. The safety-aware route is obtained by solving
-\begin{equation}
-\label{eq:safe-routing}
+\begin{equation*}
 \begin{aligned}
-P_{\text{safe}}=&\arg\min_{P}\ R(P)=\arg\min_{P}\sum_{e\in P}\rho_e \\
+P_{\text{safe}}&=\arg\min_{P}\ R(P)=\arg\min_{P}\sum_{e\in P}\rho_e \\
 &\text{s.t.}\ L(P)\le (1+\varepsilon)\,L(P_{\text{dist}}),
 \end{aligned}
-\end{equation}
+\end{equation*}
 where $\varepsilon$ is the allowable relative detour~\citep{ehrgott2005multicriteria}. We approximate this constraint using a weighted-sum sweep: for $\lambda\in\Lambda$,
 \[
 P(\lambda)
@@ -316,18 +314,15 @@ P(\lambda)
 and select the feasible route minimizing $R(P)$. Shortest paths are computed using Dijkstra’s algorithm~\citep{Dijkstra1959}.
 
 \paragraph{Evaluation metrics.}
-For each origin--destination pair, we report the relative length increase
+For each origin--destination pair, we report the relative length increase and relative risk reduction, as
 \[
 \Delta_L=\frac{L(P_{\text{safe}})-L(P_{\text{dist}})}{L(P_{\text{dist}})}
-\]
-and the relative risk reduction
-\[
+,\quad
 \Delta_R=\frac{R(P_{\text{dist}})-R(P_{\text{safe}})}{R(P_{\text{dist}})}.
 \]
-Pairs with $R(P_{\text{dist}})=0$ are excluded from $\Delta_R$. We additionally report the expected number of avoided crashes,
-\[
-\Delta_C = R(P_{\text{dist}})-R(P_{\text{safe}}).
-\]
+
+We additionally report the expected number of avoided crashes, as $\Delta_C = R(P_{\text{dist}})-R(P_{\text{safe}})$.
+Pairs with $R(P_{\text{dist}})=0$ are excluded from $\Delta_R$. 
 
 \begin{figure*}[ht]
   \centering
@@ -350,17 +345,17 @@ Where direct counts are unavailable, supervised learning and graph neural networ
 To account for accident sparsity, studies employed Poisson-Gamma count models \citep{luecken2018}, but these remained limited to city-level aggregation, lacking segment-level estimates needed for routing applications. 
 
 \section{Results}\label{sec:results}
-As described in \cref{sec:methods}, relative risk $r_i$ was computed for each segment and junction.  
-Due to high variance in the crash data, the shrinkage parameter was small ($\widehat{\alpha} = 0.129$), resulting in limited 
-regularization and a wide spread of $r_i$ estimates. These were mapped as partly shown in \cref{fig:junction_details}(a).  
-Most elements exhibit low risk: 64.4\% of segments and 69.1\% of junctions lie within the confidence bounds ($r_i = 1$).  
-Values of $r_i<1$ occur for 17.6\% of segments and 25.8\% of junctions, while 17.9\% of segments and 4.9\% of junctions show elevated risk ($r_i>1$).  
-Risk values range from 0.03--50.79 for segments and 0.03--6.43 for junctions.   
-To verify that the method identifies high-risk locations, one such site was examined in detail.  
-At junction 2482 ($r_i = 6.43$), 22 crashes occurred despite moderate traffic.  
-All involved at least one additional vehicle---mostly cars (20)---and mainly resulted from turning or crossing maneuvers.  
-As shown in \cref{fig:junction_details}(c), car lanes intersect the bicycle lane at this junction.
-We evaluated the algorithm using 1,000 random origin--destination pairs, comparing the shortest-path baseline against safest alternatives across a range of allowable detour and junction-risk constraints ~\citep{NateraOrozco2020}.
+We computed the relative risk values ($\widehat{r}_i$) for all street segments and junctions.
+Due to high variance in the crash data, the shrinkage parameter is small ($\widehat{\alpha} = 0.129$), resulting in limited
+regularization and a wide spread of $\widehat{r}_i$ estimates. These are shown in \cref{fig:junction_details}(a).
+Most elements exhibit low risk: 64.4\% of segments and 69.1\% of junctions lie within the confidence bounds of the baseline ($\widehat{r}_i = 1$).
+Values of $\widehat{r}_i<1$ occur for 17.6\% of segments and 25.8\% of junctions, while 17.9\% of segments and 4.9\% of junctions show elevated risk ($\widehat{r}_i>1$).
+Risk values range from 0.03--50.79 for segments and 0.03--6.43 for junctions.
+To verify that the method identifies high-risk locations, one such site was examined in detail.
+At junction 2482 ($\widehat{r}_i = 6.43$), 22 crashes, most of them clustered along the right turning bike lane, occurred despite moderate traffic.
+All involved at least one additional vehicle---20 of them were cars. This seems plausible, since---as shown in \cref{fig:junction_details}(c)---car lanes intersect the bicycle lane at this junction.
+
+Furthermore, we evaluated the routing algorithm using 1,000 random origin--destination pairs, comparing the shortest-path baseline against safest alternatives with a detour constraint~\citep{NateraOrozco2020}.
 
 \begin{table}[ht]
 \centering
@@ -376,16 +371,16 @@ and $\Delta_C$ the number of avoided expected crashes per 100{,}000 trips, repor
 $\varepsilon$
 & $\Delta_L\,(\mathrm{IQR})$
 & $\Delta_R\,(\mathrm{IQR})$
-& $\Delta_R>0$
-& $\Delta_C\,(\mathrm{IQR})$ \\
+& $\Delta_C\,(\mathrm{IQR})$
+& $\Delta_R>0$ \\
 \midrule
-0.05 & 0.007\,(0.022) & 0.101\,(0.210) & 0.767 & 39\,(123) \\
-0.10 & 0.015\,(0.037) & 0.147\,(0.240) & 0.841 & 61\,(132) \\
-0.15 & 0.024\,(0.063) & 0.169\,(0.239) & 0.873 & 71\,(141) \\
-0.20 & 0.041\,(0.109) & 0.192\,(0.238) & 0.901 & 83\,(150) \\
-0.30 & 0.091\,(0.156) & 0.237\,(0.228) & 0.928 & 104\,(157) \\
-0.40 & 0.137\,(0.188) & 0.262\,(0.230) & 0.944 & 112\,(170) \\
-0.50 & 0.165\,(0.200) & 0.281\,(0.222) & 0.948 & 121\,(178) \\
+0.05 & 0.007\,(0.022) & 0.101\,(0.210) & 39\,(123)  & 0.767 \\
+0.10 & 0.015\,(0.037) & 0.147\,(0.240) & 61\,(132)  & 0.841 \\
+0.15 & 0.024\,(0.063) & 0.169\,(0.239) & 71\,(141)  & 0.873 \\
+0.20 & 0.041\,(0.109) & 0.192\,(0.238) & 83\,(150)  & 0.901 \\
+0.30 & 0.091\,(0.156) & 0.237\,(0.228) & 104\,(157) & 0.928 \\
+0.40 & 0.137\,(0.188) & 0.262\,(0.230) & 112\,(170) & 0.944 \\
+0.50 & 0.165\,(0.200) & 0.281\,(0.222) & 121\,(178) & 0.948 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -394,15 +389,15 @@ Table \ref{tab:routing_tradeoff} illustrates a clear trade-off between path leng
 At the smallest budget of $\varepsilon = 0.05$, the algorithm achieves a median relative crash reduction ($\Delta_R$) of $10.1\%$—avoiding $39$ expected crashes per 100,000 trips ($\Delta_C$)—while incurring a median distance increase ($\Delta_L$) of only $0.7\%$.
 As the budget relaxes to $\varepsilon = 0.50$, the median safety gains scale to $\Delta_R = 28.1\%$ ($121$ expected avoided crashes), and the actual median path increase reaches $16.5\%$.
 %This indicates that the most effective safety interventions are found within the first $15\%$ of detour distance.
+While the interquartile ranges (IQR) for safety gains ($\Delta_R, \Delta_C$) remain relatively stable across budgets, the IQR for path length ($\Delta_L$) expands significantly from $0.022$ to $0.200$, indicating that the distance cost required to achieve safety improvements is highly sensitive to the specific layout of the route.
 Furthermore, the likelihood of finding a safer route ($\Delta_R > 0$) remains high across all budgets, increasing from $76.7\%$ to $94.8\%$ as the search space expands.
 
 
 \section{Discussion and Conclusion}\label{sec:conclusion}
 % Use this section to briefly summarize the entire text. Highlight limitations and problems, but also make clear statements where they are possible and supported by the analysis. 
 We developed a city-wide method for estimating bicycle crash risk using Strava exposure data. The approach enables safety-aware routing that balances crash risk reduction against route length constraints.
-Our approach faces two main limitations. First, official crash data capture only personal injury incidents and suffer from under-reporting, systematically underestimating absolute risk. Second, Strava data skew toward recreational rides on main roads, underrepresenting casual trips on residential streets. Where Strava overcounts exposure, calculated risk is too low; where it undercounts, sparse data yield inflated estimates. Empirical Bayes smoothing partially mitigates this by shrinking unstable low-exposure estimates toward the citywide baseline.
-Our junction exposure model assumes uniform flow and ignores turning movements. This misallocates exposure where one main road dominates side streets. Systematic biases in crowdsourced exposure data limit risk estimates' accuracy. While graph neural network methods can interpolate traffic volumes from sparse data \citep{kaiser2025spatiotemporalgraphneuralnetwork}, they require manual validation counts. Cities with sparse counting networks like Berlin could address this by expanding automated counting infrastructure.
-Despite these limitations, the approach scales to any city with crash records and crowdsourced trip data, requiring only modest detours for substantially safer routes.
+Our approach faces two main limitations. First, official crash data capture only personal injury incidents and suffer from under-reporting, systematically underestimating absolute risk. Second, Strava data skew toward fast rides on main roads, underrepresenting trips on residential streets. Where Strava inflates exposure, the calculated risk is too low; where it understimates exposure, sparse data yield inflated risk estimates. Empirical Bayes smoothing partially mitigates this by shrinking unstable low-exposure estimates toward the citywide baseline.
+Another issue is, that for calculating the junction exposure we assume uniform flow and ignore turning movements. This misallocates exposure where one main road dominates side streets. To improve the accuracy of risk estimates, cities like Berlin could expand their automated counting infrastructure. This could offer ground truth data that, through deep learning methods, can be used to improve interpolation of bike exposure from sparse data \citep{kaiser2025spatiotemporalgraphneuralnetwork}. 
 
 Code and supplementary materials are available at \url{https://github.com/ytobiaz/data_literacy}.
 \clearpage
