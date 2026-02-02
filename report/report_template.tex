@@ -418,12 +418,40 @@ Across all detour budgets, increasing $\eta$ is associated with lower median ris
 
 \section{Discussion and Conclusion}\label{sec:conclusion}
 % Use this section to briefly summarize the entire text. Highlight limitations and problems, but also make clear statements where they are possible and supported by the analysis. 
-This study combines street segment-level risk modeling with separate junction treatment, addressing sparse crash data and low-exposure segments through uncertainty quantification. Within a 10\% route length increase, our method achieves a crash risk reduction of about one third—a modest detour for safer cycling.
+We developed a city-wide method for estimating bicycle crash risk that accounts for cyclist exposure using Strava data. Empirical Bayes smoothing stabilized estimates across Berlin’s network, achieving 18–24\% risk reductions through routing with modest detours.
 
-However, limitations remain. Official data capture only personal injury crashes and suffer from under-reporting; during our study period, one researcher, Edward Eichhorn, experienced two bicycle accidents absent from official records. Additionally, cyclist exposure is approximated using Strava data, which represents a subset of specific cyclist types and likely overemphasizes routes popular within this community. Results therefore support relative risk comparisons and routing decisions rather than absolute crash probability estimates.
+Official data capture only personal injury crashes and suffer
+from under-reporting. This systematically underestimates
+absolute risk but preserves relative comparisons, which re-
+main valid for identifying high-risk infrastructure and rout-
+ing. Beyond missing crashes, Strava data skew toward fast
+recreational rides on main roads while underrepresenting
+casual trips on residential streets. Where Strava overcounts
+exposure (wide roads like Karl-Marx-Allee), calculated risk
+is too low; where it undercounts (quieter streets like Schwal-
+bacher), sparse data yield inflated estimates. Empirical
+Bayes smoothing shrinks these unstable low-exposure esti-
+mates toward the citywide baseline, stabilizing risk calcula-
+tions.
 
-The approach transfers to cities with crash data, a routable street network, and an exposure proxy. All code and supplementary materials are available at \url{https://github.com/ytobiaz/data_literacy}.
+Our junction exposure model assumes uniform flow and
+ignores turning movements. This misallocates exposure
+where one main road dominates side streets. Systematic
+biases in crowdsourced exposure data limit our risk esti-
+mates’ accuracy. While graph neural network methods can
+interpolate traffic volumes from sparse data, they still re-
+quire manual validation counts for calibration \citep{kaiser2025spatiotemporalgraphneuralnetwork}. Considering that even in such city as Berlin’s 20
+counting stations provide sparse coverage, cities can ad-
+dress this through expansion of counting networks or by
+augmenting automated sensors with periodic manual counts
+to ground-truth crowdsourced data \citep{kaiser2025spatiotemporalgraphneuralnetwork}.
 
+Despite these limitations, the approach scales to any city
+with crash records and crowdsourced trip data. Risk es-
+timates identify where infrastructure should be improved
+(e.g. junction 2482 needs protected turns), while routing
+alternatives require only 5–20\% longer paths, practical for
+daily cycling
 \clearpage
 
 \section*{Contribution Statement}
