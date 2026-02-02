@@ -182,7 +182,7 @@ trip data to estimate the relative crash risk across street segments and junctio
   \centering
   \includegraphics{figs/map_3_panels.pdf}
   \caption{\textbf{Safety-aware routing pipeline for the Berlin network.}
-  Panels (a–c) are zoomed in for readability; see \cref{sec:methods} for definitions and notation.
+  Panels (a--c) are zoomed in for readability; see \cref{sec:methods} for definitions and notation.
   (a) Police-recorded bicycle crashes in June 2021 ({\color{TUorange}points}) and street segments with measured cyclist exposure ({\color{TUgray}lines}).
   (b) Pooled segment-level relative crash risk estimated from all available data; high-risk segments in {\color{TUred}red} correspond to values above the 90th percentile of relative risk; {\color{TUdark}circles} mark junctions (degree $\ge 3$).
   (c) Shortest path ({\color{TUblue}blue}) versus a safer alternative ({\color{TUgreen}green}) selected to reduce cumulative relative route risk under a route-length constraint. {\color{TUocre}Filled circle} and {\color{TUocre}cross} denote origin and destination, respectively.
@@ -247,8 +247,7 @@ Concretely, we assume a true relative risk  $r^{\text{true}}_i$ such that the ob
 C_i \mid r^{\text{true}}_i \sim \text{Poisson}(\widehat{C}_i\,r^{\text{true}}_i).
 \]
 The Poisson distribution is natural for nonnegative event counts over a fixed time period under a baseline rate, and it yields $\mathbb{E}[C_i]=\widehat C_i$ when $r^{\text{true}}_i=1$. To allow heterogeneity in 
-relative risk beyond this baseline, we place a Gamma prior on $r^{\text{true}}_i$ in the shape–rate parameterization,
-
+relative risk beyond this baseline, we place a Gamma prior on $r^{\text{true}}_i$ in the shape--rate parameterization,
 \[
 r^{\text{true}}_i \sim \text{Gamma}(\alpha,\alpha),
 \]
@@ -258,14 +257,12 @@ to the Poisson likelihood, giving a closed-form posterior
 r^{\text{true}}_i \mid C_i,\widehat{C}_i \sim \text{Gamma}(C_i+\alpha,\;\widehat{C}_i+\alpha),
 \]
 so posterior inference is simple and numerically stable. We estimate $\alpha$ from the data using method of moments~\citep{Morris1983}, as
-
 \[
 \widehat{\alpha}
 =
 \frac{\sum_i \widehat{C}_i^{\,2}}
 {\sum_i (C_i-\widehat{C}_i)^2 - \sum_i \widehat{C}_i}.
 \]
-
 and use the posterior mean
 \[
 \widehat{r}_i=\mathbb{E}[r^{\text{true}}_i\mid C_i,\widehat C_i]=\frac{C_i+\alpha}{\widehat C_i+\alpha}
@@ -337,10 +334,10 @@ Pairs with $R(P_{\text{dist}})=0$ are excluded from $\Delta_R$. We additionally 
   \centering
   \includegraphics{figs/risk_3_panel.pdf}
   \caption{\textbf{Risk heatmap and detailed inspection of junction 2482.}
-  The colors \coolwarmbox\space in panels (a)--(b) indicate $\log_{10}$-scaled risk values, ranging from low risk {\color{TUblue}(-2)} to high risk {\color{TUred}(2)}.
-  (a) Section of the Strava bike network in Berlin with all computed road segments and junctions displayed.
-  (b) Closer view of junction 2482 and the crashes (black dots) assigned to it, with risk values shown using the same color scale.
-  (c) Street-level view of junction 2482 \citep{streetview2024}, providing visual context for the observed risk.
+  Colors \coolwarmbox\space in panels (a) and (b) indicate $\log_{10}$-scaled relative risk values, ranging from low {\color{TUblue}($-2$)} to high {\color{TUred}($2$)}.
+  (a) Zoomed-in view of the network showing estimated segment and junction risks.
+  (b) Detailed view of junction 2482 with assigned crashes (black dots).
+  (c) Street-level image of junction 2482~\citep{streetview2024}, providing visual context for the observed risk.
   }
   \label{fig:junction_details}
 \end{figure*}
