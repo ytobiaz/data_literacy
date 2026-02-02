@@ -203,7 +203,7 @@ All datasets were combined into one dataframe and matched to the same street net
 At monthly resolution, events are sparse: in a typical month, fewer than 5\% of segments and 3\% of junctions record at least one crash. We drop segments with zero recorded trips over at least one year and pool counts over the full period 2019--2023 for risk estimation. The dataset comprises 4{,}335 segments, 2{,}862 junctions, and 15{,}396 recorded bicycle crashes. The resulting segment- and junction-level relative risk estimates are used throughout the analysis and serve as inputs to the routing algorithm.
 
 \section{Methods}\label{sec:methods}
-\paragraph{Crash, Exposure and Risk Measures.}
+\paragraph{Crash, exposure, and risk measures.}
 For each month $t$, let $C_{s,t}$ and $E_{s,t}$ denote the number of police-recorded bicycle crashes and measured cyclist exposure on street segment $s$. Junction crashes $C_{v,t}$ are defined as crashes within a fixed radius of junction $v$. Because a traversal typically contributes exposure to two incident segments, we approximate junction exposure by the half-sum of incident segment exposures,
 \[
 E_{v,t}=\tfrac{1}{2}\sum_{s\in\mathcal I(v)} E_{s,t},
@@ -227,7 +227,7 @@ C_i=\sum_t C_{i,t},
 \]
 and the raw relative risk $r^{\text{raw}}_i$ is $C_i/\widehat{C}_i$.
 
-\paragraph{Empirical Bayes Smoothing.}
+\paragraph{Empirical Bayes smoothing.}
 Because many segments have low exposure and thus very small expected counts, the raw relative risk is highly variable. That is why we use Empirical Bayes smoothing to improve the risk estimates.
 This methods shrinks low-exposure estimates toward a baseline, while high-exposure estimates change little.
 Concretely, we assume a true relative risk  $r^{\text{true}}_i$ such that the observed count $C_i$ follows a Poisson model with 
@@ -262,31 +262,33 @@ as the smoothed relative risk. For small $\widehat C_i$, $r_i$ is pulled toward 
 equal-tailed credible intervals from quantiles of the Gamma posterior.
 
 \paragraph{Risk-weighted routing graph.}
-Relative risk estimates are dimensionless and conditional on exposure. To obtain additive weights for routing, we rescale relative risk by the pooled baseline crash rate
+Relative risk estimates are dimensionless and conditional on exposure. To obtain additive routing weights, we rescale relative risk by the pooled baseline crash rate,
 \[
 \bar{\lambda}=\frac{C_\cdot}{E_\cdot},
 \qquad
-C_\cdot=\sum_i C_i,\ \ E_\cdot=\sum_i E_i.
+C_\cdot=\sum_i C_i,\ \ E_\cdot=\sum_i E_i,
 \]
-The resulting routing weight is
+yielding the routing weight
 \[
 w_i=\bar{\lambda}\,r_i.
 \]
-We construct an undirected graph $G=(V,E)$ from the street network. Nodes correspond to segment endpoints and edges to street segments with length $\ell_e$. Each edge $e$ corresponds to a segment $s$ 
-and inherits its routing weight $w_e=w_s$. Junction identifiers and weights are mapped to nodes via spatial snapping in a projected coordinate system, yielding a single risk-annotated network.
+
+We construct an undirected graph $G=(V,E)$ from the street network, where nodes correspond to segment endpoints and edges to street segments of length $\ell_e$. Each edge $e$ corresponds to a 
+segment $s$ and inherits its weight, $w_e=w_s$. Junction identifiers and weights are mapped to nodes via spatial snapping in a projected coordinate system, producing a single risk-annotated 
+network.
 
 \paragraph{Safety-aware routing.}
 We compare shortest-distance routes with alternatives that reduce estimated crash risk under a bounded detour. The length of a route $P$ is
 \[
 L(P)=\sum_{e\in P}\ell_e.
 \]
-To account for segment- and junction-level risk, the risk contribution of edge $e=(u,v)$ is
+To incorporate segment- and junction-level risk, the risk contribution of edge $e=(u,v)$ is defined as
 \[
 \rho_e = w_e + \eta\,\frac{w_u+w_v}{2},
 \]
-where $w_u$ and $w_v$ are junction routing weights (zero for non-junction nodes) and $\eta\ge 0$ controls the contribution of junction risk. These quantities form an \emph{additive surrogate} for cumulative route risk.
+where $w_u$ and $w_v$ denote junction routing weights (zero for non-junction nodes), yielding an additive surrogate for cumulative route risk.
 
-For an origin--destination pair, the baseline route $P_{\text{dist}}$ minimizes $L(P)$. The safety-aware route solves
+For an origin--destination pair, the baseline route $P_{\text{dist}}$ minimizes $L(P)$. The safety-aware route is obtained by solving
 \begin{equation}
 \label{eq:safe-routing}
 \begin{aligned}
@@ -294,7 +296,7 @@ P_{\text{safe}}=\arg\min_{P}\ & R(P)=\sum_{e\in P}\rho_e \\
 \text{s.t.}\ & L(P)\le (1+\varepsilon)\,L(P_{\text{dist}}),
 \end{aligned}
 \end{equation}
-where $\varepsilon$ is the allowable relative detour~\citep{ehrgott2005multicriteria}. We approximate this constraint via a weighted-sum sweep: for $\lambda\in\Lambda$,
+where $\varepsilon$ is the allowable relative detour~\citep{ehrgott2005multicriteria}. We approximate this constraint using a weighted-sum sweep: for $\lambda\in\Lambda$,
 \[
 P(\lambda)
 =\arg\min_{P}
@@ -303,19 +305,18 @@ P(\lambda)
 +\lambda\sum_{e\in P}\ell_e
 \right),
 \]
-and select among feasible candidates the route minimizing $R(P)$. Shortest paths are computed with Dijkstra’s algorithm~\citep{Dijkstra1959}.
+and select the feasible route minimizing $R(P)$. Shortest paths are computed using Dijkstra’s algorithm~\citep{Dijkstra1959}.
 
 \paragraph{Evaluation metrics.}
 For each origin--destination pair, we report the relative length increase
 \[
 \Delta_L=\frac{L(P_{\text{safe}})-L(P_{\text{dist}})}{L(P_{\text{dist}})}
 \]
-and the relative crash reduction
+and the relative risk reduction
 \[
 \Delta_R=\frac{R(P_{\text{dist}})-R(P_{\text{safe}})}{R(P_{\text{dist}})}.
 \]
-Pairs with $R(P_{\text{dist}})=0$ are excluded from $\Delta_R$ due to the undefined denominator.
-We also report the avoided crashes
+Pairs with $R(P_{\text{dist}})=0$ are excluded from $\Delta_R$. We additionally report the avoided crashes,
 \[
 \Delta_C = R(P_{\text{dist}})-R(P_{\text{safe}}).
 \]
@@ -356,27 +357,28 @@ We evaluated the algorithm using 1,000 random origin–destination pairs, compar
 
 \begin{table}[ht]
 \centering
-\caption{Trade-off between path length increase and safety improvements for varying detour budgets ($\varepsilon$) and junction weights ($\eta$).
+\caption{Trade-off between path length increase and safety improvement under varying detour budgets ($\varepsilon$).
 Values are aggregated over all origin--destination pairs and reported as medians.
-$\Delta_L$ denotes relative path length increase,
+The junction penalty weight is fixed to $\eta = 1$.
+$\Delta_L$ denotes the relative path length increase,
 $\Delta_R$ the relative reduction in expected crashes with respect to the shortest-path baseline,
-and $\Delta_C$ avoided expected crashes (per 100k trips).}
+and $\Delta_C$ the absolute number of avoided expected crashes per 100\,000 trips.}
 \label{tab:routing_tradeoff}
 \begin{tabular}{ccccc}
 \toprule
-$\eta$ & $\varepsilon$ & $\Delta_L$ & $\Delta_R$ & $\Delta_C$ \\
+$\varepsilon$ & $\Delta_L$ & $\Delta_R$ & $\Delta_C$ & $\Delta_R>0$\\
 \midrule
-0.0 & 0.05 & 0.007 & 0.187 & 32.0 \\
-    & 0.10 & 0.013 & 0.239 & 43.8 \\
-    & 0.20 & 0.034 & 0.296 & 61.9 \\
+0.05 & 0.007 & 0.187 & 32.0 & 0 \\
+0.10 & 0.013 & 0.239 & 43.8 & 0 \\
+0.20 & 0.034 & 0.296 & 61.9 & 0 \\
 \addlinespace
-0.5 & 0.05 & 0.007 & 0.155 & 35.8 \\
-    & 0.10 & 0.013 & 0.182 & 50.5 \\
-    & 0.20 & 0.036 & 0.254 & 70.6 \\
+0.05 & 0.007 & 0.155 & 35.8 & 0 \\
+0.10 & 0.013 & 0.182 & 50.5 & 0 \\
+0.20 & 0.036 & 0.254 & 70.6 & 0 \\
 \addlinespace
-1.0 & 0.05 & 0.007 & 0.136 & 38.7 \\
-    & 0.10 & 0.015 & 0.174 & 60.6 \\
-    & 0.20 & 0.041 & 0.235 & 82.7 \\
+0.05 & 0.007 & 0.136 & 38.7 & 0 \\
+0.10 & 0.015 & 0.174 & 60.6 & 0 \\
+0.20 & 0.041 & 0.235 & 82.7 & 0 \\
 \bottomrule
 \end{tabular}
 \end{table}
