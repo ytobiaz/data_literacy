@@ -310,11 +310,15 @@ For each origin--destination pair, we report the relative length increase
 \[
 \Delta_L=\frac{L(P_{\text{safe}})-L(P_{\text{dist}})}{L(P_{\text{dist}})}
 \]
-and the relative risk reduction
+and the relative crash reduction
 \[
 \Delta_R=\frac{R(P_{\text{dist}})-R(P_{\text{safe}})}{R(P_{\text{dist}})}.
 \]
-Pairs with $R(P_{\text{dist}})=0$ are excluded from $\Delta_R$ due to the undefined denominator. These metrics quantify the trade-off between distance and exposure-adjusted crash risk under bounded detours.
+Pairs with $R(P_{\text{dist}})=0$ are excluded from $\Delta_R$ due to the undefined denominator.
+We also report the avoided crashes
+\[
+\Delta_C = R(P_{\text{dist}})-R(P_{\text{safe}}).
+\]
 
 \begin{figure*}[ht]
   \centering
@@ -352,25 +356,27 @@ We evaluated the algorithm using 1,000 random origin–destination pairs, compar
 
 \begin{table}[ht]
 \centering
-\caption{\textbf{Comparative analysis of path length increase ($\Delta_L$) and risk reduction ($\Delta_R$) across varying detour budgets ($\varepsilon$) and junction weights ($\eta$).}
-Results aggregated over all origin-destination pairs; medians (interquartile ranges) shown. $\Delta_L$ and $\Delta_R$ are relative scales; $P(\Delta_R > 0)$ is a percentage.}
-
+\caption{Trade-off between path length increase and safety improvements for varying detour budgets ($\varepsilon$) and junction weights ($\eta$).
+Values are aggregated over all origin--destination pairs and reported as medians.
+$\Delta_L$ denotes relative path length increase,
+$\Delta_R$ the relative reduction in expected crashes with respect to the shortest-path baseline,
+and $\Delta_C$ avoided expected crashes (per 100k trips).}
 \label{tab:routing_tradeoff}
-\begin{tabular}{@{}c c c c c@{}}
+\begin{tabular}{ccccc}
 \toprule
-$\eta$ & $\varepsilon$ & Med.\ $\Delta_L$ & Med.\ $\Delta_R$ & $P(\Delta_R>0)$ \\
+$\eta$ & $\varepsilon$ & $\Delta_L$ & $\Delta_R$ & $\Delta_C$ \\
 \midrule
-0.0 & 0.05 & 0.009 (0.026) & 0.246 (0.451) & 76.1 \\
-    & 0.10 & 0.025 (0.042) & 0.377 (0.388) & 86.0 \\
-    & 0.20 & 0.038 (0.072) & 0.425 (0.353) & 90.6 \\
+0.0 & 0.05 & 0.007 & 0.187 & 32.0 \\
+    & 0.10 & 0.013 & 0.239 & 43.8 \\
+    & 0.20 & 0.034 & 0.296 & 61.9 \\
 \addlinespace
-0.5 & 0.05 & 0.008 (0.026) & 0.208 (0.401) & 75.3 \\
-    & 0.10 & 0.026 (0.046) & 0.331 (0.370) & 86.4 \\
-    & 0.20 & 0.047 (0.089) & 0.404 (0.323) & 92.0 \\
+0.5 & 0.05 & 0.007 & 0.155 & 35.8 \\
+    & 0.10 & 0.013 & 0.182 & 50.5 \\
+    & 0.20 & 0.036 & 0.254 & 70.6 \\
 \addlinespace
-1.0 & 0.05 & 0.008 (0.026) & 0.185 (0.363) & 75.9 \\
-    & 0.10 & 0.028 (0.047) & 0.305 (0.345) & 86.3 \\
-    & 0.20 & 0.050 (0.086) & 0.378 (0.318) & 91.8 \\
+1.0 & 0.05 & 0.007 & 0.136 & 38.7 \\
+    & 0.10 & 0.015 & 0.174 & 60.6 \\
+    & 0.20 & 0.041 & 0.235 & 82.7 \\
 \bottomrule
 \end{tabular}
 \end{table}
