@@ -276,6 +276,7 @@ Relative risk estimates are dimensionless and conditional on exposure. To obtain
 C_\cdot=\sum_i C_i,\ \ E_\cdot=\sum_i E_i,
 \]
 yielding the routing weight $w_i=\bar{\lambda}\,\widehat{r}_i$.
+
 We construct an undirected graph $G=(V,E)$ from the street network, where nodes correspond to segment endpoints and edges to street segments of length $\ell_e$. Each edge $e$ corresponds to a 
 segment $s$ and inherits its weight, $w_e=w_s$. Junction identifiers and weights are mapped to nodes via spatial snapping in a projected coordinate system, producing a single risk-annotated 
 network.
@@ -327,7 +328,7 @@ Pairs with $R(P_{\text{dist}})=0$ are excluded from $\Delta_R$.
   Colors \coolwarmbox\space in panels (a)--(b) indicate $\log_{10}$-scaled risk values, ranging from low {\color{TUblue}(-2)} to high {\color{TUred}(2)}.
   (a) Section bike network with all computed road segments and junctions displayed.
   (b) Closer view of junction 2482 and the crashes (black dots) assigned to it
-  (c) Street-level view of junction 2482 \citep{streetview2024}, providing visual context for the observed risk.
+  (c) Street-level view \citep{streetview2024}, providing visual context on observed risk.
   }
   \label{fig:junction_details}
 \end{figure*}
@@ -401,6 +402,7 @@ Several limitations must be acknowledged. Official bicycle crash counts are unde
 include crashes involving injuries. In addition, the exposure data used in this study does not represent
 the full cycling population due to the nature of Strava data. Finally, when computing junction exposure, 
 we assume uniform flow and do not account for turning movements. 
+
 Code and supplementary materials are available at \url{https://github.com/ytobiaz/data_literacy}.
 \clearpage
 
