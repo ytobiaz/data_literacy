@@ -275,11 +275,7 @@ Relative risk estimates are dimensionless and conditional on exposure. To obtain
 \qquad
 C_\cdot=\sum_i C_i,\ \ E_\cdot=\sum_i E_i,
 \]
-yielding the routing weight
-\[
-w_i=\bar{\lambda}\,r_i.
-\]
-
+yielding the routing weight $w_i=\bar{\lambda}\,\widehat{r}_i$.
 We construct an undirected graph $G=(V,E)$ from the street network, where nodes correspond to segment endpoints and edges to street segments of length $\ell_e$. Each edge $e$ corresponds to a 
 segment $s$ and inherits its weight, $w_e=w_s$. Junction identifiers and weights are mapped to nodes via spatial snapping in a projected coordinate system, producing a single risk-annotated 
 network.
@@ -328,9 +324,9 @@ Pairs with $R(P_{\text{dist}})=0$ are excluded from $\Delta_R$.
   \centering
   \includegraphics{figs/risk_3_panel.pdf}
   \caption{\textbf{Risk heatmap and detailed inspection of junction 2482.}
-  The colors \coolwarmbox\space in panels (a)--(b) indicate $\log_{10}$-scaled risk values, ranging from low risk {\color{TUblue}(-2)} to high risk {\color{TUred}(2)}.
-  (a) Section of the Strava bike network in Berlin with all computed road segments and junctions displayed.
-  (b) Closer view of junction 2482 and the crashes (black dots) assigned to it, with risk values shown using the same color scale.
+  Colors \coolwarmbox\space in panels (a)--(b) indicate $\log_{10}$-scaled risk values, ranging from low {\color{TUblue}(-2)} to high {\color{TUred}(2)}.
+  (a) Section bike network with all computed road segments and junctions displayed.
+  (b) Closer view of junction 2482 and the crashes (black dots) assigned to it
   (c) Street-level view of junction 2482 \citep{streetview2024}, providing visual context for the observed risk.
   }
   \label{fig:junction_details}
@@ -339,11 +335,9 @@ Pairs with $R(P_{\text{dist}})=0$ are excluded from $\Delta_R$.
 
 
 \section{Related Work}\label{sec:relatedw}
-
-Prior studies combined police crash records with exposure estimates, but early work extrapolated bicycle traffic from motorized transport data, poorly capturing actual cycling patterns \citep{isprs-archives-XLIII-B4-2022-427-2022}. Other work calibrated crowdsourced GPS cycling data with count stations and showed that cyclist volumes predict crash risk, though uncertainty of risk estimates on low-volume segments remained unexamined \citep{Uijtdewilligen01092024, futuretransp1030037}.
-Where direct counts are unavailable, supervised learning and graph neural network approaches estimate city-wide volumes by combining sparse counters with crowdsourced data \citep{Kaiser_Klein_Kaack_2025, kaiser2025spatiotemporalgraphneuralnetwork}. While these models required manual validation counts for calibration, they demonstrated that Strava data correlates with official counting stations at segment level, supporting its use as an exposure proxy.
-To account for accident sparsity, studies employed Poisson-Gamma count models \citep{luecken2018}, but these remained limited to city-level aggregation, lacking segment-level estimates needed for routing applications. 
-
+Previous studies on estimating street-level crash risk differ mainly in the proxy used for cyclist exposure and how exposure is modelled. For instance, \citet{isprs-archives-XLIII-B4-2022-427-2022} extrapolated bicycle volumes from motorised traffic data, but this does not accurately reflect actual cycling patterns. As an alternative to Strava-based exposure estimation, other studies have used crowdsourced GPS traces from less widely used tracking apps (e.g. BikeCitizens; \citealp{futuretransp1030037}) or city-wide counting events \citep{Uijtdewilligen01092024}. While these sources can approximate long-term station counts, they tend to be less stable as they rely on small user bases or special occasions.
+Another approach predicts bicycle counts directly with models such as XGBoost and graph neural networks \citep{Kaiser_Klein_Kaack_2025, kaiser2025spatiotemporalgraphneuralnetwork}. While these methods can achieve strong predictive performance, they typically require rich, location-specific inputs and often additional calibration data, including manual counts on some streets. This is costly and rarely feasible at scale.
+To address crash sparsity and overdispersion, prior work has also used Poisson–Gamma count models~\citep{luecken2018}. However, this was only for city-wide crash estimation and is not suited to estimating risk at segment level.
 \section{Results}\label{sec:results}
 We computed the relative risk values ($\widehat{r}_i$) for all street segments and junctions.
 Due to high variance in the crash data, the shrinkage parameter is small ($\widehat{\alpha} = 0.129$), resulting in limited
@@ -364,7 +358,7 @@ Furthermore, we evaluated the routing algorithm using 1,000 random origin--desti
 Values are aggregated over all origin--destination pairs and reported as medians with interquartile ranges.
 $\Delta_L$ denotes the relative path length increase,
 $\Delta_R$ the relative risk reduction,
-and $\Delta_C$ the number of avoided expected crashes per 100{,}000 trips, reported as rounded integer counts.}
+and $\Delta_C$ the expected number of avoided crashes per 100{,}000 trips, reported as rounded integer counts.}
 \label{tab:routing_tradeoff}
 \begin{tabular}{@{}ccccc@{}}
 \toprule
@@ -386,24 +380,38 @@ $\varepsilon$
 \end{table}
 
 Table \ref{tab:routing_tradeoff} illustrates a clear trade-off between path length and safety, where increasing the detour budget $\varepsilon$ yields consistent safety improvements.
-At the smallest budget of $\varepsilon = 0.05$, the algorithm achieves a median relative crash reduction ($\Delta_R$) of $10.1\%$—avoiding $39$ expected crashes per 100,000 trips ($\Delta_C$)—while incurring a median distance increase ($\Delta_L$) of only $0.7\%$.
+At the smallest budget of $\varepsilon = 0.05$, the algorithm achieves a median relative crash reduction ($\Delta_R$) of $10.1\%$, avoiding $39$ expected crashes per 100,000 trips ($\Delta_C$), while incurring a median distance increase ($\Delta_L$) of only $0.7\%$.
 As the budget relaxes to $\varepsilon = 0.50$, the median safety gains scale to $\Delta_R = 28.1\%$ ($121$ expected avoided crashes), and the actual median path increase reaches $16.5\%$.
 %This indicates that the most effective safety interventions are found within the first $15\%$ of detour distance.
-While the interquartile ranges (IQR) for safety gains ($\Delta_R, \Delta_C$) remain relatively stable across budgets, the IQR for path length ($\Delta_L$) expands significantly from $0.022$ to $0.200$, indicating that the distance cost required to achieve safety improvements is highly sensitive to the specific layout of the route.
-Furthermore, the likelihood of finding a safer route ($\Delta_R > 0$) remains high across all budgets, increasing from $76.7\%$ to $94.8\%$ as the search space expands.
-
+While the interquartile ranges (IQR) for safety gains ($\Delta_R, \Delta_C$) remain relatively stable yet high, reflecting a large and persistent variability across routes, the IQR for path length ($\Delta_L$) expands significantly from $0.022$ to $0.200$, indicating that the distance cost required to achieve these improvements is highly sensitive to the specific layout of the route.
+Furthermore, the likelihood of finding a safer route ($\Delta_R > 0$) remains high across all budgets, 
+increasing from $76.7\%$ to $94.8\%$ as the search space expands.
 
 \section{Discussion and Conclusion}\label{sec:conclusion}
-% Use this section to briefly summarize the entire text. Highlight limitations and problems, but also make clear statements where they are possible and supported by the analysis. 
-We developed a city-wide method for estimating bicycle crash risk using Strava exposure data. The approach enables safety-aware routing that balances crash risk reduction against route length constraints.
-Our approach faces two main limitations. First, official crash data capture only personal injury incidents and suffer from under-reporting, systematically underestimating absolute risk. Second, Strava data skew toward fast rides on main roads, underrepresenting trips on residential streets. Where Strava inflates exposure, the calculated risk is too low; where it understimates exposure, sparse data yield inflated risk estimates. Empirical Bayes smoothing partially mitigates this by shrinking unstable low-exposure estimates toward the citywide baseline.
-Another issue is, that for calculating the junction exposure we assume uniform flow and ignore turning movements. This misallocates exposure where one main road dominates side streets. To improve the accuracy of risk estimates, cities like Berlin could expand their automated counting infrastructure. This could offer ground truth data that, through deep learning methods, can be used to improve interpolation of bike exposure from sparse data \citep{kaiser2025spatiotemporalgraphneuralnetwork}. 
-
+We developed a method to estimate bicycle crash risk at the street-segment level using police-recorded 
+crash counts and exposure data derived from Strava. These risk estimates were used to identify high-risk 
+locations, where clear hazards could be observed. Based on these estimates, we implemented a safety-aware
+routing algorithm that balances crash risk reduction against constraints on route length.
+For modest detours of 5--15\%, the routing approach achieves substantial reductions in expected crash 
+risk. The median risk decrease ranges from 10.1\% to 16.9\%, corresponding to an expected avoidance of 
+39--71 crashes compared to the shortest-path route. However, the reduction in route-level risk strongly 
+depends on the chosen origin and destination. Safe alternative routes are available for the majority of 
+simulated trips (76.7\%--87.3\%). 
+Several limitations must be acknowledged. Official bicycle crash counts are underreported and only 
+include crashes involving injuries. In addition, the exposure data used in this study does not represent
+the full cycling population due to the nature of Strava data. Finally, when computing junction exposure, 
+we assume uniform flow and do not account for turning movements. 
 Code and supplementary materials are available at \url{https://github.com/ytobiaz/data_literacy}.
 \clearpage
 
 \section*{Contribution Statement}
-Explain here, in one sentence per person, what each group member contributed. For example, you could write: Max Mustermann collected and prepared data. Gabi Musterfrau and John Doe performed the data analysis. Jane Doe produced visualizations. All authors will jointly wrote the text of the report. Note that you, as a group, a collectively responsible for the report. Your contributions should be roughly equal in amount and difficulty.
+Eric Berger worked on visualizations and data correctness.
+Edward Eichhorn worked on Empirical Bayes Smoothing and investigating the risk estimates.
+Liaisan Faidrakhmanova worked on aggregating raw data and merging.
+Luise Grasl worked on preprocessing and visualizations.
+Tobias Schnarr worked on merging and routing.
+All authors jointly wrote the text of the report.
+
 
 % \section*{Notes} 
 % Your entire report has a \textbf{hard page limit of 4 pages} excluding references and the contribution statement. (I.e. any pages beyond page 4 must only contain the contribution statement and references). Appendices are \emph{not} possible. But you can put additional material, like interactive visualizations or videos, on a githunb repo (use \href{https://github.com/pnkraemer/tueplots}{links} in your pdf to refer to them). Each report has to contain \textbf{at least three plots or visualizations}, and \textbf{cite at least two references}. More details about how to prepare the report, inclucing how to produce plots, cite correctly, and how to ideally structure your github repo, will be discussed in the lecture, where a rubric for the evaluation will also be provided.
